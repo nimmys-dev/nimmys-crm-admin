@@ -1,0 +1,220 @@
+/**
+ * crm.css — application styles layered on top of the Datta Able theme.
+ *
+ * The theme's style.css is a purged Tailwind build: it only contains classes
+ * used by CodedThemes' own demo pages. Alerts, modals, validation states and
+ * empty states are NOT in it, so they are authored here as plain CSS. Plain
+ * CSS (rather than Tailwind utilities) is deliberate — this file needs no
+ * build step and cannot be purged.
+ *
+ * Dark mode follows the theme's own contract: [data-pc-theme="dark"] on <html>.
+ */
+
+:root {
+    --crm-success: #2ca87f;
+    --crm-danger: #d64550;
+    --crm-warning: #d98324;
+    --crm-info: #3d7dca;
+
+    --crm-surface: #ffffff;
+    --crm-border: #e8ebee;
+    --crm-text: #3e4853;
+    --crm-text-muted: #8996a4;
+}
+
+[data-pc-theme='dark'] {
+    --crm-surface: #2b2c2f;
+    --crm-border: #3b3c40;
+    --crm-text: #c5c8cc;
+    --crm-text-muted: #8b8f95;
+}
+
+/* ---------------------------------------------------------------- Alerts */
+
+.alert {
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+    padding: 0.875rem 1rem;
+    border: 1px solid transparent;
+    border-left-width: 3px;
+    border-radius: 0.375rem;
+    font-size: 0.875rem;
+    line-height: 1.5;
+}
+
+.alert > i {
+    flex-shrink: 0;
+    font-size: 1.05rem;
+    line-height: 1.4;
+}
+
+.alert-success {
+    color: var(--crm-success);
+    border-color: var(--crm-success);
+    background-color: color-mix(in srgb, var(--crm-success) 10%, transparent);
+}
+
+.alert-danger {
+    color: var(--crm-danger);
+    border-color: var(--crm-danger);
+    background-color: color-mix(in srgb, var(--crm-danger) 10%, transparent);
+}
+
+.alert-warning {
+    color: var(--crm-warning);
+    border-color: var(--crm-warning);
+    background-color: color-mix(in srgb, var(--crm-warning) 10%, transparent);
+}
+
+.alert-info {
+    color: var(--crm-info);
+    border-color: var(--crm-info);
+    background-color: color-mix(in srgb, var(--crm-info) 10%, transparent);
+}
+
+/* ------------------------------------------------------ Validation state */
+
+.form-control.is-invalid,
+.form-select.is-invalid,
+.form-control.is-invalid:focus,
+.form-select.is-invalid:focus {
+    border-color: var(--crm-danger);
+}
+
+.invalid-feedback {
+    display: block;
+    margin-top: 0.375rem;
+    font-size: 0.8125rem;
+    color: var(--crm-danger);
+}
+
+.form-label .required {
+    color: var(--crm-danger);
+}
+
+/* ---------------------------------------------------------------- Modals */
+/* Driven by assets/js/component.js: the toggle adds .show then .animate,
+   and [data-pc-modal-dismiss] removes them. */
+
+.modal {
+    position: fixed;
+    inset: 0;
+    z-index: 1029;
+    display: none;
+    overflow-x: hidden;
+    overflow-y: auto;
+    padding: 1rem;
+}
+
+.modal.show {
+    display: block;
+}
+
+.modal-dialog {
+    position: relative;
+    width: 100%;
+    max-width: 500px;
+    margin: 3.5rem auto;
+    opacity: 0;
+    transform: translateY(-1rem);
+    transition:
+        opacity 0.2s ease,
+        transform 0.2s ease;
+}
+
+.modal.animate .modal-dialog {
+    opacity: 1;
+    transform: none;
+}
+
+.modal-content {
+    display: flex;
+    flex-direction: column;
+    background-color: var(--crm-surface);
+    border-radius: 0.5rem;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.18);
+}
+
+.modal-header,
+.modal-footer {
+    display: flex;
+    align-items: center;
+    padding: 1rem 1.25rem;
+}
+
+.modal-header {
+    justify-content: space-between;
+    border-bottom: 1px solid var(--crm-border);
+}
+
+.modal-header h5 {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 500;
+}
+
+.modal-body {
+    padding: 1.25rem;
+    color: var(--crm-text);
+}
+
+.modal-footer {
+    justify-content: flex-end;
+    gap: 0.75rem;
+    border-top: 1px solid var(--crm-border);
+}
+
+.modal-close {
+    border: 0;
+    background: none;
+    cursor: pointer;
+    font-size: 1.25rem;
+    line-height: 1;
+    color: var(--crm-text-muted);
+}
+
+.modal-close:hover {
+    color: var(--crm-text);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .modal-dialog {
+        transition: none;
+    }
+}
+
+/* ----------------------------------------------------------- Empty state */
+
+.empty-state {
+    padding: 3rem 1.5rem;
+    text-align: center;
+    color: var(--crm-text-muted);
+}
+
+.empty-state i {
+    font-size: 2.25rem;
+    opacity: 0.5;
+}
+
+.empty-state p {
+    margin: 0.75rem 0 0;
+}
+
+/* --------------------------------------------------------- Stat tile aid */
+
+.stat-tile-label {
+    margin: 0;
+    font-size: 0.8125rem;
+    color: var(--crm-text-muted);
+}
+
+.stat-tile-value {
+    margin: 0.375rem 0 0;
+    font-size: 1.75rem;
+    font-weight: 300;
+    font-variant-numeric: tabular-nums;
+    color: var(--crm-text);
+}

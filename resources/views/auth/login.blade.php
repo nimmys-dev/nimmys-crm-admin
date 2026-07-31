@@ -1,121 +1,48 @@
-<!doctype html>
-<html lang="en" @@bodySetup>
-  <!-- [Head] start -->
+@extends('layouts.guest')
 
-  <head>
-    
-    <title>Login</title>
-    <!-- [Meta] -->
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=0, minimal-ui" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <meta
-    name="description"
-    content="Datta Able is trending dashboard template made using Bootstrap 5 design framework. Datta Able is available in Bootstrap, React, CodeIgniter, Angular,  and .net Technologies."
-    />
-    <meta
-    name="keywords"
-    content="Bootstrap admin template, Dashboard UI Kit, Dashboard Template, Backend Panel, react dashboard, angular dashboard"
-    />
-    <meta name="author" content="CodedThemes" />
+@section('title', 'Log in')
 
-    <!-- Favicon -->
-    <link rel="icon" href="{{ asset('assets/images/favicon.svg') }}" type="image/svg+xml">
+@section('content')
 
-    <!-- Fonts -->
-    <link rel="stylesheet" href="{{ asset('assets/fonts/fontawesome.css') }}">
-    <link rel="stylesheet" href="{{ asset('assets/fonts/feather.css') }}">
+    <h4 class="text-center font-medium mb-4">Log in</h4>
 
-    <!-- Template CSS -->
-    <link rel="stylesheet" href="{{ asset('assets/css/style.css') }}">
-    <link rel="stylesheet" href="{{ asset('assets/css/style-preset.css') }}">
-    <link rel="stylesheet" href="{{ asset('assets/css/theme.css') }}">
-     <!-- [Font] Family -->
-    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
-    <!-- [phosphor Icons] https://phosphoricons.com/ -->
-    <link rel="stylesheet" href="{{ asset('assets/fonts/phosphor/duotone/style.css') }}" />
-    <!-- [Tabler Icons] https://tablericons.com -->
-    <link rel="stylesheet" href="{{ asset('assets/fonts/tabler-icons.min.css') }}" />
-    <!-- [Feather Icons] https://feathericons.com -->
-    <link rel="stylesheet" href="{{ asset('assets/fonts/feather.css') }}" />
-    <!-- [Font Awesome Icons] https://fontawesome.com/icons -->
-    <link rel="stylesheet" href="{{ asset('assets/fonts/fontawesome.css') }}" />
-    <!-- [Material Icons] https://fonts.google.com/icons -->
-    <link rel="stylesheet" href="{{ asset('assets/fonts/material.css') }}" />
-    <!-- [Template CSS Files] -->
-    <link rel="stylesheet" href="{{ asset('assets/css/style.css') }}" id="main-style-link" />
+    <x-alerts />
 
-  
-  </head>
-  <!-- [Head] end -->
-  <!-- [Body] Start -->
+    <form method="POST" action="{{ route('login.store') }}">
+        @csrf
 
-  <body>
-    <div class="loader-bg fixed inset-0 bg-white dark:bg-themedark-cardbg z-[1034]">
-        <div class="loader-track h-[5px] w-full absolute top-0 overflow-hidden">
-            <div
-                class="loader-fill w-[300px] h-[5px] bg-primary-500 absolute top-0 left-0 animate-[hitZak_0.6s_ease-in-out_infinite_alternate]">
+        <div class="grid grid-cols-12 gap-4">
+            <x-form.input
+                name="email"
+                type="email"
+                label="Email address"
+                col="col-span-12"
+                autocomplete="username"
+                autofocus
+                required
+            />
+
+            <x-form.input
+                name="password"
+                type="password"
+                label="Password"
+                col="col-span-12"
+                autocomplete="current-password"
+                required
+            />
+        </div>
+
+        <div class="flex mt-4 justify-between items-center flex-wrap">
+            <div class="form-check">
+                <input class="form-check-input input-primary" type="checkbox" name="remember" id="remember"
+                    value="1" @checked(old('remember')) />
+                <label class="form-check-label text-muted" for="remember">Remember me</label>
             </div>
         </div>
-    </div>
 
-    <div class="auth-main relative">
-      <div class="auth-wrapper v1 flex items-center w-full h-full min-h-screen">
-        <div class="auth-form flex items-center justify-center grow flex-col min-h-screen relative p-6 ">
-          <div class="w-full max-w-[350px] relative">
-            <div class="auth-bg ">
-              <span class="absolute top-[-100px] right-[-100px] w-[300px] h-[300px] block rounded-full bg-theme-bg-1 animate-[floating_7s_infinite]"></span>
-              <span class="absolute top-[150px] right-[-150px] w-5 h-5 block rounded-full bg-primary-500 animate-[floating_9s_infinite]"></span>
-              <span class="absolute left-[-150px] bottom-[150px] w-5 h-5 block rounded-full bg-theme-bg-1 animate-[floating_7s_infinite]"></span>
-              <span class="absolute left-[-100px] bottom-[-100px] w-[300px] h-[300px] block rounded-full bg-theme-bg-2 animate-[floating_9s_infinite]"></span>
-            </div>
-            <div class="card sm:my-12  w-full shadow-none">
-              <div class="card-body !p-10">
-                <div class="text-center mb-8">
-                  <a href="#"><img src="{{ asset('assets/images/logo-dark.svg') }}" alt="img" class="mx-auto auth-logo"/></a>
-                </div>
-                <h4 class="text-center font-medium mb-4">Login</h4>
-                <div class="mb-3">
-                  <input type="email" class="form-control" id="floatingInput" placeholder="Email Address" />
-                </div>
-                <div class="mb-4">
-                  <input type="password" class="form-control" id="floatingInput1" placeholder="Password" />
-                </div>
-                <div class="flex mt-1 justify-between items-center flex-wrap">
-                  <div class="form-check">
-                    <input class="form-check-input input-primary" type="checkbox" id="customCheckc1" checked="" />
-                    <label class="form-check-label text-muted" for="customCheckc1">Remember me?</label>
-                  </div>
-                  <h6 class="font-normal text-red-500 mb-0">
-                    <a href="#"> Forgot Password? </a>
-                  </h6>
-                </div>
-                <div class="mt-4 text-center">
-                  <button type="button" class="btn btn-primary mx-auto shadow-2xl">Login</button>
-                </div>
-                <div class="flex justify-between items-end flex-wrap mt-4">
-                  <h6 class="font-medium mb-0">Don't have an Account?</h6>
-                  <a href="register-v1.html" class="text-red-500">Create Account</a>
-                </div>
-              </div>
-            </div>
-          </div>
-          
+        <div class="mt-4 text-center">
+            <x-button type="submit" class="mx-auto">Log in</x-button>
         </div>
-      </div>
-    </div>
-    <!-- [ Main Content ] end -->
-  </body>
-  <!-- [Body] end -->
-</html>
-<script>
-    window.addEventListener('load', function () {
-    var loader = document.querySelector('.loader-bg');
-    if (!loader) return;
-    loader.style.transition = 'opacity 0.5s ease';
-    loader.style.opacity = '0';
-    setTimeout(function () {
-        if (loader.parentNode) loader.parentNode.removeChild(loader);
-    }, 500);
-    });
-</script>
+    </form>
+
+@endsection
