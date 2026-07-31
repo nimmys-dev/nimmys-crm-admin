@@ -55,26 +55,26 @@
                     <i data-feather="settings"></i>
                 </a>
                 <div class="dropdown-menu dropdown-menu-end pc-h-dropdown">
-                    <a href="#!" class="dropdown-item">
+                    <!-- <a href="#!" class="dropdown-item">
                     <i class="ti ti-user"></i>
                     <span>My Account</span>
-                    </a>
+                    </a> -->
                     <a href="#!" class="dropdown-item">
                     <i class="ti ti-settings"></i>
                     <span>Settings</span>
                     </a>
-                    <a href="#!" class="dropdown-item">
+                    <!-- <a href="#!" class="dropdown-item">
                     <i class="ti ti-headset"></i>
                     <span>Support</span>
-                    </a>
-                    <a href="#!" class="dropdown-item">
+                    </a> -->
+                    <!-- <a href="#!" class="dropdown-item">
                     <i class="ti ti-lock"></i>
                     <span>Lock Screen</span>
                     </a>
                     <a href="#!" class="dropdown-item">
                     <i class="ti ti-power"></i>
                     <span>Logout</span>
-                    </a>
+                    </a> -->
                 </div>
                 </li>
                 <li class="dropdown pc-h-item">
@@ -206,22 +206,23 @@
                     </div>
                     <div class="dropdown-body py-4 px-5">
                     <div class="profile-notification-scroll position-relative" style="max-height: calc(100vh - 225px)">
-                        <a href="#" class="dropdown-item">
+                        <a href="/" class="dropdown-item">
                         <span>
-                            <svg class="pc-icon text-muted me-2 inline-block">
+                            <!-- <svg class="pc-icon text-muted me-2 inline-block">
                             <use xlink:href="#custom-setting-outline"></use>
-                            </svg>
-                            <span>Settings</span>
+                            </svg> -->
+                            <i class="ti ti-user me-2"></i>
+                            <span>Profile</span>
                         </span>
                         </a>
-                        <a href="#" class="dropdown-item">
+                        <!-- <a href="#" class="dropdown-item"> -->
                         <!-- <span>
                             <svg class="pc-icon text-muted me-2 inline-block">
                             <use xlink:href="#custom-share-bold"></use>
                             </svg>
                             <span>Share</span>
                         </span> -->
-                        </a>
+                        <!-- </a> -->
                         <a href="#" class="dropdown-item">
                         <span>
                             <svg class="pc-icon text-muted me-2 inline-block">
