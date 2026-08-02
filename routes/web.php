@@ -1,17 +1,111 @@
 <?php
 
+use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\LeadController;
+use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\ReportController;
+use App\Http\Controllers\SearchController;
+use App\Http\Controllers\SettingsController;
+use App\Http\Controllers\ShopController;
+use App\Http\Controllers\StaffController;
+use App\Http\Controllers\TaskController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    // return view('welcome');
-    // return view('dashboard');
-    // return view('auth/login');
-    // return view('profile');
-    // return view('user/list');
-    // return view('user/add');
-    // return view('user/edit');
-    // return view('task/list');
-    // return view('task/add');
-    return view('task/edit');
+/*
+|--------------------------------------------------------------------------
+| Guest
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware('guest')->group(function () {
+    Route::get('login', [LoginController::class, 'create'])->name('login');
+    Route::post('login', [LoginController::class, 'store'])->name('login.store');
+});
+
+/*
+|--------------------------------------------------------------------------
+| Web portal — Admin and Manager only
+|--------------------------------------------------------------------------
+|
+| Defence in depth, three layers deep:
+|   auth        — is there a session at all
+|   web.access  — is this role allowed on the web, and still active
+|   can:*       — does this role hold the specific ability
+|
+| The `can:` layer is what actually separates Admin from Manager, and it
+| reads from config/permissions.php, so the matrix stays in one file.
+|
+*/
+
+Route::middleware(['auth', 'web.access'])->group(function () {
+
+    Route::post('logout', [LoginController::class, 'destroy'])->name('logout');
+
+    Route::redirect('/', '/dashboard')->name('home');
+
+    Route::get('dashboard', [DashboardController::class, 'index'])
+        ->middleware('can:dashboard.view')
+        ->name('dashboard');
+
+    Route::get('search', SearchController::class)->name('search');
+
+    /*
+     | Modules — index only until the models exist. Swap each for
+     | Route::resource() then; the middleware line stays as it is.
+     */
+
+    // Shop Management — full CRUD, Admin only via shops.manage.
+    Route::resource('shops', ShopController::class)
+        ->middleware('can:shops.manage');
+
+    Route::get('staff', [StaffController::class, 'index'])
+        ->middleware('can:staff.manage')
+        ->name('staff.index');
+
+    Route::get('leads', [LeadController::class, 'index'])
+        ->middleware('can:leads.manage')
+        ->name('leads.index');
+
+    Route::get('tasks', [TaskController::class, 'index'])
+        ->middleware('can:tasks.manage')
+        ->name('tasks.index');
+
+    Route::get('reports', [ReportController::class, 'index'])
+        ->middleware('can:reports.view')
+        ->name('reports.index');
+
+    /*
+     | Account
+     */
+
+    Route::get('profile', [ProfileController::class, 'index'])
+        ->middleware('can:profile.view')
+        ->name('profile.index');
+
+    Route::get('settings', [SettingsController::class, 'index'])
+        ->middleware('can:settings.manage')
+        ->name('settings.index');
 
 });
+
+/*
+|--------------------------------------------------------------------------
+| Mobile API — not yet routed
+|--------------------------------------------------------------------------
+|
+| Sanctum is not installed. When the mobile app is built:
+|
+|   1. composer require laravel/sanctum
+|   2. php artisan install:api            (creates routes/api.php + migration)
+|   3. Add HasApiTokens to App\Models\User
+|   4. Wrap the API routes:
+|
+|        Route::middleware(['auth:sanctum', 'mobile'])->group(function () {
+|            // issue tokens with $user->abilitiesFor('mobile')
+|        });
+|
+| The `mobile` alias and EnsureUserCanAccessMobile already exist, and
+| config/permissions.php already carries the mobile matrix.
+|
+*/
