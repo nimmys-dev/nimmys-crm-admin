@@ -6,7 +6,8 @@
 
     <h4 class="text-center font-medium mb-4">Log in</h4>
 
-    <x-alerts />
+    {{-- Field errors render inline below, so only flash messages belong here. --}}
+    <x-alerts :show-errors="false" />
 
     <form method="POST" action="{{ route('login.store') }}">
         @csrf

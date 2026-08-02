@@ -7,10 +7,27 @@
      */
     $menu = config('menu', []);
 
+    /**
+     * A missing permission means "always visible". An array means "any of
+     * these", which is what lets a section caption disappear when the role
+     * holds none of the items beneath it.
+     */
     $allowed = static function (array $item): bool {
         $permission = $item['permission'] ?? null;
 
-        return blank($permission) || auth()->user()?->can($permission);
+        if (blank($permission)) {
+            return true;
+        }
+
+        $user = auth()->user();
+
+        if (! $user) {
+            return false;
+        }
+
+        return is_array($permission)
+            ? $user->canAny($permission)
+            : $user->can($permission);
     };
 
     $isActive = static function (array $item): bool {
@@ -35,14 +52,14 @@
 
                 @foreach ($menu as $item)
 
+                    @continue(! $allowed($item))
+
                     @if (isset($item['caption']))
                         <li class="pc-item pc-caption">
                             <label>{{ $item['caption'] }}</label>
                         </li>
                         @continue
                     @endif
-
-                    @continue(! $allowed($item))
 
                     @php
                         $children = collect($item['children'] ?? [])->filter($allowed);

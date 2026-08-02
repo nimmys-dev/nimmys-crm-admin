@@ -15,10 +15,21 @@
     $hasError = $errors->has($errorKey);
     $current = old($errorKey, $selected);
 
-    // Accepts ['a' => 'A'] or a plain list ['A', 'B'], which becomes value === label.
-    $options = collect($options)->mapWithKeys(
-        fn ($label, $key) => [is_int($key) ? $label : $key => $label],
-    );
+    $options = $options instanceof \Illuminate\Support\Collection
+        ? $options->all()
+        : (array) $options;
+
+    /**
+     * Only a genuine list (['Low', 'High'], keys 0..n-1) means value === label.
+     * Any keyed map uses its own keys as the submitted values — including
+     * integer keys, which are model IDs, not positions.
+     *
+     * Checking is_int($key) here instead would silently post the label for
+     * every ID => name dropdown.
+     */
+    if (array_is_list($options)) {
+        $options = array_combine($options, $options);
+    }
 @endphp
 
 <div class="{{ $col }}">

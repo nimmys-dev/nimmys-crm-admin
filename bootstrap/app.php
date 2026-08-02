@@ -11,7 +11,28 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
-        //
+
+        $middleware->alias([
+            // Parameterised: role:admin,manager
+            'role' => \App\Http\Middleware\EnsureUserHasRole::class,
+
+            // Convenience aliases — same class, role baked in.
+            'admin' => \App\Http\Middleware\EnsureUserHasRole::class.':admin',
+            'manager' => \App\Http\Middleware\EnsureUserHasRole::class.':manager',
+
+            // Surface guards.
+            'web.access' => \App\Http\Middleware\EnsureUserCanAccessWeb::class,
+            'mobile' => \App\Http\Middleware\EnsureUserCanAccessMobile::class,
+            'active' => \App\Http\Middleware\EnsureUserIsActive::class,
+        ]);
+
+        // Invalidates a session when the user's password changes elsewhere,
+        // so a stolen session dies the moment the password is reset. Uses the
+        // framework's own API so ordering within the web group is correct.
+        $middleware->authenticateSessions();
+
+        $middleware->redirectGuestsTo(fn () => route('login'));
+
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //

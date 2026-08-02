@@ -21,14 +21,22 @@ class LoginController extends Controller
 
     /**
      * Authenticate and start the session.
+     *
+     * Role and status checks live in LoginRequest::authenticate(), keeping
+     * this controller to session handling and the redirect decision.
      */
     public function store(LoginRequest $request): RedirectResponse
     {
         $request->authenticate();
 
+        // Rotates the session ID, defeating session fixation.
         $request->session()->regenerate();
 
-        return redirect()->intended(route('dashboard'));
+        $user = $request->user();
+
+        $user->recordLogin($request->ip());
+
+        return redirect()->intended(route($user->role->dashboardRoute()));
     }
 
     /**

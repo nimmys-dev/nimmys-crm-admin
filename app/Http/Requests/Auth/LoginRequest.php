@@ -22,13 +22,28 @@ class LoginRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'email' => ['required', 'string', 'email'],
-            'password' => ['required', 'string'],
+            'email' => ['required', 'string', 'email:rfc', 'max:255'],
+            'password' => ['required', 'string', 'max:255'],
+            'remember' => ['nullable', 'boolean'],
         ];
     }
 
     /**
-     * Attempt to log the user in, rate limited to 5 tries per email + IP.
+     * @return array<string, string>
+     */
+    public function attributes(): array
+    {
+        return [
+            'email' => 'email address',
+        ];
+    }
+
+    /**
+     * Authenticate against the web guard.
+     *
+     * Order matters. Credentials are verified first, so the role and status
+     * messages can never be used to probe which email addresses exist — a
+     * wrong password always returns the same generic failure.
      *
      * @throws ValidationException
      */
@@ -36,13 +51,34 @@ class LoginRequest extends FormRequest
     {
         $this->ensureIsNotRateLimited();
 
-        if (! Auth::attempt($this->only('email', 'password'), $this->boolean('remember'))) {
+        if (! Auth::validate($this->only('email', 'password'))) {
             RateLimiter::hit($this->throttleKey());
 
             throw ValidationException::withMessages([
                 'email' => __('auth.failed'),
             ]);
         }
+
+        // Credentials are good. Now decide whether this user belongs on the web.
+        $user = Auth::getProvider()->retrieveByCredentials($this->only('email'));
+
+        if (! $user->isActive()) {
+            RateLimiter::hit($this->throttleKey());
+
+            throw ValidationException::withMessages([
+                'email' => __('auth.inactive'),
+            ]);
+        }
+
+        if (! $user->role->canAccessWeb()) {
+            RateLimiter::hit($this->throttleKey());
+
+            throw ValidationException::withMessages([
+                'email' => __('auth.web_forbidden'),
+            ]);
+        }
+
+        Auth::login($user, $this->boolean('remember'));
 
         RateLimiter::clear($this->throttleKey());
     }
@@ -68,6 +104,10 @@ class LoginRequest extends FormRequest
         ]);
     }
 
+    /**
+     * Keyed on email + IP so one attacker cannot lock out a real user by
+     * hammering their address from elsewhere.
+     */
     protected function throttleKey(): string
     {
         return Str::transliterate(Str::lower($this->string('email')).'|'.$this->ip());

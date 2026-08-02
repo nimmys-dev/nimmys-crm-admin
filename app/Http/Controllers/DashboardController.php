@@ -24,7 +24,7 @@ class DashboardController extends Controller
                 ['label' => 'Total Employees', 'value' => null, 'icon' => 'ti ti-users'],
                 ['label' => 'Total Leads', 'value' => null, 'icon' => 'ti ti-target-arrow'],
                 ['label' => 'Open Tasks', 'value' => null, 'icon' => 'ti ti-checklist'],
-                ["label" => "Today's Follow-ups", 'value' => null, 'icon' => 'ti ti-calendar-event'],
+                ['label' => "Today's Follow-ups", 'value' => null, 'icon' => 'ti ti-calendar-event'],
             ],
         ]);
     }

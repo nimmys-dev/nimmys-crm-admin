@@ -11,6 +11,9 @@
  */
 
 :root {
+    /* Matches the maroon .btn-primary gradient the theme was customised with. */
+    --crm-accent: #7a0000;
+
     --crm-success: #2ca87f;
     --crm-danger: #d64550;
     --crm-warning: #d98324;
@@ -23,6 +26,7 @@
 }
 
 [data-pc-theme='dark'] {
+    --crm-accent: #a83232;
     --crm-surface: #2b2c2f;
     --crm-border: #3b3c40;
     --crm-text: #c5c8cc;
@@ -201,6 +205,88 @@
 
 .empty-state p {
     margin: 0.75rem 0 0;
+}
+
+/* ------------------------------------------------------------ Pagination */
+/* The theme's own .pagination rules are scoped to DataTables containers
+   (.dt-paging .pagination) and never apply to a plain Laravel paginator. */
+
+.crm-pagination {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-top: 1.25rem;
+}
+
+.crm-pagination-summary {
+    margin: 0;
+    font-size: 0.8125rem;
+    color: var(--crm-text-muted);
+    font-variant-numeric: tabular-nums;
+}
+
+.crm-pagination .pagination {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.crm-pagination .page-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 2rem;
+    height: 2rem;
+    padding: 0 0.5rem;
+    border: 1px solid var(--crm-border);
+    border-radius: 0.375rem;
+    font-size: 0.8125rem;
+    font-variant-numeric: tabular-nums;
+    color: var(--crm-text);
+    text-decoration: none;
+    transition: background-color 0.15s ease;
+}
+
+.crm-pagination a.page-link:hover {
+    background-color: var(--crm-border);
+}
+
+.crm-pagination .page-link.active {
+    background-color: var(--crm-accent, #7a0000);
+    border-color: var(--crm-accent, #7a0000);
+    color: #fff;
+    font-weight: 600;
+}
+
+.crm-pagination .page-link.is-disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .crm-pagination .page-link {
+        transition: none;
+    }
+}
+
+/* -------------------------------------------------------- Table controls */
+
+.table-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.375rem;
+    white-space: nowrap;
+}
+
+.table-actions .btn {
+    padding: 0.3rem 0.5rem;
+    line-height: 1;
 }
 
 /* --------------------------------------------------------- Stat tile aid */

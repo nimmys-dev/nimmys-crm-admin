@@ -4,6 +4,7 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\LeadController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\ShopController;
@@ -24,39 +25,87 @@ Route::middleware('guest')->group(function () {
 
 /*
 |--------------------------------------------------------------------------
-| Authenticated
+| Web portal — Admin and Manager only
 |--------------------------------------------------------------------------
+|
+| Defence in depth, three layers deep:
+|   auth        — is there a session at all
+|   web.access  — is this role allowed on the web, and still active
+|   can:*       — does this role hold the specific ability
+|
+| The `can:` layer is what actually separates Admin from Manager, and it
+| reads from config/permissions.php, so the matrix stays in one file.
+|
 */
 
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth', 'web.access'])->group(function () {
 
     Route::post('logout', [LoginController::class, 'destroy'])->name('logout');
 
     Route::redirect('/', '/dashboard')->name('home');
 
-    Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('dashboard', [DashboardController::class, 'index'])
+        ->middleware('can:dashboard.view')
+        ->name('dashboard');
 
     Route::get('search', SearchController::class)->name('search');
 
     /*
-     | Modules — index only for now. Add store/update/destroy per module as
-     | it is built, or swap to Route::resource() once the models exist.
+     | Modules — index only until the models exist. Swap each for
+     | Route::resource() then; the middleware line stays as it is.
      */
 
-    Route::get('shops', [ShopController::class, 'index'])->name('shops.index');
+    // Shop Management — full CRUD, Admin only via shops.manage.
+    Route::resource('shops', ShopController::class)
+        ->middleware('can:shops.manage');
 
-    Route::get('staff', [StaffController::class, 'index'])->name('staff.index');
+    Route::get('staff', [StaffController::class, 'index'])
+        ->middleware('can:staff.manage')
+        ->name('staff.index');
 
-    Route::get('leads', [LeadController::class, 'index'])->name('leads.index');
+    Route::get('leads', [LeadController::class, 'index'])
+        ->middleware('can:leads.manage')
+        ->name('leads.index');
 
-    Route::get('tasks', [TaskController::class, 'index'])->name('tasks.index');
+    Route::get('tasks', [TaskController::class, 'index'])
+        ->middleware('can:tasks.manage')
+        ->name('tasks.index');
+
+    Route::get('reports', [ReportController::class, 'index'])
+        ->middleware('can:reports.view')
+        ->name('reports.index');
 
     /*
      | Account
      */
 
-    Route::get('profile', [ProfileController::class, 'index'])->name('profile.index');
+    Route::get('profile', [ProfileController::class, 'index'])
+        ->middleware('can:profile.view')
+        ->name('profile.index');
 
-    Route::get('settings', [SettingsController::class, 'index'])->name('settings.index');
+    Route::get('settings', [SettingsController::class, 'index'])
+        ->middleware('can:settings.manage')
+        ->name('settings.index');
 
 });
+
+/*
+|--------------------------------------------------------------------------
+| Mobile API — not yet routed
+|--------------------------------------------------------------------------
+|
+| Sanctum is not installed. When the mobile app is built:
+|
+|   1. composer require laravel/sanctum
+|   2. php artisan install:api            (creates routes/api.php + migration)
+|   3. Add HasApiTokens to App\Models\User
+|   4. Wrap the API routes:
+|
+|        Route::middleware(['auth:sanctum', 'mobile'])->group(function () {
+|            // issue tokens with $user->abilitiesFor('mobile')
+|        });
+|
+| The `mobile` alias and EnsureUserCanAccessMobile already exist, and
+| config/permissions.php already carries the mobile matrix.
+|
+*/
