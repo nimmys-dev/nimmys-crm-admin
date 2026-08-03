@@ -5,15 +5,15 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Validator;
 
 class AuthController extends Controller
 {
     public function login(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'email'    => 'required|email',
+            'email' => 'required|email',
             'password' => 'required',
         ]);
 
@@ -21,20 +21,20 @@ class AuthController extends Controller
         if ($validator->fails()) {
             return response()->json([
                 'status' => false,
-                "status_code" => 422,
+                'status_code' => 422,
                 'message' => 'Validation failed',
-                'errors' => $validator->errors()
+                'errors' => $validator->errors(),
             ], 422);
         }
 
         $user = User::where('email', $request->email)->first();
 
         // Invalid Credentials
-        if (!$user || !Hash::check($request->password, $user->password)) {
+        if (! $user || ! Hash::check($request->password, $user->password)) {
             return response()->json([
                 'status' => false,
                 'status_code' => 401,
-                'message' => 'Invalid credentials'
+                'message' => 'Invalid credentials',
             ], 401);
         }
 
@@ -43,6 +43,7 @@ class AuthController extends Controller
 
         // Generate new token
         $token = $user->createToken('auth_token')->plainTextToken;
+
         // Success Response
         return response()->json([
             'status' => true,
@@ -50,11 +51,11 @@ class AuthController extends Controller
             'message' => 'Login successful',
             'token' => $token,
             'user' => [
-                'id'    => $user->id,
-                'name'  => $user->name,
+                'id' => $user->id,
+                'name' => $user->name,
                 'email' => $user->email,
-                'role'  => $user->role,
-            ]
+                'role' => $user->role,
+            ],
         ], 200);
     }
 
@@ -62,11 +63,11 @@ class AuthController extends Controller
     {
         $user = $request->user();
 
-        if (!$user) {
+        if (! $user) {
             return response()->json([
                 'status' => false,
                 'status_code' => 401,
-                'message' => 'Unauthenticated.'
+                'message' => 'Unauthenticated.',
             ], 401);
         }
 
@@ -84,17 +85,17 @@ class AuthController extends Controller
                 'photo' => $user->photo,
                 'role' => $user->role,
                 'status' => $user->status,
-            ]
+            ],
         ], 200);
     }
 
     public function logout(Request $request)
     {
-        if (!$request->user() || !$request->user()->currentAccessToken()) {
+        if (! $request->user() || ! $request->user()->currentAccessToken()) {
             return response()->json([
                 'status' => false,
                 'status_code' => 401,
-                'message' => 'Unauthenticated.'
+                'message' => 'Unauthenticated.',
             ], 401);
         }
 
@@ -103,7 +104,7 @@ class AuthController extends Controller
         return response()->json([
             'status' => true,
             'status_code' => 200,
-            'message' => 'Logout successful'
+            'message' => 'Logout successful',
         ], 200);
     }
 }

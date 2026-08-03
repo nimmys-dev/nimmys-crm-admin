@@ -7,6 +7,9 @@ use App\Enums\UserStatus;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Storage;
@@ -15,21 +18,7 @@ use Laravel\Sanctum\HasApiTokens;
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
-    use HasApiTokens, HasFactory, Notifiable;
-
-    /*
-    |--------------------------------------------------------------------------
-    | Sanctum
-    |--------------------------------------------------------------------------
-    | When the mobile API is built, install sanctum and add the trait:
-    |
-    |   composer require laravel/sanctum
-    |   use Laravel\Sanctum\HasApiTokens;
-    |   use HasFactory, Notifiable, HasApiTokens;
-    |
-    | Nothing else in this model has to change — abilitiesFor() below already
-    | returns the token abilities to mint.
-    */
+    use HasApiTokens, HasFactory, Notifiable, SoftDeletes;
 
     /**
      * @var list<string>
@@ -41,11 +30,25 @@ class User extends Authenticatable
         'role',
         'email',
         'phone',
+        'alternate_phone',
         'photo',
         'password',
+        'joining_date',
+        'salary',
+        'description',
         'status',
         'device_token',
     ];
+
+    /**
+     * Columns the staff listing may be ordered by.
+     *
+     * Whitelisted because `sort` arrives from the query string and reaches
+     * an ORDER BY.
+     *
+     * @var list<string>
+     */
+    public const SORTABLE = ['employee_code', 'name', 'email', 'role', 'status', 'joining_date', 'created_at'];
 
     /**
      * @var list<string>
@@ -64,10 +67,34 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'last_login_at' => 'datetime',
+            'joining_date' => 'date',
+            'salary' => 'decimal:2',
             'password' => 'hashed',
             'role' => UserRole::class,
             'status' => UserStatus::class,
         ];
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Relationships
+    |--------------------------------------------------------------------------
+    */
+
+    /** @return BelongsTo<Shop, User> */
+    public function shop(): BelongsTo
+    {
+        return $this->belongsTo(Shop::class);
+    }
+
+    /**
+     * The shop this user runs, as opposed to the one they belong to.
+     *
+     * @return HasOne<Shop>
+     */
+    public function managedShop(): HasOne
+    {
+        return $this->hasOne(Shop::class, 'manager_id');
     }
 
     /*
@@ -186,6 +213,74 @@ class User extends Authenticatable
     public function scopeForShop(Builder $query, ?int $shopId): void
     {
         $query->where('shop_id', $shopId);
+    }
+
+    /**
+     * Free-text search across the fields an admin would actually type.
+     *
+     * @param  Builder<User>  $query
+     */
+    public function scopeSearch(Builder $query, ?string $term): void
+    {
+        $term = trim((string) $term);
+
+        if ($term === '') {
+            return;
+        }
+
+        // Escape LIKE wildcards so a literal % or _ is not read as a pattern.
+        $escaped = '%'.addcslashes($term, '%_\\').'%';
+
+        $query->where(function (Builder $query) use ($escaped) {
+            $query->where('employee_code', 'like', $escaped)
+                ->orWhere('name', 'like', $escaped)
+                ->orWhere('email', 'like', $escaped)
+                ->orWhere('phone', 'like', $escaped)
+                ->orWhere('alternate_phone', 'like', $escaped);
+        });
+    }
+
+    /** @param  Builder<User>  $query */
+    public function scopeFilterRole(Builder $query, UserRole|string|null $role): void
+    {
+        if (blank($role)) {
+            return;
+        }
+
+        $query->where('role', $role instanceof UserRole ? $role : UserRole::from($role));
+    }
+
+    /** @param  Builder<User>  $query */
+    public function scopeFilterStatus(Builder $query, UserStatus|string|null $status): void
+    {
+        if (blank($status)) {
+            return;
+        }
+
+        $query->where('status', $status instanceof UserStatus ? $status : UserStatus::from($status));
+    }
+
+    /** @param  Builder<User>  $query */
+    public function scopeFilterShop(Builder $query, int|string|null $shopId): void
+    {
+        if (blank($shopId)) {
+            return;
+        }
+
+        $query->where('shop_id', (int) $shopId);
+    }
+
+    /**
+     * Order by a whitelisted column, falling back to newest first.
+     *
+     * @param  Builder<User>  $query
+     */
+    public function scopeSorted(Builder $query, ?string $column, ?string $direction): void
+    {
+        $column = in_array($column, self::SORTABLE, true) ? $column : 'created_at';
+        $direction = strtolower((string) $direction) === 'asc' ? 'asc' : 'desc';
+
+        $query->orderBy($column, $direction);
     }
 
     /*

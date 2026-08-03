@@ -33,6 +33,9 @@
 
     <x-footer />
 
+    {{-- Modals render here so their forms are never nested inside a page form. --}}
+    @stack('modals')
+
     @include('partials.scripts')
 
 </body>
