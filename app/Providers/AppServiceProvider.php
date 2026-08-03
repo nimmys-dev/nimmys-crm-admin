@@ -5,6 +5,7 @@ namespace App\Providers;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Facades\Schema;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -30,5 +31,6 @@ class AppServiceProvider extends ServiceProvider
         // Fail loudly in development when a relationship is used without
         // being eager loaded, rather than shipping an N+1 to production.
         Model::preventLazyLoading(! app()->isProduction());
+        Schema::defaultStringLength(191);
     }
 }
