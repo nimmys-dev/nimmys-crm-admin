@@ -37,31 +37,25 @@
                     />
                 </x-filter-bar>
 
-                <div class="table-responsive">
-                    <table class="table table-hover">
-                        <thead>
-                            <tr>
-                                <th scope="col">
-                                    <x-sort-link column="code" label="Code" :sort="$filters['sort']" :direction="$filters['direction']" />
-                                </th>
-                                <th scope="col">
-                                    <x-sort-link column="name" label="Shop" :sort="$filters['sort']" :direction="$filters['direction']" />
-                                </th>
-                                <th scope="col">Manager</th>
-                                <th scope="col">
-                                    <x-sort-link column="city" label="City" :sort="$filters['sort']" :direction="$filters['direction']" />
-                                </th>
-                                <th scope="col">Staff</th>
-                                <th scope="col">
-                                    <x-sort-link column="status" label="Status" :sort="$filters['sort']" :direction="$filters['direction']" />
-                                </th>
-                                <th scope="col"><span class="sr-only">Actions</span></th>
-                            </tr>
-                        </thead>
-
-                        @if ($shops->isNotEmpty())
-                            <tbody>
-                                @foreach ($shops as $shop)
+                <x-datatable
+                    :headers="[
+                        ['label' => 'Code', 'sort' => 'code'],
+                        ['label' => 'Shop', 'sort' => 'name'],
+                        'Manager',
+                        ['label' => 'City', 'sort' => 'city'],
+                        'Staff',
+                        ['label' => 'Status', 'sort' => 'status'],
+                        ['label' => '', 'class' => 'w-px'],
+                    ]"
+                    :sort="$filters['sort']"
+                    :direction="$filters['direction']"
+                    :rows="$shops"
+                    :empty-message="$hasActiveFilters
+                        ? 'No shops match these filters.'
+                        : 'No shops yet. Add the first one to get started.'"
+                    empty-icon="ti ti-building-store"
+                >
+                    @foreach ($shops as $shop)
                                     <tr>
                                         <td><span class="text-muted">{{ $shop->code }}</span></td>
 
@@ -105,38 +99,22 @@
                                                     aria-label="Delete {{ $shop->name }}"
                                                 />
                                             </div>
-
-                                            <x-delete-modal
-                                                :id="'delete-shop-' . $shop->id"
-                                                :action="route('shops.destroy', $shop)"
-                                                title="Delete shop"
-                                                :message="'Delete ' . $shop->name . '? Staff and history are kept, and the shop can be restored.'"
-                                            />
                                         </td>
                                     </tr>
-                                @endforeach
-                            </tbody>
-                        @endif
-                    </table>
-                </div>
-
-                @if ($shops->isEmpty())
-                    <div class="empty-state">
-                        <i class="ti ti-building-store"></i>
-                        <p>
-                            @if ($hasActiveFilters)
-                                No shops match these filters.
-                            @else
-                                No shops yet. Add the first one to get started.
-                            @endif
-                        </p>
-                    </div>
-                @endif
-
-                {{ $shops->links() }}
+                    @endforeach
+                </x-datatable>
 
             </x-card>
         </div>
     </div>
+
+    @foreach ($shops as $shop)
+        <x-delete-modal
+            :id="'delete-shop-' . $shop->id"
+            :action="route('shops.destroy', $shop)"
+            title="Delete shop"
+            :message="'Delete ' . $shop->name . '? Staff and history are kept, and the shop can be restored.'"
+        />
+    @endforeach
 
 @endsection

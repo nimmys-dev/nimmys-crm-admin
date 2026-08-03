@@ -3,7 +3,7 @@
 @section('title', 'Staff Management')
 
 @section('page-actions')
-    <x-button icon="ti ti-plus" disabled>Add Staff</x-button>
+    <x-button :href="route('staff.create')" icon="ti ti-plus">Add Staff</x-button>
 @endsection
 
 @section('content')
@@ -11,13 +11,126 @@
     <div class="grid grid-cols-12 gap-x-6">
         <div class="col-span-12">
             <x-card title="Staff">
+
+                <x-filter-bar
+                    :action="route('staff.index')"
+                    :search="$filters['q']"
+                    :has-active-filters="$hasActiveFilters"
+                    placeholder="Code, name, email or mobile"
+                >
+                    <x-form.select
+                        name="role"
+                        label="Role"
+                        :options="$roleOptions"
+                        :selected="$filters['role']"
+                        placeholder="Any role"
+                        col="col-span-12 md:col-span-2"
+                    />
+
+                    <x-form.select
+                        name="status"
+                        label="Status"
+                        :options="$statusOptions"
+                        :selected="$filters['status']"
+                        placeholder="Any status"
+                        col="col-span-12 md:col-span-2"
+                    />
+
+                    <x-form.select
+                        name="shop_id"
+                        label="Shop"
+                        :options="$shopOptions"
+                        :selected="$filters['shop_id']"
+                        placeholder="Any shop"
+                        col="col-span-12 md:col-span-2"
+                    />
+                </x-filter-bar>
+
                 <x-datatable
-                    :headers="['Name', 'Email', 'Role', 'Status', '']"
-                    empty-message="No staff yet. The staff module is not connected."
+                    :headers="[
+                        ['label' => 'Code', 'sort' => 'employee_code'],
+                        ['label' => 'Name', 'sort' => 'name'],
+                        ['label' => 'Role', 'sort' => 'role'],
+                        'Shop',
+                        'Mobile',
+                        ['label' => 'Joined', 'sort' => 'joining_date'],
+                        ['label' => 'Status', 'sort' => 'status'],
+                        ['label' => '', 'class' => 'w-px'],
+                    ]"
+                    :sort="$filters['sort']"
+                    :direction="$filters['direction']"
+                    :rows="$staff"
+                    :empty-message="$hasActiveFilters
+                        ? 'No staff match these filters.'
+                        : 'No staff yet. Add the first member to get started.'"
                     empty-icon="ti ti-users"
-                />
+                >
+                    @foreach ($staff as $member)
+                        <tr>
+                            <td><span class="text-muted">{{ $member->employee_code ?? '—' }}</span></td>
+
+                            <td>
+                                <div class="flex items-center gap-3">
+                                    <x-avatar :name="$member->name" :url="$photos->url($member->photo)" />
+                                    <div>
+                                        <a href="{{ route('staff.show', $member) }}" class="font-medium">{{ $member->name }}</a>
+                                        <p class="m-0 text-muted text-sm">{{ $member->email }}</p>
+                                    </div>
+                                </div>
+                            </td>
+
+                            <td>{{ $member->role->label() }}</td>
+
+                            <td>{{ $member->shop?->name ?? '—' }}</td>
+
+                            <td>{{ $member->phone ?? '—' }}</td>
+
+                            <td>{{ $member->joining_date?->format('j M Y') ?? '—' }}</td>
+
+                            <td><x-status-badge :status="$member->status->value" /></td>
+
+                            <td>
+                                <div class="table-actions">
+                                    <x-button
+                                        variant="light"
+                                        size="sm"
+                                        :href="route('staff.show', $member)"
+                                        icon="ti ti-eye"
+                                        aria-label="View {{ $member->name }}"
+                                    />
+                                    <x-button
+                                        variant="light"
+                                        size="sm"
+                                        :href="route('staff.edit', $member)"
+                                        icon="ti ti-pencil"
+                                        aria-label="Edit {{ $member->name }}"
+                                    />
+                                    <x-button
+                                        variant="light"
+                                        size="sm"
+                                        icon="ti ti-trash"
+                                        data-pc-toggle="modal"
+                                        data-pc-target="#delete-staff-{{ $member->id }}"
+                                        aria-label="Delete {{ $member->name }}"
+                                    />
+                                </div>
+                            </td>
+                        </tr>
+                    @endforeach
+                </x-datatable>
+
             </x-card>
         </div>
     </div>
+
+    @foreach ($staff as $member)
+        <x-delete-modal
+            :id="'delete-staff-' . $member->id"
+            :action="route('staff.destroy', $member)"
+            title="Remove staff member"
+            :message="'Remove ' . $member->name . '? Their history is kept and they can no longer sign in.'"
+            confirm="Remove"
+        />
+    @endforeach
 
 @endsection

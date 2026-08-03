@@ -59,9 +59,14 @@ Route::middleware(['auth', 'web.access'])->group(function () {
     Route::resource('shops', ShopController::class)
         ->middleware('can:shops.manage');
 
-    Route::get('staff', [StaffController::class, 'index'])
-        ->middleware('can:staff.manage')
-        ->name('staff.index');
+    // Staff Management — full CRUD, Admin only via staff.manage.
+    Route::middleware('can:staff.manage')->group(function () {
+        Route::delete('staff/{staff}/photo', [StaffController::class, 'destroyPhoto'])
+            ->name('staff.photo.destroy');
+
+        Route::resource('staff', StaffController::class)
+            ->parameters(['staff' => 'staff']);
+    });
 
     Route::get('leads', [LeadController::class, 'index'])
         ->middleware('can:leads.manage')
