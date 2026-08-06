@@ -68,8 +68,14 @@ Route::middleware(['auth', 'web.access'])->group(function () {
             ->parameters(['staff' => 'staff']);
     });
 
+    /*
+     | Lead module. The `leads` middleware admits Admins and Managers on their
+     | role, and Employees only with lead_module_access switched on — it 404s
+     | for anyone else so the module stays invisible rather than merely
+     | forbidden. Placeholder until the Lead module is built.
+     */
     Route::get('leads', [LeadController::class, 'index'])
-        ->middleware('can:leads.manage')
+        ->middleware('leads')
         ->name('leads.index');
 
     Route::get('tasks', [TaskController::class, 'index'])

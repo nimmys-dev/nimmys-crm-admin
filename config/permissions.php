@@ -42,6 +42,15 @@ return [
             'leads.manage',
             'tasks.manage',
             'profile.view',
+
+            /*
+             * To let Managers read the staff directory without being able to
+             * change anything, add 'staff.view' here. Index and show are
+             * gated on staff.view; create, edit, delete and the privileged
+             * toggles stay on staff.manage / staff.settings.manage, which
+             * Managers do not hold. Left out for now because the documented
+             * matrix keeps staff Admin-only.
+             */
         ],
 
         // Employees are mobile-only. An empty set is the second line of
@@ -101,7 +110,16 @@ return [
     'web_abilities' => [
         'dashboard.view',
         'shops.manage',
+
+        // Reading the staff directory, separate from changing it, so view
+        // access can be widened without also granting write access.
+        'staff.view',
         'staff.manage',
+
+        // Salary-increment reminders and Lead module access are Admin-only
+        // even among users who can otherwise edit staff.
+        'staff.settings.manage',
+
         'leads.manage',
         'tasks.manage',
         'reports.view',

@@ -69,7 +69,10 @@ class StaffController extends Controller
 
     public function store(StoreStaffRequest $request): RedirectResponse
     {
-        $data = $request->safe()->except(['photo', 'password_confirmation']);
+        // staffAttributes() drops the Admin-only toggles when the current
+        // user may not set them.
+        $data = $request->staffAttributes();
+        $data['password'] = $request->validated('password');
 
         if ($request->hasFile('photo')) {
             $data['photo'] = $this->photos->store($request->file('photo'));
@@ -118,7 +121,7 @@ class StaffController extends Controller
 
     public function update(UpdateStaffRequest $request, User $staff): RedirectResponse
     {
-        $data = $request->safe()->except(['photo', 'password', 'password_confirmation']);
+        $data = $request->staffAttributes();
 
         // A blank password field means "leave it alone".
         if ($request->filled('password')) {

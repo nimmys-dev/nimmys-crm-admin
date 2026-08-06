@@ -73,6 +73,58 @@
 
                 </dl>
             </x-card>
+
+            <x-card title="Salary &amp; access">
+                <dl class="grid grid-cols-12 gap-4">
+
+                    <div class="col-span-12 md:col-span-4">
+                        <dt class="stat-tile-label">Current salary</dt>
+                        <dd class="m-0 mt-1">
+                            {{ filled($staff->salary) ? number_format((float) $staff->salary, 2) : '—' }}
+                        </dd>
+                    </div>
+
+                    <div class="col-span-12 md:col-span-4">
+                        <dt class="stat-tile-label">Increment amount</dt>
+                        <dd class="m-0 mt-1">
+                            {{ filled($staff->increment_amount) ? '+'.number_format((float) $staff->increment_amount, 2) : '—' }}
+                        </dd>
+                    </div>
+
+                    <div class="col-span-12 md:col-span-4">
+                        <dt class="stat-tile-label">Salary after increment</dt>
+                        <dd class="m-0 mt-1">
+                            {{ $staff->projectedSalary() ? number_format((float) $staff->projectedSalary(), 2) : '—' }}
+                        </dd>
+                    </div>
+
+                    <div class="col-span-12 md:col-span-4">
+                        <dt class="stat-tile-label">Increment date</dt>
+                        <dd class="m-0 mt-1">
+                            {{ $staff->increment_date?->format('d-M-Y') ?? '—' }}
+
+                            @if ($staff->isDueForIncrementReminder())
+                                <span class="badge badge-due">Due soon</span>
+                            @endif
+                        </dd>
+                    </div>
+
+                    <div class="col-span-12 md:col-span-4">
+                        <dt class="stat-tile-label">Increment reminder</dt>
+                        <dd class="m-0 mt-1">
+                            <x-bool-badge :state="$staff->increment_notification" on="ON" off="OFF" />
+                        </dd>
+                    </div>
+
+                    <div class="col-span-12 md:col-span-4">
+                        <dt class="stat-tile-label">Lead module access</dt>
+                        <dd class="m-0 mt-1">
+                            <x-bool-badge :state="$staff->lead_module_access" />
+                        </dd>
+                    </div>
+
+                </dl>
+            </x-card>
         </div>
 
     </div>

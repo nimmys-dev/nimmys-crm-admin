@@ -27,6 +27,9 @@ return Application::configure(basePath: dirname(__DIR__))
             'web.access' => \App\Http\Middleware\EnsureUserCanAccessWeb::class,
             'mobile' => \App\Http\Middleware\EnsureUserCanAccessMobile::class,
             'active' => \App\Http\Middleware\EnsureUserIsActive::class,
+
+            // Module guards.
+            'leads' => \App\Http\Middleware\EnsureLeadModuleAccess::class,
         ]);
 
         // Invalidates a session when the user's password changes elsewhere,

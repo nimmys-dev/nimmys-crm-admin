@@ -13,4 +13,7 @@ return [
     // Shown when an Employee attempts a web login. Employees are mobile-only.
     'web_forbidden' => 'Employees can access the system only through the mobile application.',
 
+    // Lead module is off for this account.
+    'lead_module_forbidden' => 'You do not have access to the Lead module.',
+
 ];

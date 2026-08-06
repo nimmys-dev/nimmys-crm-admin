@@ -52,8 +52,9 @@
                         ['label' => 'Name', 'sort' => 'name'],
                         ['label' => 'Role', 'sort' => 'role'],
                         'Shop',
-                        'Mobile',
-                        ['label' => 'Joined', 'sort' => 'joining_date'],
+                        ['label' => 'Increment', 'sort' => 'increment_date'],
+                        'Reminder',
+                        'Lead access',
                         ['label' => 'Status', 'sort' => 'status'],
                         ['label' => '', 'class' => 'w-px'],
                     ]"
@@ -83,9 +84,24 @@
 
                             <td>{{ $member->shop?->name ?? '—' }}</td>
 
-                            <td>{{ $member->phone ?? '—' }}</td>
+                            <td>
+                                @if ($member->increment_date)
+                                    <span @class(['text-warning-500' => $member->isDueForIncrementReminder()])>
+                                        {{ $member->increment_date->format('j M Y') }}
+                                    </span>
+                                    @if (filled($member->increment_amount))
+                                        <p class="m-0 text-muted text-sm">
+                                            +{{ number_format((float) $member->increment_amount, 2) }}
+                                        </p>
+                                    @endif
+                                @else
+                                    —
+                                @endif
+                            </td>
 
-                            <td>{{ $member->joining_date?->format('j M Y') ?? '—' }}</td>
+                            <td><x-bool-badge :state="$member->increment_notification" on="ON" off="OFF" /></td>
+
+                            <td><x-bool-badge :state="$member->lead_module_access" /></td>
 
                             <td><x-status-badge :status="$member->status->value" /></td>
 
