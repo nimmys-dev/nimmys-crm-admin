@@ -9,6 +9,10 @@
 
 @php
     $isCreate = ! $staff->exists;
+
+    // The increment reminder and Lead access are Admin-only. Anyone else sees
+    // them read-only; the form request strips them server-side regardless.
+    $canManageSettings = auth()->user()->can('staff.settings.manage');
 @endphp
 
 <div class="grid grid-cols-12 gap-4">
@@ -96,6 +100,46 @@
         :selected="$staff->status?->value"
         :placeholder="false"
         required
+    />
+
+    {{-- Salary increment --}}
+
+    <div class="col-span-12">
+        <h6 class="form-section">Salary increment</h6>
+    </div>
+
+    <x-form.input
+        name="increment_date"
+        type="date"
+        label="Increment date"
+        :value="$staff->increment_date?->format('Y-m-d')"
+        hint="Next scheduled salary review."
+    />
+
+    <x-form.input
+        name="increment_amount"
+        type="number"
+        label="Increment amount"
+        :value="$staff->increment_amount"
+        step="0.01"
+        min="0"
+        hint="Raise applied on the increment date."
+    />
+
+    <x-form.toggle
+        name="increment_notification"
+        label="Salary Increment Reminder"
+        :checked="$staff->increment_notification"
+        :disabled="! $canManageSettings"
+        :hint="'Reminds Admins ' . \App\Models\User::INCREMENT_REMINDER_DAYS . ' days before the increment date.'"
+    />
+
+    <x-form.toggle
+        name="lead_module_access"
+        label="Lead Module Access"
+        :checked="$staff->lead_module_access"
+        :disabled="! $canManageSettings"
+        hint="Lets an Employee create and manage their own leads."
     />
 
     <x-form.file

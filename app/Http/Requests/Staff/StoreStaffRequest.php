@@ -43,6 +43,16 @@ class StoreStaffRequest extends FormRequest
 
             'salary' => ['nullable', 'numeric', 'min:0', 'max:9999999999.99'],
 
+            // Increments are always scheduled forward; a past date would fire
+            // the reminder window immediately and never clear.
+            'increment_date' => ['nullable', 'date', 'after_or_equal:today'],
+            'increment_amount' => ['nullable', 'numeric', 'min:0', 'max:99999999.99'],
+
+            // Checkboxes are absent from the payload when unticked, so these
+            // must tolerate a missing key rather than requiring one.
+            'increment_notification' => ['nullable', 'boolean'],
+            'lead_module_access' => ['nullable', 'boolean'],
+
             'photo' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048', 'dimensions:min_width=100,min_height=100'],
 
             'password' => ['required', 'confirmed', Password::defaults()],
@@ -66,7 +76,16 @@ class StoreStaffRequest extends FormRequest
             'photo.dimensions' => 'The photo must be at least 100×100 pixels.',
             'photo.max' => 'The photo may not be larger than 2 MB.',
             'joining_date.before_or_equal' => 'The joining date cannot be in the future.',
+            'increment_date.after_or_equal' => 'The increment date must be today or later.',
         ];
+    }
+
+    /**
+     * Whether the current user may set the privileged toggles.
+     */
+    public function canManageSettings(): bool
+    {
+        return $this->user()?->can('staff.settings.manage') ?? false;
     }
 
     /**
@@ -86,6 +105,32 @@ class StoreStaffRequest extends FormRequest
         $this->merge([
             'name' => trim((string) $this->input('name')),
             'email' => filled($this->input('email')) ? strtolower(trim($this->input('email'))) : null,
+
+            // An unticked checkbox is simply absent from the payload, so
+            // normalise both toggles to a real boolean before validation.
+            'increment_notification' => $this->boolean('increment_notification'),
+            'lead_module_access' => $this->boolean('lead_module_access'),
         ]);
+    }
+
+    /**
+     * Validated attributes with the privileged toggles stripped for anyone
+     * who may not set them.
+     *
+     * Enforced server-side rather than only hiding the inputs: a non-Admin
+     * could otherwise post the fields directly. Falls back to the model
+     * default on create and the stored value on update.
+     *
+     * @return array<string, mixed>
+     */
+    public function staffAttributes(): array
+    {
+        $data = $this->safe()->except(['photo', 'password', 'password_confirmation']);
+
+        if (! $this->canManageSettings()) {
+            unset($data['increment_notification'], $data['lead_module_access']);
+        }
+
+        return $data;
     }
 }

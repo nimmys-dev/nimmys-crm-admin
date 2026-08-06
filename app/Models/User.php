@@ -35,9 +35,30 @@ class User extends Authenticatable
         'password',
         'joining_date',
         'salary',
+        'increment_date',
+        'increment_amount',
+        'increment_notification',
+        'lead_module_access',
         'description',
         'status',
         'device_token',
+    ];
+
+    /**
+     * Days before increment_date that the reminder fires.
+     */
+    public const INCREMENT_REMINDER_DAYS = 5;
+
+    /**
+     * Mirrors the column defaults so a new, unsaved User already carries
+     * them. Without this the create form and freshly created models read
+     * null until the row is re-fetched.
+     *
+     * @var array<string, mixed>
+     */
+    protected $attributes = [
+        'increment_notification' => true,
+        'lead_module_access' => false,
     ];
 
     /**
@@ -48,7 +69,10 @@ class User extends Authenticatable
      *
      * @var list<string>
      */
-    public const SORTABLE = ['employee_code', 'name', 'email', 'role', 'status', 'joining_date', 'created_at'];
+    public const SORTABLE = [
+        'employee_code', 'name', 'email', 'role', 'status',
+        'joining_date', 'increment_date', 'created_at',
+    ];
 
     /**
      * @var list<string>
@@ -69,6 +93,10 @@ class User extends Authenticatable
             'last_login_at' => 'datetime',
             'joining_date' => 'date',
             'salary' => 'decimal:2',
+            'increment_date' => 'date',
+            'increment_amount' => 'decimal:2',
+            'increment_notification' => 'boolean',
+            'lead_module_access' => 'boolean',
             'password' => 'hashed',
             'role' => UserRole::class,
             'status' => UserStatus::class,
@@ -154,6 +182,69 @@ class User extends Authenticatable
     public function canAccessMobile(): bool
     {
         return $this->isActive() && $this->role->canAccessMobile();
+    }
+
+    /**
+     * Whether this user may reach the Lead module at all.
+     *
+     * Two independent routes in: Admins and Managers hold leads.manage from
+     * the role matrix, while an Employee needs the per-user flag switched on.
+     * An inactive account holds neither.
+     */
+    public function canAccessLeadModule(): bool
+    {
+        if (! $this->isActive()) {
+            return false;
+        }
+
+        if (in_array('leads.manage', $this->abilitiesFor('web'), true)) {
+            return true;
+        }
+
+        return $this->isEmployee() && $this->lead_module_access;
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Salary increment
+    |--------------------------------------------------------------------------
+    */
+
+    /**
+     * Salary this employee moves to on their increment date.
+     */
+    public function projectedSalary(): ?string
+    {
+        if (blank($this->salary) && blank($this->increment_amount)) {
+            return null;
+        }
+
+        return number_format(
+            (float) $this->salary + (float) $this->increment_amount,
+            2,
+            '.',
+            ''
+        );
+    }
+
+    /**
+     * Whether this employee is inside the reminder window right now.
+     *
+     * Mirrors scopeDueForIncrementReminder so a single record can be checked
+     * without another query.
+     */
+    public function isDueForIncrementReminder(?int $withinDays = null): bool
+    {
+        $withinDays ??= self::INCREMENT_REMINDER_DAYS;
+
+        if (! $this->increment_notification || blank($this->increment_date) || ! $this->isActive()) {
+            return false;
+        }
+
+        return $this->increment_date->betweenIncluded(
+            today(),
+            today()->addDays($withinDays)
+        );
     }
 
     /**
@@ -258,6 +349,30 @@ class User extends Authenticatable
         }
 
         $query->where('status', $status instanceof UserStatus ? $status : UserStatus::from($status));
+    }
+
+    /**
+     * Staff whose increment falls inside the reminder window.
+     *
+     * The predicate matches the users_increment_reminder_index composite, so
+     * the daily sweep stays an index range scan rather than a full table scan.
+     *
+     * @param  Builder<User>  $query
+     */
+    public function scopeDueForIncrementReminder(Builder $query, ?int $withinDays = null): void
+    {
+        $withinDays ??= self::INCREMENT_REMINDER_DAYS;
+
+        $query->where('increment_notification', true)
+            ->whereNotNull('increment_date')
+            ->whereBetween('increment_date', [today(), today()->addDays($withinDays)])
+            ->active();
+    }
+
+    /** @param  Builder<User>  $query */
+    public function scopeWithLeadAccess(Builder $query): void
+    {
+        $query->where('lead_module_access', true);
     }
 
     /** @param  Builder<User>  $query */

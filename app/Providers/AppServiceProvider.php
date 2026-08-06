@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Contracts\SalaryIncrementReminderService;
+use App\Services\SalaryIncrementService;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Schema;
@@ -14,6 +16,13 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
+        // Depend on the contract, not the implementation, so the scheduled
+        // command and tests can swap it.
+        $this->app->bind(
+            SalaryIncrementReminderService::class,
+            SalaryIncrementService::class,
+        );
+
         //
     }
 

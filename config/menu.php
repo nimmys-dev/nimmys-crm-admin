@@ -52,7 +52,7 @@ return [
         'caption'    => 'Management',
         // Hidden entirely when the role holds none of the items beneath it,
         // so a Manager never sees an empty "Management" heading.
-        'permission' => ['shops.manage', 'staff.manage', 'leads.manage', 'tasks.manage'],
+        'permission' => ['shops.manage', 'staff.view', 'staff.manage', 'leads.access', 'tasks.manage'],
     ],
 
     [
@@ -72,11 +72,15 @@ return [
     ],
 
     [
-        'label'      => 'Lead Management',
-        'icon'       => 'ti ti-target-arrow',
-        'route'      => 'leads.index',
-        'active'     => 'leads.*',
-        'permission' => 'leads.manage',
+        'label' => 'Lead Management',
+        'icon' => 'ti ti-target-arrow',
+        'route' => 'leads.index',
+        'active' => 'leads.*',
+
+        // leads.access, not leads.manage: Admins and Managers qualify on
+        // their role, while an Employee qualifies only with the per-user
+        // lead_module_access flag. Turning the flag off hides the menu.
+        'permission' => 'leads.access',
     ],
 
     [

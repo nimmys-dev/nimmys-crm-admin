@@ -60,6 +60,24 @@ class UserFactory extends Factory
         return $this->state(fn (array $attributes) => ['status' => UserStatus::Suspended]);
     }
 
+    public function withLeadAccess(): static
+    {
+        return $this->state(fn (array $attributes) => ['lead_module_access' => true]);
+    }
+
+    /**
+     * An increment scheduled inside the reminder window.
+     */
+    public function incrementDueIn(int $days = 3): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'salary' => '25000.00',
+            'increment_amount' => '2500.00',
+            'increment_date' => today()->addDays($days),
+            'increment_notification' => true,
+        ]);
+    }
+
     /**
      * Indicate that the model's email address should be unverified.
      */

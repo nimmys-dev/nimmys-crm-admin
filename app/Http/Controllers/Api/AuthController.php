@@ -14,7 +14,7 @@ class AuthController extends Controller
     {
         // Validate request
         $validator = Validator::make($request->all(), [
-            'email'    => 'required|email',
+            'email' => 'required|email',
             'password' => 'required',
         ]);
 
@@ -30,17 +30,17 @@ class AuthController extends Controller
         // Find user by email
         $user = User::where('email', $request->email)->first();
 
-        if (!$user) {
+        if (! $user) {
             return response()->json([
                 'status' => false,
                 'status_code' => 404,
                 'message' => 'User not found',
             ], 404);
         }
-            // dd($request->password, $user->password);
+        // dd($request->password, $user->password);
 
         // Verify hashed password
-        if (!Hash::check($request->password, $user->password)) {
+        if (! Hash::check($request->password, $user->password)) {
             return response()->json([
                 'status' => false,
                 'status_code' => 401,
@@ -60,10 +60,10 @@ class AuthController extends Controller
             'message' => 'Login successful',
             'token' => $token,
             'user' => [
-                'id'    => $user->id,
-                'name'  => $user->name,
+                'id' => $user->id,
+                'name' => $user->name,
                 'email' => $user->email,
-                'role'  => $user->role,
+                'role' => $user->role,
             ],
         ], 200);
     }
