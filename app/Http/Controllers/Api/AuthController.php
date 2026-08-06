@@ -12,12 +12,12 @@ class AuthController extends Controller
 {
     public function login(Request $request)
     {
+        // Validate request
         $validator = Validator::make($request->all(), [
-            'email' => 'required|email',
+            'email'    => 'required|email',
             'password' => 'required',
         ]);
 
-        // Validation Error
         if ($validator->fails()) {
             return response()->json([
                 'status' => false,
@@ -27,34 +27,43 @@ class AuthController extends Controller
             ], 422);
         }
 
+        // Find user by email
         $user = User::where('email', $request->email)->first();
 
-        // Invalid Credentials
-        if (! $user || ! Hash::check($request->password, $user->password)) {
+        if (!$user) {
+            return response()->json([
+                'status' => false,
+                'status_code' => 404,
+                'message' => 'User not found',
+            ], 404);
+        }
+            // dd($request->password, $user->password);
+
+        // Verify hashed password
+        if (!Hash::check($request->password, $user->password)) {
             return response()->json([
                 'status' => false,
                 'status_code' => 401,
-                'message' => 'Invalid credentials',
+                'message' => 'Incorrect password',
             ], 401);
         }
 
-        // Delete old tokens (optional)
+        // Delete old tokens
         $user->tokens()->delete();
 
         // Generate new token
         $token = $user->createToken('auth_token')->plainTextToken;
 
-        // Success Response
         return response()->json([
             'status' => true,
             'status_code' => 200,
             'message' => 'Login successful',
             'token' => $token,
             'user' => [
-                'id' => $user->id,
-                'name' => $user->name,
+                'id'    => $user->id,
+                'name'  => $user->name,
                 'email' => $user->email,
-                'role' => $user->role,
+                'role'  => $user->role,
             ],
         ], 200);
     }
