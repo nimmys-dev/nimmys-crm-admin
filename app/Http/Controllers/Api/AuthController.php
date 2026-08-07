@@ -7,6 +7,10 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
+use App\Enums\UserStatus;
+use App\Enums\UserRole;
+use Illuminate\Http\JsonResponse;
+
 
 class AuthController extends Controller
 {
@@ -96,6 +100,40 @@ class AuthController extends Controller
                 'status' => $user->status,
             ],
         ], 200);
+    }
+
+    public function getUserRoles(): JsonResponse
+    {
+        $roles = collect(UserRole::cases())->map(function ($role) {
+            return [
+                'value' => $role->value,
+                'label' => $role->label(),
+            ];
+        });
+
+        return response()->json([
+            'status' => true,
+            'status_code' => 200,
+            'message' => 'User roles fetched successfully.',
+            'data' => $roles,
+        ]);
+    }
+
+    public function getUserStatuses(): JsonResponse
+    {
+        $statuses = collect(UserStatus::cases())->map(function ($status) {
+            return [
+                'value' => $status->value,
+                'label' => $status->label(),
+            ];
+        });
+
+        return response()->json([
+            'status' => true,
+            'status_code' => 200,
+            'message' => 'User statuses fetched successfully.',
+            'data' => $statuses,
+        ]);
     }
 
     public function logout(Request $request)
