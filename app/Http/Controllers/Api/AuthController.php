@@ -102,6 +102,7 @@ class AuthController extends Controller
         ], 200);
     }
 
+    
     public function getUserRoles(): JsonResponse
     {
         $roles = collect(UserRole::cases())->map(function ($role) {
