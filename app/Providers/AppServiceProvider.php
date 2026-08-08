@@ -2,7 +2,9 @@
 
 namespace App\Providers;
 
+use App\Contracts\LeadRepository;
 use App\Contracts\SalaryIncrementReminderService;
+use App\Repositories\EloquentLeadRepository;
 use App\Services\SalaryIncrementService;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Pagination\Paginator;
@@ -21,6 +23,13 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(
             SalaryIncrementReminderService::class,
             SalaryIncrementService::class,
+        );
+
+        // Lead reads are scoped by the repository, so binding the contract
+        // keeps web and the future mobile API on identical visibility rules.
+        $this->app->bind(
+            LeadRepository::class,
+            EloquentLeadRepository::class,
         );
 
         //

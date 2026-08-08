@@ -2,7 +2,9 @@
 
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\LeadAssignmentController;
 use App\Http\Controllers\LeadController;
+use App\Http\Controllers\LeadFollowUpController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SearchController;
@@ -74,9 +76,20 @@ Route::middleware(['auth', 'web.access'])->group(function () {
      | for anyone else so the module stays invisible rather than merely
      | forbidden. Placeholder until the Lead module is built.
      */
-    Route::get('leads', [LeadController::class, 'index'])
-        ->middleware('leads')
-        ->name('leads.index');
+    Route::middleware('leads')->group(function () {
+        // Assignment and follow-ups sit before the resource so their nested
+        // paths are not swallowed by leads/{lead}.
+        Route::put('leads/{lead}/assignment', [LeadAssignmentController::class, 'update'])
+            ->name('leads.assignment.update');
+
+        Route::post('leads/{lead}/follow-ups', [LeadFollowUpController::class, 'store'])
+            ->name('leads.follow-ups.store');
+
+        Route::patch('leads/{lead}/follow-ups/{followUp}/complete', [LeadFollowUpController::class, 'complete'])
+            ->name('leads.follow-ups.complete');
+
+        Route::resource('leads', LeadController::class);
+    });
 
     Route::get('tasks', [TaskController::class, 'index'])
         ->middleware('can:tasks.manage')

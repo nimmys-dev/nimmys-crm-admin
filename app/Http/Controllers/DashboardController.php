@@ -45,6 +45,8 @@ class DashboardController extends Controller
             'upcomingIncrements' => $this->dashboard->getUpcomingIncrements(),
             'recentEmployees' => $this->dashboard->getRecentEmployees(),
             'recentShops' => $this->dashboard->getRecentShops(),
+            'leadStats' => $this->dashboard->getLeadStatistics($user),
+            'dueFollowUps' => $this->dashboard->getDueFollowUps($user),
         ]);
     }
 
@@ -67,6 +69,11 @@ class DashboardController extends Controller
             'recentEmployees' => $shopId
                 ? $this->dashboard->getRecentEmployees($shopId)
                 : collect(),
+
+            // Lead figures are scoped by the repository, not by shop — a
+            // Manager works the whole pipeline they can see.
+            'leadStats' => $this->dashboard->getLeadStatistics($user),
+            'dueFollowUps' => $this->dashboard->getDueFollowUps($user),
         ]);
     }
 }
