@@ -3,36 +3,33 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Staff\StoreStaffRequest;
 use App\Models\Shop;
 use App\Models\User;
-use Illuminate\Http\JsonResponse;
-use App\Http\Requests\Staff\StoreStaffRequest;
 use App\Support\EmployeeCode;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-
-
+use Illuminate\Support\Facades\Storage;
 
 class StaffController extends Controller
 {
-
     public function staffList(Request $request): JsonResponse
     {
         $perPage = (int) $request->get('per_page', 10);
         $search = trim($request->get('search', ''));
 
         $staff = User::select(
-                'id',
-                'employee_code',
-                'name',
-                'email',
-                'phone',
-                'shop_id',
-                'role',
-                'status',
-                'photo',
-                'created_at'
-            )
+            'id',
+            'employee_code',
+            'name',
+            'email',
+            'phone',
+            'shop_id',
+            'role',
+            'status',
+            'photo',
+            'created_at'
+        )
             ->whereIn('role', ['manager', 'employee'])
             ->when($search !== '', function ($query) use ($search) {
 
@@ -73,9 +70,10 @@ class StaffController extends Controller
                 'to' => $staff->lastItem(),
                 'next_page_url' => $staff->nextPageUrl(),
                 'previous_page_url' => $staff->previousPageUrl(),
-            ]
+            ],
         ], 200);
     }
+
     public function createStaff(StoreStaffRequest $request): JsonResponse
     {
         $data = $request->validated();
@@ -89,6 +87,7 @@ class StaffController extends Controller
         // Auto Generate Employee Code
         $staff = EmployeeCode::withNext(function (string $code) use ($data) {
             $data['employee_code'] = $code;
+
             return User::create($data);
         });
 
@@ -106,10 +105,11 @@ class StaffController extends Controller
                 'role' => $staff->role,
                 'status' => $staff->status,
                 'photo' => $staff->photo,
-                'photo_url' => $staff->photo? url(Storage::url($staff->photo)): null,
-            ]
+                'photo_url' => $staff->photo ? url(Storage::url($staff->photo)) : null,
+            ],
         ], 201);
     }
+
     public function getBranches(): JsonResponse
     {
         $shops = Shop::select('id', 'name', 'status')
@@ -120,20 +120,21 @@ class StaffController extends Controller
             'status' => true,
             'status_code' => 200,
             'message' => 'Shop status fetched successfully',
-            'data' => $shops
+            'data' => $shops,
         ], 200);
     }
 
     public function viewStaff($id): JsonResponse
     {
         $staff = User::find($id);
-        if (!$staff) {
+        if (! $staff) {
             return response()->json([
                 'status' => false,
                 'status_code' => 404,
                 'message' => 'Staff not found.',
             ], 404);
         }
+
         return response()->json([
             'status' => true,
             'status_code' => 200,
@@ -161,7 +162,7 @@ class StaffController extends Controller
                     : null,
                 'created_at' => $staff->created_at,
                 'updated_at' => $staff->updated_at,
-            ]
+            ],
         ], 200);
     }
 
@@ -169,7 +170,7 @@ class StaffController extends Controller
     {
         $staff = User::find($id);
 
-        if (!$staff) {
+        if (! $staff) {
             return response()->json([
                 'status' => false,
                 'status_code' => 404,
@@ -179,7 +180,7 @@ class StaffController extends Controller
 
         $data = $request->validate([
             'name' => 'sometimes|string|max:191',
-            'email' => 'sometimes|email|max:191|unique:users,email,' . $id,
+            'email' => 'sometimes|email|max:191|unique:users,email,'.$id,
             'phone' => 'sometimes|nullable|string|max:20',
             'alternate_phone' => 'sometimes|nullable|string|max:20',
             'shop_id' => 'sometimes|nullable|integer',
@@ -198,7 +199,7 @@ class StaffController extends Controller
         ]);
 
         // Password
-        if (!empty($data['password'])) {
+        if (! empty($data['password'])) {
             $data['password'] = bcrypt($data['password']);
         } else {
             unset($data['password']);
@@ -225,6 +226,7 @@ class StaffController extends Controller
         $staff->update($data);
         // Get latest data
         $staff->refresh();
+
         return response()->json([
             'status' => true,
             'status_code' => 200,
@@ -251,7 +253,7 @@ class StaffController extends Controller
                     ? url(Storage::url($staff->photo))
                     : null,
                 'updated_at' => $staff->updated_at,
-            ]
+            ],
         ], 200);
     }
 
@@ -259,7 +261,7 @@ class StaffController extends Controller
     {
         $staff = User::find($id);
 
-        if (!$staff) {
+        if (! $staff) {
             return response()->json([
                 'status' => false,
                 'status_code' => 404,
@@ -276,8 +278,7 @@ class StaffController extends Controller
             'data' => [
                 'id' => $staff->id,
                 'deleted_at' => $staff->deleted_at,
-            ]
+            ],
         ], 200);
     }
-
 }

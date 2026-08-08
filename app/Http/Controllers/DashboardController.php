@@ -2,30 +2,71 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\User;
+use App\Services\DashboardService;
+use App\Services\StaffPhotoService;
 use Illuminate\Contracts\View\View;
+use Illuminate\Http\Request;
 
+/**
+ * Role-based dashboard.
+ *
+ * Chooses a view and hands it data from DashboardService. Every figure and
+ * every scoping decision lives in that service, so this class holds no
+ * business logic and each role gets its own template rather than one view
+ * full of @if blocks.
+ *
+ * Employees never arrive here: the `web.access` middleware ejects them
+ * before routing, since they are mobile-only.
+ */
 class DashboardController extends Controller
 {
-    /**
-     * Show the dashboard.
-     *
-     * Tiles render with null values until the modules are built. Replace each
-     * 'value' with a real count as the modules land — the view needs no edits.
-     */
-    public function index(): View
+    public function __construct(
+        private readonly DashboardService $dashboard,
+        private readonly StaffPhotoService $photos,
+    ) {}
+
+    public function index(Request $request): View
     {
-        return view('dashboard.index', [
+        $user = $request->user();
+
+        return $user->isAdmin()
+            ? $this->adminDashboard($user)
+            : $this->managerDashboard($user);
+    }
+
+    private function adminDashboard(User $user): View
+    {
+        return view('dashboard.admin', [
             'pageTitle' => 'Dashboard',
-            'breadcrumbs' => [
-                ['label' => 'Dashboard'],
-            ],
-            'stats' => [
-                ['label' => 'Total Shops', 'value' => null, 'icon' => 'ti ti-building-store'],
-                ['label' => 'Total Employees', 'value' => null, 'icon' => 'ti ti-users'],
-                ['label' => 'Total Leads', 'value' => null, 'icon' => 'ti ti-target-arrow'],
-                ['label' => 'Open Tasks', 'value' => null, 'icon' => 'ti ti-checklist'],
-                ['label' => "Today's Follow-ups", 'value' => null, 'icon' => 'ti ti-calendar-event'],
-            ],
+            'breadcrumbs' => [['label' => 'Dashboard']],
+            'photos' => $this->photos,
+            'stats' => $this->dashboard->getAdminStatistics(),
+            'upcomingIncrements' => $this->dashboard->getUpcomingIncrements(),
+            'recentEmployees' => $this->dashboard->getRecentEmployees(),
+            'recentShops' => $this->dashboard->getRecentShops(),
+        ]);
+    }
+
+    private function managerDashboard(User $user): View
+    {
+        $stats = $this->dashboard->getManagerStatistics($user);
+        $shopId = $stats['shop']?->id;
+
+        return view('dashboard.manager', [
+            'pageTitle' => 'Dashboard',
+            'breadcrumbs' => [['label' => 'Dashboard']],
+            'photos' => $this->photos,
+            'stats' => $stats,
+
+            // Scoped by shop id in the service. A Manager with no shop gets
+            // an explicitly empty set rather than an unscoped query.
+            'upcomingIncrements' => $shopId
+                ? $this->dashboard->getUpcomingIncrements($shopId)
+                : collect(),
+            'recentEmployees' => $shopId
+                ? $this->dashboard->getRecentEmployees($shopId)
+                : collect(),
         ]);
     }
 }

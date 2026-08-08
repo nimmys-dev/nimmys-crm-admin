@@ -71,10 +71,7 @@
 </div>
 
 @unless ($hasRows)
-    <div class="empty-state">
-        <i class="{{ $emptyIcon }}"></i>
-        <p>{{ $emptyMessage }}</p>
-    </div>
+    <x-empty-state :message="$emptyMessage" :icon="$emptyIcon" />
 @endunless
 
 @if ($rows instanceof \Illuminate\Contracts\Pagination\Paginator)
