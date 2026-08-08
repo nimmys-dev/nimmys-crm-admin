@@ -153,6 +153,7 @@ class StaffController extends Controller
                 'increment_notification' => $staff->increment_notification,
                 'lead_module_access' => $staff->lead_module_access,
                 'description' => $staff->description,
+                'role' => $staff->role,
                 'status' => $staff->status,
                 'photo' => $staff->photo,
                 'photo_url' => $staff->photo
