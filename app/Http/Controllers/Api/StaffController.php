@@ -18,7 +18,8 @@ class StaffController extends Controller
 
     public function staffList(Request $request): JsonResponse
     {
-        $perPage = $request->get('per_page', 10);
+        $perPage = (int) $request->get('per_page', 10);
+        $search = trim($request->get('search', ''));
 
         $staff = User::select(
                 'id',
@@ -32,44 +33,26 @@ class StaffController extends Controller
                 'photo',
                 'created_at'
             )
+            ->whereIn('role', ['manager', 'employee'])
+            ->when($search !== '', function ($query) use ($search) {
 
-            // Name filter
-            ->when($request->name, function ($query) use ($request) {
-                $query->where('name', 'like', '%' . $request->name . '%');
+                $query->where(function ($q) use ($search) {
+
+                    $q->where('name', 'LIKE', "%{$search}%")
+                        ->orWhere('email', 'LIKE', "%{$search}%")
+                        ->orWhere('phone', 'LIKE', "%{$search}%")
+                        ->orWhere('employee_code', 'LIKE', "%{$search}%")
+                        ->orWhere('shop_id', 'LIKE', "%{$search}%")
+                        ->orWhere('status', 'LIKE', "%{$search}%");
+                });
             })
-
-            // Email filter
-            ->when($request->email, function ($query) use ($request) {
-                $query->where('email', 'like', '%' . $request->email . '%');
-            })
-
-            // Employee code filter
-            ->when($request->employee_code, function ($query) use ($request) {
-                $query->where('employee_code', 'like', '%' . $request->employee_code . '%');
-            })
-
-            // Phone filter
-            ->when($request->phone, function ($query) use ($request) {
-                $query->where('phone', 'like', '%' . $request->phone . '%');
-            })
-
-            // Shop filter
-            ->when($request->shop_id, function ($query) use ($request) {
-                $query->where('shop_id', $request->shop_id);
-            })
-
-            // Status filter
-            ->when($request->status, function ($query) use ($request) {
-                $query->where('status', $request->status);
-            })
-
             ->latest()
             ->paginate($perPage);
 
         $staff->getCollection()->transform(function ($item) {
 
             $item->photo_url = $item->photo
-                ? url(\Illuminate\Support\Facades\Storage::url($item->photo))
+                ? url(Storage::url($item->photo))
                 : null;
 
             return $item;
@@ -162,7 +145,14 @@ class StaffController extends Controller
                 'email' => $staff->email,
                 'phone' => $staff->phone,
                 'shop_id' => $staff->shop_id,
-                'role' => $staff->role,
+                'alternate_phone' => $staff->alternate_phone,
+                'joining_date' => $staff->joining_date,
+                'salary' => $staff->salary,
+                'increment_date' => $staff->increment_date,
+                'increment_amount' => $staff->increment_amount,
+                'increment_notification' => $staff->increment_notification,
+                'lead_module_access' => $staff->lead_module_access,
+                'description' => $staff->description,
                 'status' => $staff->status,
                 'photo' => $staff->photo,
                 'photo_url' => $staff->photo
