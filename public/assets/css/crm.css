@@ -474,6 +474,145 @@ body.modal-open {
     line-height: 1;
 }
 
+/* ------------------------------------------------------------- Dashboard */
+
+.stat-card {
+    display: block;
+    height: calc(100% - 1.5rem);
+    text-decoration: none;
+    color: inherit;
+    border-left: 3px solid transparent;
+}
+
+.stat-card-link {
+    transition:
+        transform 0.15s ease,
+        box-shadow 0.15s ease;
+}
+
+.stat-card-link:hover {
+    transform: translateY(-2px);
+    text-decoration: none;
+    color: inherit;
+}
+
+.stat-card-link:focus-visible {
+    outline: 2px solid var(--crm-accent);
+    outline-offset: 2px;
+}
+
+/* Semantic accent, kept separate from the brand colour. */
+.stat-card-warning {
+    border-left-color: var(--crm-warning);
+}
+
+.stat-card-success {
+    border-left-color: var(--crm-success);
+}
+
+.stat-card-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 2.75rem;
+    height: 2.75rem;
+    border-radius: 0.625rem;
+    background-color: var(--crm-border);
+    color: var(--crm-text-muted);
+    font-size: 1.25rem;
+}
+
+.stat-card-meta {
+    margin: 0.3rem 0 0;
+    font-size: 0.75rem;
+    color: var(--crm-text-muted);
+}
+
+/* A shop name is text, not a figure — drop the tabular sizing. */
+.stat-card-text .stat-tile-value {
+    font-size: 1.125rem;
+    font-weight: 500;
+    overflow-wrap: anywhere;
+}
+
+.dashboard-widget {
+    height: calc(100% - 1.5rem);
+}
+
+.widget-action {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2rem;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.dashboard-table {
+    font-size: 0.86rem;
+}
+
+.dashboard-table .tabular {
+    font-variant-numeric: tabular-nums;
+}
+
+/* ------------------------------------------------- Future-module widgets */
+
+.widget-placeholder {
+    opacity: 0.85;
+}
+
+.placeholder-figures {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.placeholder-figure-value {
+    margin: 0.2rem 0 0;
+    font-size: 1.25rem;
+    font-weight: 300;
+    color: var(--crm-text-muted);
+}
+
+.chart-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    padding: 1rem;
+    border: 1px dashed var(--crm-border);
+    border-radius: 0.5rem;
+}
+
+.chart-placeholder-bars {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 0.5rem;
+    width: 100%;
+    height: 100%;
+    min-height: 70px;
+    flex-grow: 1;
+}
+
+.chart-placeholder-bars span {
+    flex: 1;
+    max-width: 1.75rem;
+    border-radius: 3px 3px 0 0;
+    background-color: var(--crm-border);
+}
+
+.chart-placeholder-note {
+    margin: 0;
+    font-size: 0.75rem;
+    color: var(--crm-text-muted);
+    text-align: center;
+}
+
 /* --------------------------------------------------------- Stat tile aid */
 
 .stat-tile-label {

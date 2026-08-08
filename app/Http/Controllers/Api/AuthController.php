@@ -2,15 +2,14 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Enums\UserRole;
+use App\Enums\UserStatus;
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
-use App\Enums\UserStatus;
-use App\Enums\UserRole;
-use Illuminate\Http\JsonResponse;
-
 
 class AuthController extends Controller
 {
@@ -102,7 +101,6 @@ class AuthController extends Controller
         ], 200);
     }
 
-    
     public function getUserRoles(): JsonResponse
     {
         $roles = collect(UserRole::cases())->map(function ($role) {
