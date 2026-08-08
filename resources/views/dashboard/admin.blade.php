@@ -85,6 +85,8 @@
         </div>
     </div>
 
+    @include('dashboard.widgets.leads')
+
     @include('dashboard.widgets.future')
 
 @endsection

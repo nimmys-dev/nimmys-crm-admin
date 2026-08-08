@@ -2,8 +2,10 @@
 
 namespace App\Services;
 
+use App\Contracts\LeadRepository;
 use App\Enums\ShopStatus;
 use App\Enums\UserRole;
+use App\Models\Lead;
 use App\Models\Shop;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
@@ -20,6 +22,32 @@ class DashboardService
 {
     /** Rows shown in each dashboard listing. */
     public const LIST_LIMIT = 5;
+
+    public function __construct(private readonly LeadRepository $leads) {}
+
+    /**
+     * Lead pipeline figures for the viewer.
+     *
+     * Delegated to LeadRepository so the dashboard inherits the same
+     * visibility scoping as the Lead module itself — a Manager sees the whole
+     * pipeline, an Employee only their own.
+     *
+     * @return array<string, mixed>
+     */
+    public function getLeadStatistics(User $viewer): array
+    {
+        return $this->leads->statistics($viewer);
+    }
+
+    /**
+     * Leads whose follow-up is due today or overdue.
+     *
+     * @return Collection<int, Lead>
+     */
+    public function getDueFollowUps(User $viewer, int $limit = self::LIST_LIMIT): Collection
+    {
+        return $this->leads->dueForFollowUp($viewer, 0, $limit);
+    }
 
     /*
     |--------------------------------------------------------------------------

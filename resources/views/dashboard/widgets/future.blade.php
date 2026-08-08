@@ -11,24 +11,16 @@
 
 <div class="grid grid-cols-12 gap-x-6">
 
+    {{--
+        Lead and follow-up statistics have graduated to real widgets — see
+        dashboard/widgets/leads.blade.php. Only Task remains a placeholder.
+    --}}
     @foreach ([
-        [
-            'title' => 'Lead statistics',
-            'icon' => 'ti ti-target-arrow',
-            'note' => 'Available once the Lead module is built.',
-            'figures' => ['New leads', 'Converted', 'Conversion rate'],
-        ],
         [
             'title' => 'Task statistics',
             'icon' => 'ti ti-checklist',
             'note' => 'Available once the Task module is built.',
             'figures' => ['Open', 'Completed', 'Overdue'],
-        ],
-        [
-            'title' => 'Follow-up statistics',
-            'icon' => 'ti ti-calendar-event',
-            'note' => 'Available once follow-ups are built.',
-            'figures' => ['Due today', 'This week', 'Missed'],
         ],
     ] as $panel)
         <div class="col-span-12 xl:col-span-4">

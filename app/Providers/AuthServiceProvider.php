@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Models\Lead;
 use App\Models\User;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
@@ -83,11 +84,16 @@ class AuthServiceProvider extends ServiceProvider
     }
 
     /**
-     * Ownership check, tolerant of the Lead model not existing yet.
+     * Ownership check.
+     *
+     * Written before the Lead model existed and completed now that it does:
+     * ownership is the `assigned_to` column, which Lead::isOwnedBy()
+     * encapsulates. Still tolerant of a null record, since the gates accept
+     * one for menu-level "could this user ever do this" questions.
      */
     protected static function owns(User $user, mixed $lead): bool
     {
-        return isset($lead->user_id) && (int) $lead->user_id === $user->id;
+        return $lead instanceof Lead && $lead->isOwnedBy($user);
     }
 
     /**

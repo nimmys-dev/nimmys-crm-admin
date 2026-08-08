@@ -340,14 +340,27 @@ class DashboardTest extends TestCase
     */
 
     #[Test]
-    public function future_module_widgets_render_as_placeholders(): void
+    public function unbuilt_module_widgets_render_as_placeholders(): void
+    {
+        /*
+         * Lead and follow-up statistics graduated to real widgets when the
+         * Lead module landed — see LeadManagementTest. Task is the only
+         * placeholder left.
+         */
+        $this->actingAs(User::factory()->admin()->create())
+            ->get(route('dashboard'))
+            ->assertSee('Task statistics')
+            ->assertSee('Available once the Task module is built.');
+    }
+
+    #[Test]
+    public function the_lead_widgets_are_real_not_placeholders(): void
     {
         $this->actingAs(User::factory()->admin()->create())
             ->get(route('dashboard'))
             ->assertSee('Lead statistics')
-            ->assertSee('Task statistics')
-            ->assertSee('Follow-up statistics')
-            ->assertSee('Available once the Lead module is built.');
+            ->assertSee('Follow-ups due')
+            ->assertDontSee('Available once the Lead module is built.');
     }
 
     #[Test]
