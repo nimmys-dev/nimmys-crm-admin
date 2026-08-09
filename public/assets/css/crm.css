@@ -536,6 +536,64 @@ body.modal-open {
     font-variant-numeric: tabular-nums;
 }
 
+/* ------------------------------------------------------------ Call detail */
+
+/* Badge carries an icon, so it needs to lay out as a row. */
+.badge > .ti {
+    margin-right: 0.25rem;
+    vertical-align: -1px;
+}
+
+.followup-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+}
+
+.followup-date {
+    font-size: 0.8125rem;
+    color: var(--crm-text-muted);
+    font-variant-numeric: tabular-nums;
+}
+
+/* Collapsible "log a call" form — <details> keeps it closed by default
+   without any JavaScript, and it reopens on a validation error. */
+.call-add {
+    margin-bottom: 1.25rem;
+    border: 1px solid var(--crm-border);
+    border-radius: 0.5rem;
+    padding: 0.85rem 1rem;
+}
+
+.call-add-toggle {
+    cursor: pointer;
+    font-weight: 500;
+    font-size: 0.9rem;
+    list-style: none;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.call-add-toggle::-webkit-details-marker {
+    display: none;
+}
+
+.call-add[open] .call-add-toggle {
+    padding-bottom: 0.6rem;
+    border-bottom: 1px solid var(--crm-border);
+}
+
+.call-filter {
+    margin-bottom: 1.25rem;
+}
+
+/* Timeline notes hold sanitised rich text; keep the block tight. */
+.timeline-notes.rich-text p:last-child {
+    margin-bottom: 0;
+}
+
 /* -------------------------------------------------------- Follow-up feed */
 
 .timeline {
@@ -670,9 +728,18 @@ body.modal-open {
 
 /* ------------------------------------------------------------- Dashboard */
 
+/*
+ * Full height only when the card is the sole occupant of its grid cell.
+ *
+ * height:100% resolves against the grid item, so two of these stacked in one
+ * column each demand the whole column and the second overflows the container
+ * — on the lead page that spilled the follow-up form straight over the
+ * footer. :only-child keeps the equal-height row on the dashboard, where
+ * each card really is alone in its cell, and lets stacked cards flow
+ * naturally everywhere else.
+ */
 .stat-card {
     display: block;
-    height: calc(100% - 1.5rem);
     text-decoration: none;
     color: inherit;
     border-left: 3px solid transparent;
@@ -730,7 +797,9 @@ body.modal-open {
     overflow-wrap: anywhere;
 }
 
-.dashboard-widget {
+/* Same reasoning as .stat-card: only stretch when alone in the cell. */
+.stat-card:only-child,
+.dashboard-widget:only-child {
     height: calc(100% - 1.5rem);
 }
 

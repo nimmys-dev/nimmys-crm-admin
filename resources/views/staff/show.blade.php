@@ -74,7 +74,7 @@
                 </dl>
             </x-card>
 
-            <x-card title="Salary &amp; access">
+            <x-card title="Salary & access">
                 <dl class="grid grid-cols-12 gap-4">
 
                     <div class="col-span-12 md:col-span-4">

@@ -90,10 +90,15 @@
                 </x-card>
             @endcan
 
+            {{-- Call Details module. Data supplied by CallHistoryComposer. --}}
+            @includeWhen(isset($callHistory), 'leads.partials.call-history')
+
         </div>
 
         {{-- Follow-up column --}}
         <div class="col-span-12 xl:col-span-5">
+
+            @includeWhen(isset($callTimeline), 'leads.partials.call-timeline')
 
             @can('addFollowUp', $lead)
                 <x-card title="Log or schedule a follow-up">
@@ -107,7 +112,9 @@
                             />
 
                             <x-form.input
-                                name="scheduled_at" type="datetime-local" label="Date &amp; time"
+                                {{-- Plain &, not &amp;: Blade escapes {{ $label }} on output, so a
+                                     pre-escaped entity here renders literally as "&amp;". --}}
+                                name="scheduled_at" type="datetime-local" label="Date & time"
                                 col="col-span-12 md:col-span-6"
                             />
 

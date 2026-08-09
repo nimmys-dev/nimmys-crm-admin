@@ -3,6 +3,7 @@
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\LeadAssignmentController;
+use App\Http\Controllers\LeadCallDetailController;
 use App\Http\Controllers\LeadController;
 use App\Http\Controllers\LeadFollowUpController;
 use App\Http\Controllers\ProfileController;
@@ -87,6 +88,27 @@ Route::middleware(['auth', 'web.access'])->group(function () {
 
         Route::patch('leads/{lead}/follow-ups/{followUp}/complete', [LeadFollowUpController::class, 'complete'])
             ->name('leads.follow-ups.complete');
+
+        /*
+         | Call details — a child of Lead Management. Nested so the parent is
+         | always present for the policy to authorise against, and declared
+         | before the lead resource so leads/{lead}/calls/… is not swallowed
+         | by leads/{lead}.
+         */
+        Route::post('leads/{lead}/calls', [LeadCallDetailController::class, 'store'])
+            ->name('leads.calls.store');
+
+        Route::get('leads/{lead}/calls/{call}', [LeadCallDetailController::class, 'show'])
+            ->name('leads.calls.show');
+
+        Route::get('leads/{lead}/calls/{call}/edit', [LeadCallDetailController::class, 'edit'])
+            ->name('leads.calls.edit');
+
+        Route::put('leads/{lead}/calls/{call}', [LeadCallDetailController::class, 'update'])
+            ->name('leads.calls.update');
+
+        Route::delete('leads/{lead}/calls/{call}', [LeadCallDetailController::class, 'destroy'])
+            ->name('leads.calls.destroy');
 
         Route::resource('leads', LeadController::class);
     });
