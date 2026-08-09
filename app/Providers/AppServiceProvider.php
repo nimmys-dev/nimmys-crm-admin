@@ -6,9 +6,11 @@ use App\Contracts\LeadRepository;
 use App\Contracts\SalaryIncrementReminderService;
 use App\Repositories\EloquentLeadRepository;
 use App\Services\SalaryIncrementService;
+use App\View\Composers\CallHistoryComposer;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -49,6 +51,10 @@ class AppServiceProvider extends ServiceProvider
         // Fail loudly in development when a relationship is used without
         // being eager loaded, rather than shipping an N+1 to production.
         Model::preventLazyLoading(! app()->isProduction());
+
+        // The Call Details module plugs its history into the Lead detail page
+        // without LeadController having to know it exists.
+        View::composer('leads.show', CallHistoryComposer::class);
         Schema::defaultStringLength(191);
     }
 }

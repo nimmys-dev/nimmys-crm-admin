@@ -116,6 +116,19 @@ class Lead extends Model
         return $this->hasMany(LeadFollowUp::class)->whereNull('completed_at');
     }
 
+    /**
+     * Logged phone calls, newest first.
+     *
+     * Separate from followUps(): a follow-up is a planned action on any
+     * channel, a call detail is the record of one call that happened.
+     *
+     * @return HasMany<CallDetail>
+     */
+    public function callDetails(): HasMany
+    {
+        return $this->hasMany(CallDetail::class)->latestFirst();
+    }
+
     /*
     |--------------------------------------------------------------------------
     | Scopes
