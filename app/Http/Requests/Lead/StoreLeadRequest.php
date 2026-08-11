@@ -33,8 +33,8 @@ class StoreLeadRequest extends FormRequest
             'city' => ['nullable', 'string', 'max:100'],
 
             'source' => ['nullable', new Enum(LeadSource::class)],
-            'status' => ['required', new Enum(LeadStatus::class)],
-            'priority' => ['required', new Enum(LeadPriority::class)],
+            'status' => ['nullable', new Enum(LeadStatus::class)],
+            'priority' => ['nullable', new Enum(LeadPriority::class)],
 
             'value' => ['nullable', 'numeric', 'min:0', 'max:9999999999.99'],
 

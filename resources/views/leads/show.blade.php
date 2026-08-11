@@ -27,15 +27,15 @@
                     @php
                         $details = [
                             'Contact' => $lead->name,
-                            'Company' => $lead->company,
+                            // 'Company' => $lead->company,
                             'Phone' => $lead->phone,
-                            'Alternate phone' => $lead->alternate_phone,
-                            'Email' => $lead->email,
-                            'City' => $lead->city,
+                            // 'Alternate phone' => $lead->alternate_phone,
+                            // 'Email' => $lead->email,
+                            // 'City' => $lead->city,
                             'Source' => $lead->source?->label(),
-                            'Shop' => $lead->shop?->name,
-                            'Estimated value' => filled($lead->value) ? number_format((float) $lead->value, 2) : null,
-                            'Owner' => $lead->owner?->name,
+                            // 'Shop' => $lead->shop?->name,
+                            // 'Estimated value' => filled($lead->value) ? number_format((float) $lead->value, 2) : null,
+                            'Assign to' => $lead->owner?->name,
                             'Created by' => $lead->creator?->name,
                             'Last contacted' => $lead->last_contacted_at?->diffForHumans(),
                         ];
@@ -90,15 +90,18 @@
                 </x-card>
             @endcan
 
+        </div>
+        {{-- call history --}}
+        <div class="col-span-6 xl:col-span-5">
             {{-- Call Details module. Data supplied by CallHistoryComposer. --}}
             @includeWhen(isset($callHistory), 'leads.partials.call-history')
-
+        </div>
+        <div class="col-span-6 xl:col-span-5">
+            @includeWhen(isset($callTimeline), 'leads.partials.call-timeline')
         </div>
 
         {{-- Follow-up column --}}
-        <div class="col-span-12 xl:col-span-5">
-
-            @includeWhen(isset($callTimeline), 'leads.partials.call-timeline')
+        <div class="col-span-6 xl:col-span-5">
 
             @can('addFollowUp', $lead)
                 <x-card title="Log or schedule a follow-up">
@@ -136,7 +139,9 @@
                     </form>
                 </x-card>
             @endcan
+        </div>
 
+        <div class="col-span-6 xl:col-span-5">
             <x-dashboard-widget title="Follow-up history" icon="ti ti-timeline">
                 @if ($lead->followUps->isEmpty())
                     <x-empty-state icon="ti ti-calendar-off" message="No follow-ups recorded yet." />
