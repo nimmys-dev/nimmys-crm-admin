@@ -11,7 +11,7 @@
 @section('content')
 
     {{-- Pipeline summary. Already scoped to the viewer by the repository. --}}
-    <div class="grid grid-cols-12 gap-x-6">
+    {{-- <div class="grid grid-cols-12 gap-x-6">
         <div class="col-span-12 md:col-span-6 xl:col-span-3">
             <x-stat-card label="Open leads" :value="$statistics['open']" icon="ti ti-target-arrow" />
         </div>
@@ -38,7 +38,7 @@
                 icon="ti ti-chart-arrows"
             />
         </div>
-    </div>
+    </div> --}}
 
     <div class="grid grid-cols-12 gap-x-6">
         <div class="col-span-12">
@@ -53,20 +53,20 @@
                     <x-form.select
                         name="status" label="Status" :options="$statusOptions"
                         :selected="$filters['status']" placeholder="Any status"
-                        col="col-span-12 md:col-span-2"
+                        col="col-span-6 md:col-span-2"
                     />
 
                     <x-form.select
                         name="priority" label="Priority" :options="$priorityOptions"
                         :selected="$filters['priority']" placeholder="Any priority"
-                        col="col-span-12 md:col-span-2"
+                        col="col-span-6 md:col-span-2"
                     />
 
                     @if ($canAssign)
                         <x-form.select
                             name="assigned_to" label="Owner" :options="$assignableUsers"
                             :selected="$filters['assigned_to']" placeholder="Anyone"
-                            col="col-span-12 md:col-span-2"
+                            col="col-span-6 md:col-span-2"
                         />
                     @endif
                 </x-filter-bar>
@@ -76,8 +76,6 @@
                         ['label' => 'Reference', 'sort' => 'reference'],
                         ['label' => 'Lead', 'sort' => 'name'],
                         'Owner',
-                        ['label' => 'Status', 'sort' => 'status'],
-                        ['label' => 'Priority', 'sort' => 'priority'],
                         ['label' => 'Value', 'sort' => 'value'],
                         ['label' => 'Next follow-up', 'sort' => 'next_follow_up_at'],
                         ['label' => '', 'class' => 'w-px'],
@@ -102,14 +100,6 @@
                             </td>
 
                             <td>{{ $lead->owner?->name ?? '—' }}</td>
-
-                            <td><x-lead-status-badge :status="$lead->status" /></td>
-
-                            <td>
-                                <span class="badge {{ $lead->priority->badgeClass() }}">
-                                    {{ $lead->priority->label() }}
-                                </span>
-                            </td>
 
                             <td class="tabular">
                                 {{ filled($lead->value) ? number_format((float) $lead->value, 2) : '—' }}

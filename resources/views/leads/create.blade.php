@@ -6,7 +6,7 @@
 
     <div class="grid grid-cols-12 gap-x-6">
         <div class="col-span-12">
-            <x-card title="Add lead">
+            <x-card title="Lead Form">
 
                 <form method="POST" action="{{ route('leads.store') }}">
                     @csrf

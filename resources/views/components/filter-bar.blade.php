@@ -20,7 +20,7 @@
 <form method="GET" action="{{ $action }}" class="mb-6" role="search">
     <div class="grid grid-cols-12 gap-4 items-end">
 
-        <div class="col-span-12 md:col-span-4">
+        <div class="col-span-6 md:col-span-4">
             <label class="form-label" for="filter-search">Search</label>
             <input
                 type="search"
