@@ -77,12 +77,12 @@
 
                         <div class="grid grid-cols-12 gap-4 items-end">
                             <x-form.select
-                                name="assigned_to" label="Owner" :options="$assignableUsers"
+                                name="assigned_to" label="Assign" :options="$assignableUsers"
                                 :selected="$lead->assigned_to" placeholder="Unassigned"
-                                col="col-span-12 md:col-span-8"
+                                col="col-span-6 md:col-span-8"
                             />
 
-                            <div class="col-span-12 md:col-span-4">
+                            <div class="col-span-12 md:col-span-4 flex justify-end">
                                 <x-button type="submit" icon="ti ti-user-check">Reassign</x-button>
                             </div>
                         </div>
@@ -96,9 +96,9 @@
             {{-- Call Details module. Data supplied by CallHistoryComposer. --}}
             @includeWhen(isset($callHistory), 'leads.partials.call-history')
         </div>
-        <div class="col-span-12 xl:col-span-5">
+        {{-- <div class="col-span-12 xl:col-span-5">
             @includeWhen(isset($callTimeline), 'leads.partials.call-timeline')
-        </div>
+        </div> --}}
 
         {{-- Follow-up column --}}
         <div class="col-span-12 xl:col-span-5">

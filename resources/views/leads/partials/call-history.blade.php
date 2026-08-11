@@ -37,7 +37,7 @@
     @endcan
 
     {{-- Search --}}
-    <form method="GET" action="{{ route('leads.show', $lead) }}" class="call-filter" role="search">
+    {{-- <form method="GET" action="{{ route('leads.show', $lead) }}" class="call-filter" role="search">
         <div class="grid grid-cols-12 gap-4 items-end">
             <div class="col-span-12 md:col-span-5">
                 <label class="form-label" for="call-search">Search calls</label>
@@ -62,7 +62,7 @@
                 @endif
             </div>
         </div>
-    </form>
+    </form> --}}
 
     <x-dashboard-table
         :rows="$callHistory"
