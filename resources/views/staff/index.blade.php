@@ -68,7 +68,11 @@
                 >
                     @foreach ($staff as $member)
                         <tr>
-                            <td><span class="text-muted">{{ $member->employee_code ?? '—' }}</span></td>
+                            <td>
+                                <!-- <span class="text-muted">{{ $member->employee_code ?? '—' }}</span></td> -->
+                            <a href="{{ route('staff.show', $member) }}" class="text-primary" style="color:#2171B5">
+                                {{ $member->employee_code ?? '—' }}
+                            </a>
 
                             <td>
                                 <div class="flex items-center gap-3">

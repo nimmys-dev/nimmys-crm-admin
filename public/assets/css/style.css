@@ -142,6 +142,7 @@ table {
   text-indent: 0; /* 1 */
   border-color: inherit; /* 2 */
   border-collapse: collapse; /* 3 */
+  color:#000000 !important;
 }
 /*
 1. Change the font styles in all browsers.

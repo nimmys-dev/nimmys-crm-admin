@@ -19,11 +19,6 @@
                         $details = [
                             'Shop code' => $shop->code,
                             'Name' => $shop->name,
-                            'Manager' => $shop->manager?->name,
-                            'Email' => $shop->email,
-                            'Phone' => $shop->phone,
-                            'Opened' => $shop->opened_on?->format('j M Y'),
-                            'Address' => $shop->fullAddress() ?: null,
                         ];
                     @endphp
 

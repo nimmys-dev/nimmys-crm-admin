@@ -881,7 +881,9 @@ body.modal-open {
 .stat-tile-label {
     margin: 0;
     font-size: 0.8125rem;
-    color: var(--crm-text-muted);
+     /* color: var(--crm-text-muted); */
+    color: #000 !important;
+    font-weight: 700;
 }
 
 .stat-tile-value {
