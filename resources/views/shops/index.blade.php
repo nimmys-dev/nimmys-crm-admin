@@ -24,7 +24,8 @@
                         :options="$statusOptions"
                         :selected="$filters['status']"
                         placeholder="Any status"
-                        col="col-span-12 md:col-span-3"
+                        col="filter-bar-field"
+                        class="form-select-sm"
                     />
 
                     <x-form.select
@@ -33,7 +34,8 @@
                         :options="$cityOptions"
                         :selected="$filters['city']"
                         placeholder="Any city"
-                        col="col-span-12 md:col-span-3"
+                        col="filter-bar-field"
+                        class="form-select-sm"
                     />
                 </x-filter-bar>
 

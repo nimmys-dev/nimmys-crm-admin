@@ -77,12 +77,12 @@
 
                         <div class="grid grid-cols-12 gap-4 items-end">
                             <x-form.select
-                                name="assigned_to" label="Owner" :options="$assignableUsers"
+                                name="assigned_to" label="Assign" :options="$assignableUsers"
                                 :selected="$lead->assigned_to" placeholder="Unassigned"
-                                col="col-span-12 md:col-span-8"
+                                col="col-span-6 md:col-span-8"
                             />
 
-                            <div class="col-span-12 md:col-span-4">
+                            <div class="col-span-12 md:col-span-4 flex justify-end">
                                 <x-button type="submit" icon="ti ti-user-check">Reassign</x-button>
                             </div>
                         </div>
@@ -92,16 +92,16 @@
 
         </div>
         {{-- call history --}}
-        <div class="col-span-6 xl:col-span-5">
+        <div class="col-span-12 xl:col-span-5">
             {{-- Call Details module. Data supplied by CallHistoryComposer. --}}
             @includeWhen(isset($callHistory), 'leads.partials.call-history')
         </div>
-        <div class="col-span-6 xl:col-span-5">
+        {{-- <div class="col-span-12 xl:col-span-5">
             @includeWhen(isset($callTimeline), 'leads.partials.call-timeline')
-        </div>
+        </div> --}}
 
         {{-- Follow-up column --}}
-        <div class="col-span-6 xl:col-span-5">
+        {{-- <div class="col-span-12 xl:col-span-5">
 
             @can('addFollowUp', $lead)
                 <x-card title="Log or schedule a follow-up">
@@ -112,16 +112,16 @@
                             <x-form.select
                                 name="type" label="Type" :options="$followUpTypes"
                                 :placeholder="false" required col="col-span-12 md:col-span-6"
-                            />
+                            /> --}}
 
-                            <x-form.input
+                            {{-- <x-form.input --}}
                                 {{-- Plain &, not &amp;: Blade escapes {{ $label }} on output, so a
                                      pre-escaped entity here renders literally as "&amp;". --}}
-                                name="scheduled_at" type="datetime-local" label="Date & time"
-                                col="col-span-12 md:col-span-6"
-                            />
+                                {{-- name="scheduled_at" type="datetime-local" label="Date & time"
+                                col="col-span-12 md:col-span-6" --}}
+                            {{-- /> --}}
 
-                            <x-form.textarea name="notes" label="Notes" rows="3" col="col-span-12" />
+                            {{-- <x-form.textarea name="notes" label="Notes" rows="3" col="col-span-12" />
 
                             <div class="col-span-12">
                                 <x-form.toggle
@@ -139,9 +139,9 @@
                     </form>
                 </x-card>
             @endcan
-        </div>
+        </div> --}}
 
-        <div class="col-span-6 xl:col-span-5">
+        {{-- <div class="col-span-12 xl:col-span-5">
             <x-dashboard-widget title="Follow-up history" icon="ti ti-timeline">
                 @if ($lead->followUps->isEmpty())
                     <x-empty-state icon="ti ti-calendar-off" message="No follow-ups recorded yet." />
@@ -197,7 +197,7 @@
                 @endif
             </x-dashboard-widget>
 
-        </div>
+        </div> --}}
 
     </div>
 

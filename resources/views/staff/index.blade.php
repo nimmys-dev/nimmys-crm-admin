@@ -24,7 +24,8 @@
                         :options="$roleOptions"
                         :selected="$filters['role']"
                         placeholder="Any role"
-                        col="col-span-12 md:col-span-2"
+                        col="filter-bar-field"
+                        class="form-select-sm"
                     />
 
                     <x-form.select
@@ -33,7 +34,8 @@
                         :options="$statusOptions"
                         :selected="$filters['status']"
                         placeholder="Any status"
-                        col="col-span-12 md:col-span-2"
+                        col="filter-bar-field"
+                        class="form-select-sm"
                     />
 
                     <x-form.select
@@ -42,7 +44,8 @@
                         :options="$shopOptions"
                         :selected="$filters['shop_id']"
                         placeholder="Any shop"
-                        col="col-span-12 md:col-span-2"
+                        col="filter-bar-field"
+                        class="form-select-sm"
                     />
                 </x-filter-bar>
 

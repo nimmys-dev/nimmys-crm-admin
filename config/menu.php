@@ -73,7 +73,7 @@ return [
 
     [
         'label' => 'Lead Management',
-        'icon' => 'ti ti-target-arrow',
+        'icon' => 'ti ti-target',
         'route' => 'leads.index',
         'active' => 'leads.*',
 
@@ -85,7 +85,7 @@ return [
 
     [
         'label'      => 'Task Management',
-        'icon'       => 'ti ti-checklist',
+        'icon'       => 'ti ti-clipboard-check',
         'route'      => 'tasks.index',
         'active'     => 'tasks.*',
         'permission' => 'tasks.manage',
