@@ -16,14 +16,14 @@
 
     <x-form.input name="name" label="Shop name" :value="$shop->name" required />
 
-    <x-form.select
+    <!-- <x-form.select
         name="manager_id"
         label="Manager"
         :options="$managerOptions"
         :selected="$shop->manager_id"
         placeholder="Unassigned"
         hint="Only Admins and Managers can run a shop."
-    />
+    /> -->
 
     <x-form.select
         name="status"
@@ -34,7 +34,7 @@
         required
     />
 
-    <x-form.input name="email" type="email" label="Email" :value="$shop->email" />
+    <!-- <x-form.input name="email" type="email" label="Email" :value="$shop->email" />
 
     <x-form.input name="phone" label="Phone" :value="$shop->phone" />
 
@@ -46,15 +46,15 @@
 
     <x-form.input name="postal_code" label="Postal code" :value="$shop->postal_code" col="col-span-12 md:col-span-3" />
 
-    <x-form.input name="country" label="Country" :value="$shop->country" col="col-span-12 md:col-span-3" />
+    <x-form.input name="country" label="Country" :value="$shop->country" col="col-span-12 md:col-span-3" /> -->
 
-    <x-form.input
+    <!-- <x-form.input
         name="opened_on"
         type="date"
         label="Opening date"
         :value="$shop->opened_on?->format('Y-m-d')"
-    />
+    /> -->
 
-    <x-form.textarea name="notes" label="Notes" :value="$shop->notes" rows="4" />
+    <!-- <x-form.textarea name="notes" label="Notes" :value="$shop->notes" rows="4" /> -->
 
 </div>

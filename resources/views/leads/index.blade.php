@@ -90,7 +90,12 @@
                 >
                     @foreach ($leads as $lead)
                         <tr>
-                            <td><span class="text-muted">{{ $lead->reference }}</span></td>
+                            <td>
+                                <!-- <span class="text-muted">{{ $lead->reference }}</span> -->
+                                 <a href="{{ route('leads.show', $lead) }}" class="text-primary" style="color:#2171B5">
+                                    {{ $lead->reference }}
+                                </a>
+                            </td>
 
                             <td>
                                 <a href="{{ route('leads.show', $lead) }}" class="font-medium">{{ $lead->name }}</a>

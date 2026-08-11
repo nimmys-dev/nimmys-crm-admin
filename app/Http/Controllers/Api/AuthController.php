@@ -10,6 +10,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
+use App\Models\Shop;
 
 class AuthController extends Controller
 {
@@ -82,7 +83,7 @@ class AuthController extends Controller
                 'message' => 'Unauthenticated.',
             ], 401);
         }
-
+        $shop = Shop::find($user->shop_id);
         return response()->json([
             'status' => true,
             'status_code' => 200,
@@ -90,6 +91,7 @@ class AuthController extends Controller
             'user' => [
                 'id' => $user->id,
                 'shop_id' => $user->shop_id,
+                'shop_name' => $shop ? $shop->name : null,
                 'employee_code' => $user->employee_code,
                 'name' => $user->name,
                 'email' => $user->email,

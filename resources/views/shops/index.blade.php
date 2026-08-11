@@ -41,8 +41,8 @@
                     :headers="[
                         ['label' => 'Code', 'sort' => 'code'],
                         ['label' => 'Shop', 'sort' => 'name'],
-                        'Manager',
-                        ['label' => 'City', 'sort' => 'city'],
+                        // 'Manager',
+                        // ['label' => 'City', 'sort' => 'city'],
                         'Staff',
                         ['label' => 'Status', 'sort' => 'status'],
                         ['label' => '', 'class' => 'w-px'],
@@ -57,18 +57,22 @@
                 >
                     @foreach ($shops as $shop)
                                     <tr>
-                                        <td><span class="text-muted">{{ $shop->code }}</span></td>
+                                        <td>
+                                            <a href="{{ route('shops.show', $shop) }}" class="text-primary" style="color:#2171B5">
+                                                {{ $shop->code }}
+                                            </a>
+                                        </td>
 
                                         <td>
                                             <a href="{{ route('shops.show', $shop) }}" class="font-medium">{{ $shop->name }}</a>
-                                            @if ($shop->email)
+                                            <!-- @if ($shop->email)
                                                 <p class="m-0 text-muted text-sm">{{ $shop->email }}</p>
-                                            @endif
+                                            @endif -->
                                         </td>
 
-                                        <td>{{ $shop->manager?->name ?? '—' }}</td>
+                                        <!-- <td>{{ $shop->manager?->name ?? '—' }}</td> -->
 
-                                        <td>{{ $shop->city ?? '—' }}</td>
+                                        <!-- <td>{{ $shop->city ?? '—' }}</td> -->
 
                                         <td>{{ $shop->staff_count }}</td>
 
