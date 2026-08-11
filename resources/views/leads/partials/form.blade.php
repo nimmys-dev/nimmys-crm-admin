@@ -19,14 +19,14 @@
 
     @if ($canAssign)
         <x-form.select
-            name="assigned_to" label="Owner" :options="$assignableUsers"
+            name="assigned_to" label="Assign To" :options="$assignableUsers"
             :selected="$lead->assigned_to ?? Auth::id()" placeholder="Unassigned"
             hint="Only active users with Lead access can be given leads."
         />
     @else
         {{-- Employees own what they create; the field is not theirs to set. --}}
         <div class="col-span-12 md:col-span-6">
-            <label class="form-label">Owner</label>
+            <label class="form-label">Assign To</label>
             <input type="text" class="form-control" value="{{ $lead->owner?->name ?? auth()->user()->name }}" readonly />
             <small class="text-muted">Leads you create are assigned to you.</small>
         </div>
@@ -36,7 +36,7 @@
         name="status" label="Status" :options="$statusOptions"
         :selected="$lead->status?->value" :placeholder="false" required
     /> --}}
-    
+
     {{-- <x-form.input
         name="lost_reason" label="Reason (if lost)" :value="$lead->lost_reason"
         hint="Required when the status is Lost."

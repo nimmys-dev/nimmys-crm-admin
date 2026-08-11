@@ -53,20 +53,20 @@
                     <x-form.select
                         name="status" label="Status" :options="$statusOptions"
                         :selected="$filters['status']" placeholder="Any status"
-                        col="col-span-6 md:col-span-2"
+                        col="filter-bar-field" class="form-select-sm"
                     />
 
                     <x-form.select
                         name="priority" label="Priority" :options="$priorityOptions"
                         :selected="$filters['priority']" placeholder="Any priority"
-                        col="col-span-6 md:col-span-2"
+                        col="filter-bar-field" class="form-select-sm"
                     />
 
                     @if ($canAssign)
                         <x-form.select
                             name="assigned_to" label="Owner" :options="$assignableUsers"
                             :selected="$filters['assigned_to']" placeholder="Anyone"
-                            col="col-span-6 md:col-span-2"
+                            col="filter-bar-field" class="form-select-sm"
                         />
                     @endif
                 </x-filter-bar>
