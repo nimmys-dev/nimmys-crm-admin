@@ -92,16 +92,16 @@
 
         </div>
         {{-- call history --}}
-        <div class="col-span-6 xl:col-span-5">
+        <div class="col-span-12 xl:col-span-5">
             {{-- Call Details module. Data supplied by CallHistoryComposer. --}}
             @includeWhen(isset($callHistory), 'leads.partials.call-history')
         </div>
-        <div class="col-span-6 xl:col-span-5">
+        <div class="col-span-12 xl:col-span-5">
             @includeWhen(isset($callTimeline), 'leads.partials.call-timeline')
         </div>
 
         {{-- Follow-up column --}}
-        <div class="col-span-6 xl:col-span-5">
+        <div class="col-span-12 xl:col-span-5">
 
             @can('addFollowUp', $lead)
                 <x-card title="Log or schedule a follow-up">
@@ -141,7 +141,7 @@
             @endcan
         </div>
 
-        <div class="col-span-6 xl:col-span-5">
+        <div class="col-span-12 xl:col-span-5">
             <x-dashboard-widget title="Follow-up history" icon="ti ti-timeline">
                 @if ($lead->followUps->isEmpty())
                     <x-empty-state icon="ti ti-calendar-off" message="No follow-ups recorded yet." />
