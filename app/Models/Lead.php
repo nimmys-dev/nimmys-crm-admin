@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Lead extends Model
@@ -127,6 +128,26 @@ class Lead extends Model
     public function callDetails(): HasMany
     {
         return $this->hasMany(CallDetail::class)->latestFirst();
+    }
+
+    /**
+     * The single most recently logged call.
+     *
+     * A `latestOfMany` relation rather than `callDetails()->first()` so it
+     * can be eager loaded as one aggregated query on the listing page,
+     * instead of one extra query per row.
+     *
+     * @return HasOne<CallDetail>
+     */
+    public function latestCall(): HasOne
+    {
+        return $this->hasOne(CallDetail::class)->latestOfMany(['called_date', 'called_time']);
+    }
+
+    /** @return HasOne<Quotation> */
+    public function quotation(): HasOne
+    {
+        return $this->hasOne(Quotation::class);
     }
 
     /*

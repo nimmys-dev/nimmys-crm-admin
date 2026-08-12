@@ -1,11 +1,14 @@
 <?php
 
 use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\CompanyProfileController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\LeadAssignmentController;
 use App\Http\Controllers\LeadCallDetailController;
+use App\Http\Controllers\LeadCloseController;
 use App\Http\Controllers\LeadController;
 use App\Http\Controllers\LeadFollowUpController;
+use App\Http\Controllers\LeadQuotationController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SearchController;
@@ -83,6 +86,32 @@ Route::middleware(['auth', 'web.access'])->group(function () {
         Route::put('leads/{lead}/assignment', [LeadAssignmentController::class, 'update'])
             ->name('leads.assignment.update');
 
+        Route::patch('leads/{lead}/close', [LeadCloseController::class, 'update'])
+            ->name('leads.close');
+
+        /*
+         | Quotation — a singleton child of Lead, one per lead. No
+         | {quotation} parameter: the controller always resolves it from the
+         | lead, so there is nothing else to identify in the URL.
+         */
+        Route::get('leads/{lead}/quotation/create', [LeadQuotationController::class, 'create'])
+            ->name('leads.quotation.create');
+
+        Route::post('leads/{lead}/quotation', [LeadQuotationController::class, 'store'])
+            ->name('leads.quotation.store');
+
+        Route::get('leads/{lead}/quotation/edit', [LeadQuotationController::class, 'edit'])
+            ->name('leads.quotation.edit');
+
+        Route::put('leads/{lead}/quotation', [LeadQuotationController::class, 'update'])
+            ->name('leads.quotation.update');
+
+        Route::delete('leads/{lead}/quotation', [LeadQuotationController::class, 'destroy'])
+            ->name('leads.quotation.destroy');
+
+        Route::get('leads/{lead}/quotation/pdf', [LeadQuotationController::class, 'pdf'])
+            ->name('leads.quotation.pdf');
+
         Route::post('leads/{lead}/follow-ups', [LeadFollowUpController::class, 'store'])
             ->name('leads.follow-ups.store');
 
@@ -132,6 +161,19 @@ Route::middleware(['auth', 'web.access'])->group(function () {
     Route::get('settings', [SettingsController::class, 'index'])
         ->middleware('can:settings.manage')
         ->name('settings.index');
+
+    // Company letterhead used on generated documents (quotations). Admin
+    // only, same gate as the rest of Settings.
+    Route::middleware('can:settings.manage')->group(function () {
+        Route::get('settings/company', [CompanyProfileController::class, 'edit'])
+            ->name('settings.company.edit');
+
+        Route::put('settings/company', [CompanyProfileController::class, 'update'])
+            ->name('settings.company.update');
+
+        Route::delete('settings/company/logo', [CompanyProfileController::class, 'destroyLogo'])
+            ->name('settings.company.logo.destroy');
+    });
 
 });
 
