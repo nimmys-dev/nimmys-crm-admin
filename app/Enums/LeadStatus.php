@@ -77,6 +77,16 @@ enum LeadStatus: string
     }
 
     /**
+     * The outcomes a lead can be closed with, for the "close lead" action.
+     *
+     * @return array<int, self>
+     */
+    public static function closed(): array
+    {
+        return array_values(array_filter(self::cases(), fn (self $s) => $s->isClosed()));
+    }
+
+    /**
      * @return array<string, string>
      */
     public static function options(): array

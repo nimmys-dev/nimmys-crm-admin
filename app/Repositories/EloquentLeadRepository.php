@@ -44,7 +44,7 @@ class EloquentLeadRepository implements LeadRepository
         return $this->visibleTo($viewer)
             // Eager loaded so the listing stays at a fixed query count
             // regardless of page size.
-            ->with(['owner:id,name', 'shop:id,name'])
+            ->with(['owner:id,name', 'shop:id,name', 'latestCall'])
             ->withCount(['openFollowUps'])
             ->search($filters['q'] ?? null)
             ->status($filters['status'] ?? null)

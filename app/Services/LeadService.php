@@ -68,6 +68,23 @@ class LeadService
         return $this->leads->update($lead, ['assigned_to' => $userId]);
     }
 
+    /**
+     * Close a lead as Won or Lost.
+     *
+     * Kept separate from update() because it is a narrower, distinct action
+     * offered straight from the detail page — only the outcome and, for a
+     * loss, the reason, rather than the whole lead form. Closure bookkeeping
+     * (closed_at, clearing a stale lost_reason) is still handled the same
+     * way as a full update, via withClosureState().
+     */
+    public function close(Lead $lead, LeadStatus $status, ?string $reason = null): Lead
+    {
+        return $this->leads->update($lead, $this->withClosureState([
+            'status' => $status,
+            'lost_reason' => $reason,
+        ], $lead));
+    }
+
     /*
     |--------------------------------------------------------------------------
     | Follow-ups
@@ -147,8 +164,10 @@ class LeadService
     /**
      * Keep closure bookkeeping consistent with the status.
      *
-     * Moving to Won or Lost stamps closed_at; reopening clears it along with
-     * any lost reason, so a reopened lead never carries a stale explanation.
+     * Moving to Won or Lost stamps closed_at and keeps whatever reason came
+     * with it — Won and Lost are both decisions worth a one-line record of
+     * why, not just Lost. Reopening clears both, so a reopened lead never
+     * carries a stale explanation.
      *
      * @param  array<string, mixed>  $attributes
      * @return array<string, mixed>
@@ -165,10 +184,6 @@ class LeadService
 
         if ($status->isClosed()) {
             $attributes['closed_at'] = $existing?->closed_at ?? now();
-
-            if ($status !== LeadStatus::Lost) {
-                $attributes['lost_reason'] = null;
-            }
 
             return $attributes;
         }

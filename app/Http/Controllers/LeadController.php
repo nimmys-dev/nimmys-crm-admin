@@ -87,6 +87,9 @@ class LeadController extends Controller
             'shop:id,name',
             'creator:id,name',
             'followUps.user:id,name',
+            // Newest call only, for the "Latest status" detail field.
+            'latestCall',
+            'quotation',
         ]);
 
         return view('leads.show', [
@@ -96,6 +99,10 @@ class LeadController extends Controller
                 ['label' => $lead->reference],
             ],
             'lead' => $lead,
+            'latestCall' => $lead->latestCall,
+            'closeOptions' => collect(LeadStatus::closed())
+                ->mapWithKeys(fn (LeadStatus $status) => [$status->value => $status->label()])
+                ->all(),
             'followUpTypes' => FollowUpType::options(),
             'assignableUsers' => $request->user()->can('leads.assign')
                 ? AssignLeadRequest::assignableOptions()

@@ -50,7 +50,7 @@
                     :has-active-filters="$hasActiveFilters"
                     placeholder="Reference, name, company, email or phone"
                 >
-                    <x-form.select
+                    {{-- <x-form.select
                         name="status" label="Status" :options="$statusOptions"
                         :selected="$filters['status']" placeholder="Any status"
                         col="filter-bar-field" class="form-select-sm"
@@ -68,16 +68,17 @@
                             :selected="$filters['assigned_to']" placeholder="Anyone"
                             col="filter-bar-field" class="form-select-sm"
                         />
-                    @endif
+                    @endif --}}
                 </x-filter-bar>
 
                 <x-datatable
                     :headers="[
-                        ['label' => 'Reference', 'sort' => 'reference'],
                         ['label' => 'Lead', 'sort' => 'name'],
+                        'Phone',
                         'Owner',
-                        ['label' => 'Value', 'sort' => 'value'],
-                        ['label' => 'Next follow-up', 'sort' => 'next_follow_up_at'],
+                        ['label' => 'Status', 'sort' => 'status'],
+                        'Next follow-up',
+                        ['label' => 'Created', 'sort' => 'created_at'],
                         ['label' => '', 'class' => 'w-px'],
                     ]"
                     :sort="$filters['sort']"
@@ -91,37 +92,40 @@
                     @foreach ($leads as $lead)
                         <tr>
                             <td>
-                                <!-- <span class="text-muted">{{ $lead->reference }}</span> -->
-                                 <a href="{{ route('leads.show', $lead) }}" class="text-primary" style="color:#2171B5">
-                                    {{ $lead->reference }}
-                                </a>
+                                <a href="{{ route('leads.show', $lead) }}" class="font-medium">{{ $lead->name }}</a>
+                                @if ($lead->company)
+                                    <p class="m-0 text-muted text-sm">{{ $lead->company }}</p>
+                                @endif
                             </td>
 
-                            <td>
-                                <a href="{{ route('leads.show', $lead) }}" class="font-medium">{{ $lead->name }}</a>
-                                <p class="m-0 text-muted text-sm">
-                                    {{ $lead->company ?: $lead->phone }}
-                                </p>
-                            </td>
+                            <td>{{ $lead->phone }}</td>
 
                             <td>{{ $lead->owner?->name ?? '—' }}</td>
 
-                            <td class="tabular">
-                                {{ filled($lead->value) ? number_format((float) $lead->value, 2) : '—' }}
+                            <td>
+                                <x-bool-badge :state="$lead->status->isOpen()" on="Open" off="Closed" />
                             </td>
 
                             <td>
-                                @if ($lead->next_follow_up_at)
-                                    <span @class(['text-danger-500' => $lead->isOverdue()])>
-                                        {{ $lead->next_follow_up_at->format('j M Y') }}
+                                {{-- Sourced from the latest logged call, not the lead's own
+                                     next_follow_up_at — that column tracks the separate,
+                                     currently-unused follow-up feature. --}}
+                                @php $nextFollowUp = $lead->latestCall?->next_followup_date; @endphp
+
+                                @if ($nextFollowUp)
+                                    @php $isOverdue = $lead->status->isOpen() && $nextFollowUp->isPast(); @endphp
+                                    <span @class(['text-danger-500' => $isOverdue])>
+                                        {{ $nextFollowUp->format('j M Y') }}
                                     </span>
-                                    @if ($lead->isOverdue())
+                                    @if ($isOverdue)
                                         <span class="badge badge-lead-lost">Overdue</span>
                                     @endif
                                 @else
                                     <span class="text-muted">—</span>
                                 @endif
                             </td>
+
+                            <td>{{ $lead->created_at->format('j M Y') }}</td>
 
                             <td>
                                 <div class="table-actions">

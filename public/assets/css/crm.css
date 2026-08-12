@@ -964,3 +964,130 @@ body.modal-open {
         width: 100%;
     }
 }
+
+/* ------------------------------------------------------------ Quotation */
+
+/*
+ * Item rows are laid out here rather than with the theme's Tailwind grid.
+ * That build is purged to the demo pages' classes: of the 12 column spans
+ * only col-span-6 and col-span-12 survive, so anything else resolves to
+ * nothing and the field collapses to a single implicit 1/12 column. Plain
+ * flexbox sidesteps the whole problem.
+ */
+.quotation-item-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 0.75rem 1rem;
+    padding: 1rem 0;
+    border-bottom: 1px solid var(--crm-border);
+}
+
+.quotation-item-row:first-child {
+    padding-top: 0;
+}
+
+.quotation-item-row:last-child {
+    border-bottom: none;
+}
+
+/* The item name gets a line of its own — it is the longest value here. */
+.quotation-item-desc {
+    flex: 1 1 100%;
+}
+
+/* Qty, Rate and Amount then share the next line, sized to hold a figure
+   like "123456.00" comfortably instead of clipping it. */
+.quotation-item-field {
+    flex: 1 1 140px;
+    min-width: 110px;
+    max-width: 220px;
+}
+
+.quotation-item-input {
+    min-width: 0;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+/* Pushed to the far end of the line, away from the inputs, so it is never
+   hit by accident while tabbing through figures. */
+.quotation-item-remove {
+    flex: 0 0 auto;
+    margin-left: auto;
+}
+
+.quotation-remove-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.35rem;
+    height: 2.35rem;
+    padding: 0;
+    font-size: 1rem;
+    line-height: 1;
+    color: var(--crm-danger);
+    background-color: transparent;
+    border: 1px solid var(--crm-border);
+}
+
+/* The icon carries a right margin from the generic `.badge > .ti` rule
+   further up; this button has no label for it to sit against. */
+.quotation-remove-btn .ti {
+    margin: 0;
+}
+
+.quotation-remove-btn:hover:not(:disabled) {
+    color: #fff;
+    background-color: var(--crm-danger);
+    border-color: var(--crm-danger);
+}
+
+.quotation-remove-btn:disabled {
+    color: var(--crm-text-muted);
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.quotation-totals {
+    margin: 0;
+}
+
+.quotation-totals > div {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.3rem 0;
+}
+
+.quotation-totals dt {
+    color: var(--crm-text-muted);
+    font-weight: 400;
+}
+
+.quotation-totals dd {
+    margin: 0;
+    font-variant-numeric: tabular-nums;
+}
+
+.quotation-totals-grand {
+    margin-top: 0.3rem;
+    padding-top: 0.6rem !important;
+    border-top: 1px solid var(--crm-border);
+}
+
+.quotation-totals-grand dt,
+.quotation-totals-grand dd {
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--crm-text);
+}
+
+/* Toggle used purely as a UI reveal control on the lead show page — no form
+   field behind it, just show/hide for the Quotation card. */
+.quotation-toggle-label {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+}

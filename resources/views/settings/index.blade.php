@@ -12,6 +12,16 @@
                     <x-form.input name="timezone" label="Timezone" :value="config('app.timezone')" readonly />
                 </div>
             </x-card>
+
+            <x-card title="Company Profile">
+                <p class="text-muted mb-4">
+                    The letterhead — name, address, contact details and logo — printed on
+                    generated documents such as lead quotations.
+                </p>
+                <x-button variant="outline-secondary" :href="route('settings.company.edit')" icon="ti ti-building">
+                    Edit company profile
+                </x-button>
+            </x-card>
         </div>
 
         <div class="col-span-12 xl:col-span-4">
