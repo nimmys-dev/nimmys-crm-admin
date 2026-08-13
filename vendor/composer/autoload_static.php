@@ -652,7 +652,6 @@ class ComposerStaticInitb486e14a6e225d5d53d7ce9639b89a30
         'App\\Enums\\UserRole' => __DIR__ . '/../..' . '/app/Enums/UserRole.php',
         'App\\Enums\\UserStatus' => __DIR__ . '/../..' . '/app/Enums/UserStatus.php',
         'App\\Http\\Controllers\\Api\\AuthController' => __DIR__ . '/../..' . '/app/Http/Controllers/Api/AuthController.php',
-        'App\\Http\\Controllers\\Api\\LeadController' => __DIR__ . '/../..' . '/app/Http/Controllers/Api/LeadController.php',
         'App\\Http\\Controllers\\Api\\StaffController' => __DIR__ . '/../..' . '/app/Http/Controllers/Api/StaffController.php',
         'App\\Http\\Controllers\\Auth\\LoginController' => __DIR__ . '/../..' . '/app/Http/Controllers/Auth/LoginController.php',
         'App\\Http\\Controllers\\CompanyProfileController' => __DIR__ . '/../..' . '/app/Http/Controllers/CompanyProfileController.php',

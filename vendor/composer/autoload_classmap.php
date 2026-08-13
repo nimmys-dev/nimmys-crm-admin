@@ -18,7 +18,6 @@ return array(
     'App\\Enums\\UserRole' => $baseDir . '/app/Enums/UserRole.php',
     'App\\Enums\\UserStatus' => $baseDir . '/app/Enums/UserStatus.php',
     'App\\Http\\Controllers\\Api\\AuthController' => $baseDir . '/app/Http/Controllers/Api/AuthController.php',
-    'App\\Http\\Controllers\\Api\\LeadController' => $baseDir . '/app/Http/Controllers/Api/LeadController.php',
     'App\\Http\\Controllers\\Api\\StaffController' => $baseDir . '/app/Http/Controllers/Api/StaffController.php',
     'App\\Http\\Controllers\\Auth\\LoginController' => $baseDir . '/app/Http/Controllers/Auth/LoginController.php',
     'App\\Http\\Controllers\\CompanyProfileController' => $baseDir . '/app/Http/Controllers/CompanyProfileController.php',
