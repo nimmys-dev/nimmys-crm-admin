@@ -105,7 +105,7 @@ return [
 
     [
         'label'      => 'Profile',
-        'icon'       => 'ti ti-user-circle',
+        'icon' => 'ti ti-user',
         'route'      => 'profile.index',
         'active'     => 'profile.*',
         'permission' => 'profile.view',

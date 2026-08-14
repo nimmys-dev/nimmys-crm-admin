@@ -29,6 +29,7 @@
         placeholder="e.g. Installation service"
         required
         col="quotation-item-desc"
+        class="quotation-item-product"
     />
 
     <x-form.input

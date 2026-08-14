@@ -75,9 +75,10 @@
                     :headers="[
                         ['label' => 'Lead', 'sort' => 'name'],
                         'Phone',
-                        'Owner',
+                        'Assigned To',
                         ['label' => 'Status', 'sort' => 'status'],
                         'Next follow-up',
+                        'Remarks',
                         ['label' => 'Created', 'sort' => 'created_at'],
                         ['label' => '', 'class' => 'w-px'],
                     ]"
@@ -124,8 +125,11 @@
                                     <span class="text-muted">—</span>
                                 @endif
                             </td>
-
+                            <td>
+                                {{ $lead->description}}
+                            </td>
                             <td>{{ $lead->created_at->format('j M Y') }}</td>
+                            
 
                             <td>
                                 <div class="table-actions">
@@ -145,7 +149,7 @@
                                         />
                                     @endcan
 
-                                    @can('delete', $lead)
+                                    <!-- @can('delete', $lead)
                                         <x-button
                                             variant="light" size="sm"
                                             icon="ti ti-trash"
@@ -153,7 +157,7 @@
                                             data-pc-target="#delete-lead-{{ $lead->id }}"
                                             aria-label="Delete {{ $lead->reference }}"
                                         />
-                                    @endcan
+                                    @endcan -->
                                 </div>
                             </td>
                         </tr>
