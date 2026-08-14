@@ -125,8 +125,17 @@
                                     <span class="text-muted">—</span>
                                 @endif
                             </td>
-                            <td>
-                                {{ strip_tags($lead->description) }}
+                            <td style="
+                                width: 100%;
+                                max-width: 700px;
+                                padding: 12px 16px;
+                                vertical-align: middle;
+                                white-space: normal;
+                                word-break: normal;
+                                overflow-wrap: break-word;
+                                line-height: 1.6;
+                            ">
+                                {{ html_entity_decode(strip_tags($lead->description)) }}
                             </td>
                             <td>{{ $lead->created_at->format('j M Y') }}</td>
                             
