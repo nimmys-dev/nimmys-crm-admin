@@ -126,7 +126,7 @@
                                 @endif
                             </td>
                             <td>
-                                {{ $lead->description}}
+                                {{ strip_tags($lead->description) }}
                             </td>
                             <td>{{ $lead->created_at->format('j M Y') }}</td>
                             
