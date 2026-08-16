@@ -39,6 +39,7 @@ class StoreQuotationRequest extends FormRequest
             'items.*.description' => ['required', 'string', 'max:255'],
             'items.*.quantity' => ['required', 'numeric', 'min:0.01', 'max:999999.99'],
             'items.*.rate' => ['required', 'numeric', 'min:0', 'max:99999999.99'],
+            'items.*.tax_percent' => ['nullable', 'numeric', 'min:0', 'max:100'],
         ];
     }
 
@@ -57,6 +58,7 @@ class StoreQuotationRequest extends FormRequest
             'items.*.description' => 'item',
             'items.*.quantity' => 'quantity',
             'items.*.rate' => 'rate',
+            'items.*.tax_percent' => 'tax %',
         ];
     }
 

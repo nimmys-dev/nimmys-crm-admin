@@ -66,7 +66,7 @@
 
     <x-dashboard-table
         :rows="$callHistory"
-        :headers="['Date', 'Time', 'Duration', 'Status', 'Called by', 'Remarks', 'Next follow-up', ['label' => '', 'class' => 'w-px']]"
+        :headers="['Date', 'Time', 'Duration', 'Status', 'Called by', 'Remarks', 'Next follow-up']"
         :empty-message="$callHasActiveFilters
             ? 'No calls match this search.'
             : 'No calls logged for this lead yet.'"
@@ -96,7 +96,7 @@
 
                 <td><x-followup-badge :date="$call->next_followup_date" /></td>
 
-                <td>
+                <!-- <td>
                     <div class="table-actions">
                         <x-button
                             variant="light" size="sm"
@@ -122,7 +122,7 @@
                             />
                         @endcan
                     </div>
-                </td>
+                </td> -->
             </tr>
         @endforeach
     </x-dashboard-table>

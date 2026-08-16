@@ -75,7 +75,7 @@
                     :headers="[
                         ['label' => 'Lead', 'sort' => 'name'],
                         'Phone',
-                        'Owner',
+                        'Assign To',
                         ['label' => 'Status', 'sort' => 'status'],
                         'Next follow-up',
                         ['label' => 'Created', 'sort' => 'created_at'],

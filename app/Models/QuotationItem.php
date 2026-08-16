@@ -20,6 +20,9 @@ class QuotationItem extends Model
         'description',
         'quantity',
         'rate',
+        'tax_percent',
+        'basic_rate',
+        'tax_amount',
         'amount',
         'sort_order',
     ];
@@ -32,6 +35,9 @@ class QuotationItem extends Model
         return [
             'quantity' => 'decimal:2',
             'rate' => 'decimal:2',
+            'tax_percent' => 'decimal:2',
+            'basic_rate' => 'decimal:2',
+            'tax_amount' => 'decimal:2',
             'amount' => 'decimal:2',
         ];
     }

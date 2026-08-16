@@ -53,9 +53,11 @@ return [
              */
         ],
 
-        // Employees are mobile-only. An empty set is the second line of
-        // defence behind the login check and the web-access middleware.
-        UserRole::Employee->value => [],
+        UserRole::Employee->value => [
+            'dashboard.view',
+            'tasks.manage',
+            'profile.view',
+        ],
 
     ],
 

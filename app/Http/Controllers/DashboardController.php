@@ -30,9 +30,30 @@ class DashboardController extends Controller
     {
         $user = $request->user();
 
-        return $user->isAdmin()
-            ? $this->adminDashboard($user)
-            : $this->managerDashboard($user);
+        if ($user->isAdmin()) {
+            return $this->adminDashboard($user);
+        }
+
+        if ($user->isManager()) {
+            return $this->managerDashboard($user);
+        }
+
+        return $this->employeeDashboard($user);
+    }
+
+    private function employeeDashboard(User $user): View
+    {
+        $leadStats = $user->canAccessLeadModule() ? $this->dashboard->getLeadStatistics($user) : null;
+        $dueFollowUps = $user->canAccessLeadModule() ? $this->dashboard->getDueFollowUps($user) : collect();
+
+        return view('dashboard.employee', [
+            'pageTitle' => 'Dashboard',
+            'breadcrumbs' => [['label' => 'Dashboard']],
+            'user' => $user,
+            'shop' => $user->shop,
+            'leadStats' => $leadStats,
+            'dueFollowUps' => $dueFollowUps,
+        ]);
     }
 
     private function adminDashboard(User $user): View

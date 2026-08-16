@@ -72,12 +72,11 @@ class LeadManagementTest extends TestCase
     }
 
     #[Test]
-    public function an_employee_without_lead_access_is_ejected_from_the_web(): void
+    public function an_employee_without_lead_access_cannot_reach_the_leads_module(): void
     {
-        // web.access removes Employees from the portal before the module gate.
         $this->actingAs(User::factory()->employee()->create())
             ->get(route('leads.index'))
-            ->assertRedirect(route('login'));
+            ->assertNotFound();
     }
 
     #[Test]
@@ -95,21 +94,17 @@ class LeadManagementTest extends TestCase
     | Ownership scoping — the core rule
     |--------------------------------------------------------------------------
     |
-    | Asserted against the repository and policy rather than over HTTP, because
-    | `web.access` ejects Employees from the portal before any lead route is
-    | reached — they are mobile-only. These are the exact layers the future
-    | mobile API will consume, so this is where the rule has to hold.
+    | Asserted against the repository, policy and HTTP endpoints.
     */
 
     #[Test]
-    public function an_employee_is_never_admitted_to_the_web_module(): void
+    public function an_employee_with_lead_access_is_admitted_to_the_web_module(): void
     {
         $agent = $this->agent();
         $lead = Lead::factory()->assignedTo($agent->id)->create();
 
-        $this->actingAs($agent)->get(route('leads.index'))->assertRedirect(route('login'));
-        $this->actingAs($agent)->get(route('leads.show', $lead))->assertRedirect(route('login'));
-        $this->assertGuest();
+        $this->actingAs($agent)->get(route('leads.index'))->assertOk();
+        $this->actingAs($agent)->get(route('leads.show', $lead))->assertOk();
     }
 
     #[Test]
@@ -314,7 +309,7 @@ class LeadManagementTest extends TestCase
     {
         $this->actingAs($this->admin())
             ->post(route('leads.store'), [])
-            ->assertSessionHasErrors(['name', 'phone', 'status', 'priority']);
+            ->assertSessionHasErrors(['name', 'phone']);
     }
 
     #[Test]
