@@ -257,28 +257,38 @@ document.addEventListener('DOMContentLoaded', function () {
       event.preventDefault();
 
       // Get the actual target element, adjusting if clicked on an inner element
-      let targetElement = event.target;
-      if (targetElement.tagName === 'I') {
-        targetElement = targetElement.parentNode;
-      }
+      let targetElement = event.target.closest('[data-pc-modal-dismiss]') || event.target;
 
       // Determine the modal element to hide
-      let targetModal = document.querySelector(targetElement.getAttribute('data-pc-modal-dismiss'));
+      let dismissTarget = targetElement.getAttribute('data-pc-modal-dismiss');
+      let targetModal = null;
 
-      // Hide the modal and remove animations
-      targetModal.classList.remove('animate');
-      setTimeout(() => {
-        targetModal.classList.remove('show');
-        document.body.classList.remove('modal-open');
+      if (dismissTarget && dismissTarget.trim() !== '') {
+        try {
+          targetModal = document.querySelector(dismissTarget);
+        } catch (e) {}
+      }
 
-        removeClassByPrefix(targetModal,'anim-');
+      if (!targetModal) {
+        targetModal = targetElement.closest('.modal') || document.querySelector('.modal.show');
+      }
 
-        // Remove the overlay if it exists
-        let backDropOverlay = document.getElementById('modaloverlay');
-        if (backDropOverlay) {
-          backDropOverlay.remove();
-        }
-      }, 300);
+      if (targetModal) {
+        // Hide the modal and remove animations
+        targetModal.classList.remove('animate');
+        setTimeout(() => {
+          targetModal.classList.remove('show');
+          document.body.classList.remove('modal-open');
+
+          removeClassByPrefix(targetModal, 'anim-');
+
+          // Remove the overlay if it exists
+          let backDropOverlay = document.getElementById('modaloverlay');
+          if (backDropOverlay) {
+            backDropOverlay.remove();
+          }
+        }, 300);
+      }
     });
   });
 

@@ -17,7 +17,7 @@
 
             <div class="modal-header">
                 <h5 id="{{ $id }}-title">{{ $title }}</h5>
-                <button type="button" class="modal-close" data-pc-modal-dismiss aria-label="Close">
+                <button type="button" class="modal-close" data-pc-modal-dismiss="#{{ $id }}" aria-label="Close">
                     <i class="ti ti-x"></i>
                 </button>
             </div>
@@ -27,7 +27,7 @@
             </div>
 
             <div class="modal-footer">
-                <button type="button" class="btn btn-outline-secondary" data-pc-modal-dismiss>Cancel</button>
+                <button type="button" class="btn btn-outline-secondary" data-pc-modal-dismiss="#{{ $id }}">Cancel</button>
 
                 <form method="POST" action="{{ $action }}">
                     @csrf
