@@ -1017,6 +1017,20 @@ body.modal-open {
     text-align: right;
     font-variant-numeric: tabular-nums;
 }
+.quotation-item-input {
+    background-color: #f3f4f6 !important;
+}
+
+[data-pc-theme="dark"] .quotation-item-input {
+    background-color: #1f2937 !important;
+}
+.quotation-item-product{
+    background-color: #f3f4f6 !important;
+}
+
+[data-pc-theme="dark"] .quotation-item-product {
+    background-color: #1f2937 !important;
+}
 
 /* Pushed to the far end of the line, away from the inputs, so it is never
    hit by accident while tabbing through figures. */

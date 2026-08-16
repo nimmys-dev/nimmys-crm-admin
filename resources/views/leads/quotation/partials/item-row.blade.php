@@ -29,6 +29,7 @@
         placeholder="e.g. Alpha ILCE 7RM5 B Sony"
         required
         col="quotation-item-desc"
+        class="quotation-item-product"
     />
 
     <x-form.input
