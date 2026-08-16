@@ -51,36 +51,18 @@
     <hr class="my-4" />
 
     <div class="grid grid-cols-12 gap-4">
-        <x-form.input
-            name="discount_percent" label="Discount %" type="number"
-            :value="$quotation->discount_percent" min="0" max="100" step="0.01"
-            data-quotation-discount="1"
-            col="col-span-6 md:col-span-3"
-        />
-
-        <x-form.input
-            name="tax_percent" label="Tax %" type="number"
-            :value="$quotation->tax_percent" min="0" max="100" step="0.01"
-            data-quotation-tax="1"
-            col="col-span-6 md:col-span-3"
-        />
-
-        <div class="col-span-12 md:col-span-6">
+        <div class="col-span-12 md:col-span-6 md:col-start-7">
             <dl class="quotation-totals">
                 <div>
-                    <dt>Subtotal</dt>
-                    <dd data-quotation-subtotal>0.00</dd>
+                    <dt>Total Basic Value</dt>
+                    <dd data-quotation-basic-total>0.00</dd>
                 </div>
                 <div>
-                    <dt>Discount</dt>
-                    <dd data-quotation-discount-amount>0.00</dd>
-                </div>
-                <div>
-                    <dt>Tax</dt>
-                    <dd data-quotation-tax-amount>0.00</dd>
+                    <dt>Total Tax</dt>
+                    <dd data-quotation-tax-total>0.00</dd>
                 </div>
                 <div class="quotation-totals-grand">
-                    <dt>Total</dt>
+                    <dt>Grand Total</dt>
                     <dd data-quotation-total>0.00</dd>
                 </div>
             </dl>
@@ -88,10 +70,10 @@
     </div>
 </x-card>
 
-<x-card title="Terms">
+<x-card title="Terms & Conditions">
     <x-form.textarea
-        name="terms" label="Terms / notes" :value="$quotation->terms" rows="4"
-        hint="Printed at the bottom of the PDF — payment terms, delivery, validity, etc."
+        name="terms" label="Terms & Conditions" :value="$quotation->terms" rows="6"
+        hint="Printed at the bottom left of the PDF — delivery, tax, payment terms, etc."
         col="col-span-12"
     />
 </x-card>
@@ -99,7 +81,7 @@
 {{-- The JS "Add item" clone source. Rendered through the same partial as
      the real rows, with index="__INDEX__", so the two can never drift. --}}
 <template id="quotation-item-template">
-    @include('leads.quotation.partials.item-row', ['index' => '__INDEX__', 'item' => []])
+    @include('leads.quotation.partials.item-row', ['index' => '__INDEX__', 'item' => ['quantity' => '1', 'tax_percent' => '18.00']])
 </template>
 
 @push('scripts')
@@ -108,8 +90,6 @@
             var container = document.getElementById('quotation-items');
             var template = document.getElementById('quotation-item-template');
             var addButton = document.querySelector('[data-quotation-add-row]');
-            var discountInput = document.querySelector('[data-quotation-discount]');
-            var taxInput = document.querySelector('[data-quotation-tax]');
 
             if (!container || !template) return;
 
@@ -128,29 +108,37 @@
             }
 
             function recalculate() {
-                var subtotal = 0;
+                var totalBasic = 0;
+                var totalTax = 0;
+                var grandTotal = 0;
 
                 container.querySelectorAll('[data-quotation-row]').forEach(function (row) {
                     var qty = toNumber(row.querySelector('[data-quotation-qty]').value);
                     var rate = toNumber(row.querySelector('[data-quotation-rate]').value);
+                    var taxPercentInput = row.querySelector('[data-quotation-tax-percent]');
+                    var taxPercent = taxPercentInput && taxPercentInput.value !== '' ? toNumber(taxPercentInput.value) : 18.0;
+
+                    var basicRate = taxPercent > 0 ? (rate / (1 + (taxPercent / 100))) : rate;
+                    var taxAmt = (rate - basicRate) * qty;
                     var amount = qty * rate;
 
-                    row.querySelector('[data-quotation-amount]').value = money(amount);
-                    subtotal += amount;
+                    var basicInput = row.querySelector('[data-quotation-basic-rate]');
+                    if (basicInput) basicInput.value = money(basicRate);
+
+                    var taxAmtInput = row.querySelector('[data-quotation-tax-amount]');
+                    if (taxAmtInput) taxAmtInput.value = money(taxAmt);
+
+                    var amountInput = row.querySelector('[data-quotation-amount]');
+                    if (amountInput) amountInput.value = money(amount);
+
+                    totalBasic += (basicRate * qty);
+                    totalTax += taxAmt;
+                    grandTotal += amount;
                 });
 
-                var discountPercent = discountInput ? toNumber(discountInput.value) : 0;
-                var taxPercent = taxInput ? toNumber(taxInput.value) : 0;
-
-                var discountAmount = subtotal * discountPercent / 100;
-                var taxable = subtotal - discountAmount;
-                var taxAmount = taxable * taxPercent / 100;
-                var total = taxable + taxAmount;
-
-                setText('[data-quotation-subtotal]', money(subtotal));
-                setText('[data-quotation-discount-amount]', money(discountAmount));
-                setText('[data-quotation-tax-amount]', money(taxAmount));
-                setText('[data-quotation-total]', money(total));
+                setText('[data-quotation-basic-total]', money(totalBasic));
+                setText('[data-quotation-tax-total]', money(totalTax));
+                setText('[data-quotation-total]', money(grandTotal));
 
                 updateRemoveButtons();
             }
@@ -198,13 +186,10 @@
 
             // Delegated so newly added rows are covered without rebinding.
             container.addEventListener('input', function (event) {
-                if (event.target.matches('[data-quotation-qty], [data-quotation-rate]')) {
+                if (event.target.matches('[data-quotation-qty], [data-quotation-rate], [data-quotation-tax-percent]')) {
                     recalculate();
                 }
             });
-
-            discountInput && discountInput.addEventListener('input', recalculate);
-            taxInput && taxInput.addEventListener('input', recalculate);
 
             recalculate();
         })();

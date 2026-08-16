@@ -80,13 +80,11 @@ class ShopManagementTest extends TestCase
     }
 
     #[Test]
-    public function employee_is_ejected_from_the_web_portal(): void
+    public function employee_is_forbidden_from_shops_module(): void
     {
         $employee = User::factory()->employee()->create();
 
-        // web.access middleware logs them out before authorization is reached.
-        $this->actingAs($employee)->get(route('shops.index'))->assertRedirect(route('login'));
-        $this->assertGuest();
+        $this->actingAs($employee)->get(route('shops.index'))->assertForbidden();
     }
 
     #[Test]

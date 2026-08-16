@@ -45,13 +45,14 @@ class DashboardTest extends TestCase
     }
 
     #[Test]
-    public function an_employee_is_ejected_from_the_web_dashboard(): void
+    public function an_employee_gets_the_employee_dashboard(): void
     {
-        $this->actingAs(User::factory()->employee()->create())
-            ->get(route('dashboard'))
-            ->assertRedirect(route('login'));
+        $employee = User::factory()->employee()->create();
 
-        $this->assertGuest();
+        $this->actingAs($employee)
+            ->get(route('dashboard'))
+            ->assertOk()
+            ->assertViewIs('dashboard.employee');
     }
 
     #[Test]

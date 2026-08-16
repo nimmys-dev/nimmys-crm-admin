@@ -66,7 +66,7 @@
 
     <x-dashboard-table
         :rows="$callHistory"
-        :headers="['Date', 'Time', 'Status', 'Called by', 'Next follow-up', ['label' => '', 'class' => 'w-px']]"
+        :headers="['Date', 'Time', 'Duration', 'Status', 'Called by', 'Remarks', 'Next follow-up']"
         :empty-message="$callHasActiveFilters
             ? 'No calls match this search.'
             : 'No calls logged for this lead yet.'"
@@ -78,18 +78,25 @@
 
                 <td class="tabular">{{ $call->calledAt()->format('g:i A') }}</td>
 
+                <td class="tabular">{{ $call->durationForHumans() ?? '—' }}</td>
+
                 <td><x-call-status-badge :status="$call->call_status" /></td>
 
+                <td>{{ $call->caller?->name ?? '—' }}</td>
+
                 <td>
-                    {{ $call->caller?->name ?? '—' }}
-                    @if ($call->durationForHumans())
-                        <p class="m-0 text-muted text-sm">{{ $call->durationForHumans() }}</p>
+                    @if (filled($call->remarks))
+                        <span title="{{ strip_tags($call->remarks) }}">
+                            {{ Str::limit(strip_tags($call->remarks), 50) }}
+                        </span>
+                    @else
+                        —
                     @endif
                 </td>
 
                 <td><x-followup-badge :date="$call->next_followup_date" /></td>
 
-                <td>
+                <!-- <td>
                     <div class="table-actions">
                         <x-button
                             variant="light" size="sm"
@@ -115,7 +122,7 @@
                             />
                         @endcan
                     </div>
-                </td>
+                </td> -->
             </tr>
         @endforeach
     </x-dashboard-table>

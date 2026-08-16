@@ -76,11 +76,24 @@ class QuotationService
         $quotation->items()->delete();
 
         foreach (array_values($items) as $index => $item) {
+            $qty = (float) $item['quantity'];
+            $rate = (float) $item['rate'];
+            $taxPercent = isset($item['tax_percent']) && filled($item['tax_percent'])
+                ? (float) $item['tax_percent']
+                : 18.0;
+
+            $basicRate = $taxPercent > 0 ? round($rate / (1 + ($taxPercent / 100)), 2) : $rate;
+            $taxAmount = round(($rate - $basicRate) * $qty, 2);
+            $amount = $this->lineAmount($item);
+
             $quotation->items()->create([
                 'description' => $item['description'],
-                'quantity' => $this->decimal((float) $item['quantity']),
-                'rate' => $this->decimal((float) $item['rate']),
-                'amount' => $this->decimal($this->lineAmount($item)),
+                'quantity' => $this->decimal($qty),
+                'rate' => $this->decimal($rate),
+                'tax_percent' => $this->decimal($taxPercent),
+                'basic_rate' => $this->decimal($basicRate),
+                'tax_amount' => $this->decimal($taxAmount),
+                'amount' => $this->decimal($amount),
                 'sort_order' => $index,
             ]);
         }

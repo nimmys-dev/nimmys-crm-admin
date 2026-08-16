@@ -30,16 +30,10 @@ enum UserRole: string
 
     /**
      * Whether this role may sign in to the web portal.
-     *
-     * Employees are mobile-only — this is the single source of truth for that
-     * rule, enforced at login and again by middleware on every request.
      */
     public function canAccessWeb(): bool
     {
-        return match ($this) {
-            self::Admin, self::Manager => true,
-            self::Employee => false,
-        };
+        return true;
     }
 
     /**
@@ -53,17 +47,10 @@ enum UserRole: string
 
     /**
      * Landing route after a successful web login.
-     *
-     * Admin and Manager share the dashboard route today and diverge by
-     * permission inside it. Point a role at its own route here when the
-     * dashboards genuinely split.
      */
     public function dashboardRoute(): string
     {
-        return match ($this) {
-            self::Admin, self::Manager => 'dashboard',
-            self::Employee => 'login',
-        };
+        return 'dashboard';
     }
 
     /**

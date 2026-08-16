@@ -119,4 +119,19 @@ class Quotation extends Model
 
         return round($taxable * (float) $this->tax_percent / 100, 2);
     }
+
+    public function amountInWords(): string
+    {
+        return \App\Support\NumberToWords::indianCurrency($this->total);
+    }
+
+    public function totalBasicAmount(): float
+    {
+        return round((float) $this->items->sum(fn ($item) => (float) $item->basic_rate * (float) $item->quantity), 2);
+    }
+
+    public function totalItemTaxAmount(): float
+    {
+        return round((float) $this->items->sum(fn ($item) => (float) $item->tax_amount), 2);
+    }
 }

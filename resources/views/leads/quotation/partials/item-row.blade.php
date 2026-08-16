@@ -26,7 +26,7 @@
         :name="'items['.$index.'][description]'"
         label="Item / product"
         :value="$item['description'] ?? ''"
-        placeholder="e.g. Installation service"
+        placeholder="e.g. Alpha ILCE 7RM5 B Sony"
         required
         col="quotation-item-desc"
         class="quotation-item-product"
@@ -36,30 +36,60 @@
         :name="'items['.$index.'][quantity]'"
         label="Qty"
         type="number"
-        :value="$item['quantity'] ?? ''"
+        :value="$item['quantity'] ?? '1'"
         min="0.01" step="any" inputmode="decimal"
         required
         class="quotation-item-input"
         data-quotation-qty="1"
-        col="quotation-item-field"
+        col="quotation-item-field-sm"
     />
 
     <x-form.input
         :name="'items['.$index.'][rate]'"
-        label="Rate"
+        label="Rate (incl. tax)"
         type="number"
         :value="$item['rate'] ?? ''"
         min="0" step="any" inputmode="decimal"
         required
         class="quotation-item-input"
         data-quotation-rate="1"
-        col="quotation-item-field"
+        col="quotation-item-field-md"
     />
 
-    <div class="quotation-item-field">
-        <label class="form-label">Amount</label>
+    <x-form.input
+        :name="'items['.$index.'][tax_percent]'"
+        label="Tax %"
+        type="number"
+        :value="$item['tax_percent'] ?? '18.00'"
+        min="0" max="100" step="any" inputmode="decimal"
+        class="quotation-item-input"
+        data-quotation-tax-percent="1"
+        col="quotation-item-field-sm"
+    />
+
+    <div class="quotation-item-field-md">
+        <label class="form-label">Basic Rate</label>
         <input
-            type="text" class="form-control quotation-item-input" value="0.00"
+            type="text" class="form-control quotation-item-input bg-gray-50 dark:bg-gray-800"
+            value="{{ $item['basic_rate'] ?? '0.00' }}"
+            readonly tabindex="-1" data-quotation-basic-rate
+        />
+    </div>
+
+    <div class="quotation-item-field-md">
+        <label class="form-label">Tax Amt</label>
+        <input
+            type="text" class="form-control quotation-item-input bg-gray-50 dark:bg-gray-800"
+            value="{{ $item['tax_amount'] ?? '0.00' }}"
+            readonly tabindex="-1" data-quotation-tax-amount
+        />
+    </div>
+
+    <div class="quotation-item-field-md">
+        <label class="form-label">Total</label>
+        <input
+            type="text" class="form-control quotation-item-input bg-gray-50 dark:bg-gray-800 font-semibold"
+            value="{{ $item['amount'] ?? '0.00' }}"
             readonly tabindex="-1" data-quotation-amount
         />
     </div>

@@ -230,7 +230,6 @@ class CallDetailTest extends TestCase
         $this->actingAs($this->admin())
             ->get(route('leads.show', $lead))
             ->assertOk()
-            ->assertSee('Call timeline')
             ->assertSee('Call history')
             ->assertSee('Spoke about pricing');
     }

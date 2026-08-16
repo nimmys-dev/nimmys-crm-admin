@@ -83,13 +83,17 @@ class StaffManagementTest extends TestCase
     }
 
     #[Test]
-    public function employee_is_ejected_from_the_web_portal(): void
+    public function employee_cannot_reach_staff_routes(): void
     {
-        $this->actingAs(User::factory()->employee()->create())
-            ->get(route('staff.index'))
-            ->assertRedirect(route('login'));
+        $employee = User::factory()->employee()->create();
+        $member = User::factory()->employee()->create();
 
-        $this->assertGuest();
+        $this->actingAs($employee)->get(route('staff.index'))->assertForbidden();
+        $this->actingAs($employee)->get(route('staff.create'))->assertForbidden();
+        $this->actingAs($employee)->get(route('staff.show', $member))->assertForbidden();
+        $this->actingAs($employee)->get(route('staff.edit', $member))->assertForbidden();
+        $this->actingAs($employee)->post(route('staff.store'), $this->payload())->assertForbidden();
+        $this->actingAs($employee)->delete(route('staff.destroy', $member))->assertForbidden();
     }
 
     /*

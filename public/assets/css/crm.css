@@ -996,12 +996,20 @@ body.modal-open {
     flex: 1 1 100%;
 }
 
-/* Qty, Rate and Amount then share the next line, sized to hold a figure
-   like "123456.00" comfortably instead of clipping it. */
+/* Qty, Tax %, Rate, Basic Rate, Tax Amt and Amount share the line */
 .quotation-item-field {
-    flex: 1 1 140px;
-    min-width: 110px;
-    max-width: 220px;
+    flex: 1 1 120px;
+    min-width: 95px;
+}
+
+.quotation-item-field-sm {
+    flex: 0 1 90px;
+    min-width: 75px;
+}
+
+.quotation-item-field-md {
+    flex: 1 1 125px;
+    min-width: 100px;
 }
 
 .quotation-item-input {

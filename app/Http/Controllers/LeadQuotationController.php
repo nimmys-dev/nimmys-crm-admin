@@ -29,6 +29,8 @@ class LeadQuotationController extends Controller
         private readonly CompanyLogoService $logos,
     ) {}
 
+    public const DEFAULT_TERMS = "1. All Values are inclusive of all Taxes\n2. The Supply of Materials subject to the Availability\n3. We reserve the right to vary Prices in the event of changes in the price rise made by companies\n4. Material delivered after 7 days of Quotation Confirmation\n5. Shipping charges extra";
+
     public function create(Request $request, Lead $lead): View|RedirectResponse
     {
         $this->authorize('update', $lead);
@@ -47,9 +49,11 @@ class LeadQuotationController extends Controller
             'lead' => $lead,
             'quotation' => $lead->quotation()->make([
                 'customer_name' => $lead->name,
+                'customer_address' => $lead->city,
                 'issue_date' => today(),
+                'terms' => self::DEFAULT_TERMS,
             ]),
-            'items' => [['description' => '', 'quantity' => '', 'rate' => '']],
+            'items' => [['description' => '', 'quantity' => '1', 'rate' => '', 'tax_percent' => '18.00']],
         ]);
     }
 
@@ -93,6 +97,10 @@ class LeadQuotationController extends Controller
                 'description' => $item->description,
                 'quantity' => (string) $item->quantity,
                 'rate' => (string) $item->rate,
+                'tax_percent' => (string) ($item->tax_percent ?? '18.00'),
+                'basic_rate' => (string) ($item->basic_rate ?? ''),
+                'tax_amount' => (string) ($item->tax_amount ?? ''),
+                'amount' => (string) ($item->amount ?? ''),
             ])->all(),
         ]);
     }
@@ -162,11 +170,16 @@ class LeadQuotationController extends Controller
     {
         $path = $this->logos->absolutePath($company->logo_path);
 
-        if ($path === null) {
-            return null;
+        if ($path === null || ! file_exists($path)) {
+            $defaultLogo = public_path('assets/images/logo-dark.svg');
+            if (file_exists($defaultLogo)) {
+                $path = $defaultLogo;
+            } else {
+                return null;
+            }
         }
 
-        $mime = mime_content_type($path) ?: 'image/png';
+        $mime = mime_content_type($path) ?: 'image/svg+xml';
 
         return 'data:'.$mime.';base64,'.base64_encode(file_get_contents($path));
     }

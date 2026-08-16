@@ -7,6 +7,17 @@
 
     @can('update', $lead)
         <x-button :href="route('leads.edit', $lead)" icon="ti ti-pencil">Edit</x-button>
+
+        @if ($lead->status->isOpen())
+            <x-button
+                variant="danger"
+                icon="ti ti-flag-off"
+                data-pc-toggle="modal"
+                data-pc-target="#close-lead-modal"
+            >
+                Close Lead
+            </x-button>
+        @endif
     @endcan
 @endsection
 
@@ -15,7 +26,7 @@
     <div class="grid grid-cols-12 gap-x-6">
 
         {{-- Detail column --}}
-        <div class="col-span-12 xl:col-span-7">
+        <div class="col-span-12 xl:col-span-5">
 
             <x-card :title="$lead->reference">
                 <x-slot:actions>
@@ -76,150 +87,120 @@
                         {!! $lead->description !!}
                     </div>
                 @endif
-            </x-card>
 
-            @can('assign', $lead)
-                <x-card title="Assignment">
-                    <form method="POST" action="{{ route('leads.assignment.update', $lead) }}">
-                        @csrf
-                        @method('PUT')
-
-                        <div class="grid grid-cols-12 gap-4 items-end">
-                            <x-form.select
-                                name="assigned_to" label="Assign" :options="$assignableUsers"
-                                :selected="$lead->assigned_to" placeholder="Unassigned"
-                                col="col-span-6 md:col-span-8"
-                            />
-
-                            <div class="col-span-12 md:col-span-4 flex justify-end">
-                                <x-button type="submit" icon="ti ti-user-check">Reassign</x-button>
-                            </div>
-                        </div>
-                    </form>
-                </x-card>
-            @endcan
-
-            @can('update', $lead)
-                @if ($lead->status->isOpen())
-                    <x-card title="Close lead">
-                        <form method="POST" action="{{ route('leads.close', $lead) }}">
+                @can('assign', $lead)
+                    <div class="mt-4">
+                        <h6 class="form-section mb-3">Reassign</h6>
+                        <form method="POST" action="{{ route('leads.assignment.update', $lead) }}">
                             @csrf
-                            @method('PATCH')
+                            @method('PUT')
 
                             <div class="grid grid-cols-12 gap-4 items-end">
                                 <x-form.select
-                                    name="status" label="Outcome" :options="$closeOptions"
-                                    placeholder="Select outcome" required col="col-span-12 md:col-span-5"
+                                    name="assigned_to" label="Assign" :options="$assignableUsers"
+                                    :selected="$lead->assigned_to" placeholder="Unassigned"
+                                    col="col-span-12 sm:col-span-8"
                                 />
 
-                                <x-form.input
-                                    name="lost_reason" label="Reason"
-                                    hint="Required for either outcome."
-                                    required col="col-span-12 md:col-span-7"
-                                />
-
-                                <div class="col-span-12 flex justify-end">
-                                    <x-button type="submit" variant="danger" icon="ti ti-flag-off">Close lead</x-button>
+                                <div class="col-span-12 sm:col-span-4 flex justify-end">
+                                    <x-button type="submit" icon="ti ti-user-check">Reassign</x-button>
                                 </div>
                             </div>
                         </form>
-                    </x-card>
-                @endif
-            @endcan
+                    </div>
+                @endcan
 
-            @if ($lead->quotation || Auth::user()->can('update', $lead))
-                <x-card title="Quotation">
-                    <x-slot:actions>
-                        {{--
-                            UI-only toggle — nothing here is submitted. It just
-                            shows or hides the panel below via the script at
-                            the bottom of this section.
-                        --}}
-                        <label class="quotation-toggle-label" for="quotation-toggle">
-                            <span class="text-muted text-sm">{{ $lead->quotation ? 'Show' : 'Create' }}</span>
-                            <span class="toggle-switch">
-                                <input type="checkbox" id="quotation-toggle" @checked($lead->quotation) />
-                                <span class="toggle-track" aria-hidden="true"></span>
-                            </span>
-                        </label>
-                    </x-slot:actions>
+                @if ($lead->quotation || Auth::user()->can('update', $lead))
+                    <div class="mt-4">
+                        <div class="flex items-center justify-between gap-3 mb-3 border-b border-[var(--crm-border)] pb-2">
+                            <h6 class="m-0 text-xs font-bold uppercase tracking-wider text-muted">Quotation</h6>
 
-                    <div id="quotation-panel" @unless ($lead->quotation) hidden @endunless>
-                        @if ($lead->quotation)
-                            <dl class="grid grid-cols-12 gap-4">
-                                <div class="col-span-12 md:col-span-6">
-                                    <dt class="stat-tile-label">Reference</dt>
-                                    <dd class="m-0 mt-1">{{ $lead->quotation->reference }}</dd>
+                            <label class="quotation-toggle-label" for="quotation-toggle">
+                                <span class="text-muted text-sm">{{ $lead->quotation ? 'Show' : 'Create' }}</span>
+                                <span class="toggle-switch">
+                                    <input type="checkbox" id="quotation-toggle" @checked($lead->quotation) />
+                                    <span class="toggle-track" aria-hidden="true"></span>
+                                </span>
+                            </label>
+                        </div>
+
+                        <div id="quotation-panel" @unless ($lead->quotation) hidden @endunless>
+                            @if ($lead->quotation)
+                                <dl class="grid grid-cols-12 gap-4">
+                                    <div class="col-span-12 md:col-span-6">
+                                        <dt class="stat-tile-label">Reference</dt>
+                                        <dd class="m-0 mt-1">{{ $lead->quotation->reference }}</dd>
+                                    </div>
+
+                                    <div class="col-span-12 md:col-span-6">
+                                        <dt class="stat-tile-label">Date</dt>
+                                        <dd class="m-0 mt-1">{{ $lead->quotation->issue_date->format('j M Y') }}</dd>
+                                    </div>
+
+                                    <div class="col-span-12 md:col-span-6">
+                                        <dt class="stat-tile-label">Valid until</dt>
+                                        <dd class="m-0 mt-1">
+                                            {{ $lead->quotation->valid_until?->format('j M Y') ?? '—' }}
+                                            @if ($lead->quotation->isExpired())
+                                                <span class="badge badge-lead-lost">Expired</span>
+                                            @endif
+                                        </dd>
+                                    </div>
+
+                                    <div class="col-span-12 md:col-span-6">
+                                        <dt class="stat-tile-label">Total</dt>
+                                        <dd class="m-0 mt-1">{{ number_format((float) $lead->quotation->total, 2) }}</dd>
+                                    </div>
+                                </dl>
+
+                                <div class="mt-4 flex gap-3 flex-wrap">
+                                    @can('update', $lead)
+                                        <x-button :href="route('leads.quotation.edit', $lead)" icon="ti ti-pencil">
+                                            Edit quotation
+                                        </x-button>
+                                    @endcan
+
+                                    <x-button
+                                        variant="outline-secondary" :href="route('leads.quotation.pdf', $lead)"
+                                        icon="ti ti-download"
+                                    >
+                                        Download PDF
+                                    </x-button>
                                 </div>
+                            @else
+                                <p class="text-muted mb-3">
+                                    Prepare a price quotation for {{ $lead->name }} — customer address, items,
+                                    quantity and rate.
+                                </p>
 
-                                <div class="col-span-12 md:col-span-6">
-                                    <dt class="stat-tile-label">Date</dt>
-                                    <dd class="m-0 mt-1">{{ $lead->quotation->issue_date->format('j M Y') }}</dd>
-                                </div>
-
-                                <div class="col-span-12 md:col-span-6">
-                                    <dt class="stat-tile-label">Valid until</dt>
-                                    <dd class="m-0 mt-1">
-                                        {{ $lead->quotation->valid_until?->format('j M Y') ?? '—' }}
-                                        @if ($lead->quotation->isExpired())
-                                            <span class="badge badge-lead-lost">Expired</span>
-                                        @endif
-                                    </dd>
-                                </div>
-
-                                <div class="col-span-12 md:col-span-6">
-                                    <dt class="stat-tile-label">Total</dt>
-                                    <dd class="m-0 mt-1">{{ number_format((float) $lead->quotation->total, 2) }}</dd>
-                                </div>
-                            </dl>
-
-                            <div class="mt-4 flex gap-3 flex-wrap">
                                 @can('update', $lead)
-                                    <x-button :href="route('leads.quotation.edit', $lead)" icon="ti ti-pencil">
-                                        Edit quotation
+                                    <x-button :href="route('leads.quotation.create', $lead)" icon="ti ti-file-invoice">
+                                        Create quotation
                                     </x-button>
                                 @endcan
-
-                                <x-button
-                                    variant="outline-secondary" :href="route('leads.quotation.pdf', $lead)"
-                                    icon="ti ti-download"
-                                >
-                                    Download PDF
-                                </x-button>
-                            </div>
-                        @else
-                            <p class="text-muted mb-3">
-                                Prepare a price quotation for {{ $lead->name }} — customer address, items,
-                                quantity and rate.
-                            </p>
-
-                            @can('update', $lead)
-                                <x-button :href="route('leads.quotation.create', $lead)" icon="ti ti-file-invoice">
-                                    Create quotation
-                                </x-button>
-                            @endcan
-                        @endif
+                            @endif
+                        </div>
                     </div>
-                </x-card>
 
-                @push('scripts')
-                    <script>
-                        (function () {
-                            var toggle = document.getElementById('quotation-toggle');
-                            var panel = document.getElementById('quotation-panel');
-                            if (!toggle || !panel) return;
+                    @push('scripts')
+                        <script>
+                            (function () {
+                                var toggle = document.getElementById('quotation-toggle');
+                                var panel = document.getElementById('quotation-panel');
+                                if (!toggle || !panel) return;
 
-                            toggle.addEventListener('change', function () {
-                                panel.hidden = !this.checked;
-                            });
-                        })();
-                    </script>
-                @endpush
-            @endif
+                                toggle.addEventListener('change', function () {
+                                    panel.hidden = !this.checked;
+                                });
+                            })();
+                        </script>
+                    @endpush
+                @endif
+            </x-card>
 
         </div>
         {{-- call history --}}
-        <div class="col-span-12 xl:col-span-5">
+        <div class="col-span-12 xl:col-span-7">
             {{-- Call Details module. Data supplied by CallHistoryComposer. --}}
             @includeWhen(isset($callHistory), 'leads.partials.call-history')
         </div>
@@ -327,5 +308,55 @@
         </div> --}}
 
     </div>
+
+    @can('update', $lead)
+        @if ($lead->status->isOpen())
+            @push('modals')
+                <div class="modal" id="close-lead-modal" role="dialog" aria-modal="true" aria-labelledby="close-lead-modal-title">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <form method="POST" action="{{ route('leads.close', $lead) }}">
+                                @csrf
+                                @method('PATCH')
+
+                                <div class="modal-header">
+                                    <h5 id="close-lead-modal-title">Close lead</h5>
+                                    <button type="button" class="modal-close" data-pc-modal-dismiss="#close-lead-modal" aria-label="Close">
+                                        <i class="ti ti-x"></i>
+                                    </button>
+                                </div>
+
+                                <div class="modal-body">
+                                    <div class="grid grid-cols-12 gap-4">
+                                        <x-form.select
+                                            name="status"
+                                            label="Outcome"
+                                            :options="$closeOptions"
+                                            placeholder="Select outcome"
+                                            required
+                                            col="col-span-12"
+                                        />
+
+                                        <x-form.input
+                                            name="lost_reason"
+                                            label="Reason"
+                                            hint="Required for either outcome."
+                                            required
+                                            col="col-span-12"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-outline-secondary" data-pc-modal-dismiss="#close-lead-modal">Cancel</button>
+                                    <x-button type="submit" variant="danger" icon="ti ti-flag-off">Close lead</x-button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            @endpush
+        @endif
+    @endcan
 
 @endsection

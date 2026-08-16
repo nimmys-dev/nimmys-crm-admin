@@ -75,7 +75,7 @@
                     :headers="[
                         ['label' => 'Lead', 'sort' => 'name'],
                         'Phone',
-                        'Assigned To',
+                        'Assign To',
                         ['label' => 'Status', 'sort' => 'status'],
                         'Next follow-up',
                         'Remarks',

@@ -58,20 +58,16 @@ class AuthenticationTest extends TestCase
     }
 
     #[Test]
-    public function employee_cannot_log_in_to_the_web_portal(): void
+    public function employee_can_log_in_to_the_web_portal(): void
     {
-        User::factory()->employee()->create(['email' => 'employee@example.com']);
+        $employee = User::factory()->employee()->create(['email' => 'employee@example.com']);
 
         $this->post(route('login.store'), [
             'email' => 'employee@example.com',
             'password' => 'password',
-        ])->assertSessionHasErrors('email');
+        ])->assertRedirect(route('dashboard'));
 
-        $this->assertGuest();
-        $this->assertSame(
-            __('auth.web_forbidden'),
-            session('errors')->first('email')
-        );
+        $this->assertAuthenticatedAs($employee);
     }
 
     #[Test]
@@ -92,7 +88,7 @@ class AuthenticationTest extends TestCase
     public function a_wrong_password_never_reveals_the_role(): void
     {
         // Order of checks matters: the credential check must run first, so a
-        // bad password cannot be used to probe which emails are Employees.
+        // bad password cannot be used to probe which emails exist.
         User::factory()->employee()->create(['email' => 'employee@example.com']);
 
         $this->post(route('login.store'), [
@@ -129,13 +125,13 @@ class AuthenticationTest extends TestCase
     }
 
     #[Test]
-    public function changing_a_role_to_employee_ends_a_live_session(): void
+    public function suspending_an_account_ends_a_live_session(): void
     {
-        $user = User::factory()->manager()->create();
+        $user = User::factory()->employee()->create();
 
         $this->actingAs($user)->get(route('dashboard'))->assertOk();
 
-        $user->update(['role' => UserRole::Employee]);
+        $user->update(['status' => \App\Enums\UserStatus::Suspended]);
 
         $this->actingAs($user)->get(route('dashboard'))->assertRedirect(route('login'));
         $this->assertGuest();
@@ -169,6 +165,31 @@ class AuthenticationTest extends TestCase
     public function manager_permissions_match_the_matrix(string $route, int $expected): void
     {
         $this->actingAs(User::factory()->manager()->create())
+            ->get(route($route))
+            ->assertStatus($expected);
+    }
+
+    /**
+     * @return array<string, array{string, int}>
+     */
+    public static function employeeMatrix(): array
+    {
+        return [
+            'dashboard is allowed' => ['dashboard', 200],
+            'tasks are allowed' => ['tasks.index', 200],
+            'profile is allowed' => ['profile.index', 200],
+            'shops are denied' => ['shops.index', 403],
+            'staff are denied' => ['staff.index', 403],
+            'reports are denied' => ['reports.index', 403],
+            'settings are denied' => ['settings.index', 403],
+        ];
+    }
+
+    #[Test]
+    #[DataProvider('employeeMatrix')]
+    public function employee_permissions_match_the_matrix(string $route, int $expected): void
+    {
+        $this->actingAs(User::factory()->employee()->create())
             ->get(route($route))
             ->assertStatus($expected);
     }
