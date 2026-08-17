@@ -8,7 +8,7 @@
     @can('update', $lead)
         <x-button :href="route('leads.edit', $lead)" icon="ti ti-pencil">Edit</x-button>
 
-        @if ($lead->status->isOpen())
+        <!-- @if ($lead->status->isOpen())
             <x-button
                 variant="danger"
                 icon="ti ti-flag-off"
@@ -17,6 +17,35 @@
             >
                 Close Lead
             </x-button>
+        @endif -->
+
+        {{-- Reassign --}}
+        @can('assign', $lead)
+
+            <button
+                type="button"
+                class="btn btn-primary"
+                onclick="openModal('reassignModal')"
+                style="white-space: nowrap;"
+            >
+                <i class="ti ti-user-check me-1"></i>
+                Reassign
+            </button>
+
+        @endcan
+         {{-- Quotation --}}
+        @if ($lead->quotation || Auth::user()->can('update', $lead))
+
+            <button
+                type="button"
+                class="btn btn-primary"
+                onclick="openModal('quotationModal')"
+                style="white-space: nowrap;"
+            >
+                <i class="ti ti-file-invoice me-1"></i>
+                Quotation
+            </button>
+
         @endif
     @endcan
 @endsection
@@ -29,175 +58,368 @@
         <div class="col-span-12 xl:col-span-5">
 
             <x-card :title="$lead->reference">
+
                 <x-slot:actions>
                     <x-lead-status-badge :status="$lead->status" />
-                    <span class="badge {{ $lead->priority->badgeClass() }}">{{ $lead->priority->label() }}</span>
+
+                    <span class="badge {{ $lead->priority->badgeClass() }}">
+                        {{ $lead->priority->label() }}
+                    </span>
                 </x-slot:actions>
 
-                <dl class="grid grid-cols-12 gap-4">
-                    @php
-                        $details = [
-                            'Contact' => $lead->name,
-                            // 'Company' => $lead->company,
-                            'Phone' => $lead->phone,
-                            // 'Alternate phone' => $lead->alternate_phone,
-                            // 'Email' => $lead->email,
-                            // 'City' => $lead->city,
-                            'Source' => $lead->source?->label(),
-                            // 'Shop' => $lead->shop?->name,
-                            // 'Estimated value' => filled($lead->value) ? number_format((float) $lead->value, 2) : null,
-                            'Assign to' => $lead->owner?->name,
-                            'Created by' => $lead->creator?->name,
-                            'Last contacted' => $lead->last_contacted_at?->diffForHumans(),
-                        ];
-                    @endphp
+                    <dl class="grid grid-cols-12 gap-4">
 
-                    @foreach ($details as $label => $value)
-                        <div class="col-span-12 md:col-span-6">
-                            <dt class="stat-tile-label">{{ $label }}</dt>
-                            <dd class="m-0 mt-1">{{ $value ?: '—' }}</dd>
-                        </div>
-                    @endforeach
+                        @php
+                            $details = [
+                                'Contact' => $lead->name,
+                                'Phone' => $lead->phone,
+                                'Source' => $lead->source?->label(),
+                                'Assign to' => $lead->owner?->name,
+                                'Created by' => $lead->creator?->name,
+                                'Last contacted' => $lead->last_contacted_at?->diffForHumans(),
+                            ];
+                        @endphp
 
-                    <div class="col-span-12 md:col-span-6">
-                        <dt class="stat-tile-label">Latest status</dt>
-                        <dd class="m-0 mt-1">
-                            @if ($lead->status->isClosed())
-                                <span class="badge badge-off">Closed</span>
-                                @if ($lead->lost_reason)
-                                    <p class="m-0 mt-1 text-muted text-sm">{{ $lead->lost_reason }}</p>
-                                @endif
-                            @elseif ($latestCall)
-                                <x-call-status-badge :status="$latestCall->call_status" />
-                            @else
-                                —
-                            @endif
-                        </dd>
-                    </div>
-                </dl>
+                        {{-- Lead Details --}}
+                        @foreach ($details as $label => $value)
+                            <div class="col-span-12 md:col-span-4 lg:col-span-4">
+                                <div
+                                    class="lead-detail-item"
+                                    style="
+                                        border: 1px solid #e5e7eb;
+                                        border-radius: 8px;
+                                        padding: 14px 16px;
+                                        background: #fff;
+                                        min-height: 75px;
+                                    "
+                                >
+                                    <dt
+                                        class="stat-tile-label"
+                                        style="
+                                            font-size: 12px;
+                                            font-weight: 600;
+                                            color: #6b7280;
+                                            margin-bottom: 5px;
+                                        "
+                                    >
+                                        {{ $label }}
+                                    </dt>
 
-                @if ($lead->description)
-                    <div class="rich-text mt-4">
-                        <h6 class="form-section mb-3">Description</h6>
-                        {{--
-                            Printed unescaped because HtmlSanitiser::clean()
-                            stripped it to a safe allow-list before it was
-                            stored — see StoreLeadRequest::prepareForValidation.
-                        --}}
-                        {!! $lead->description !!}
-                    </div>
-                @endif
-
-                @can('assign', $lead)
-                    <div class="mt-4">
-                        <h6 class="form-section mb-3">Reassign</h6>
-                        <form method="POST" action="{{ route('leads.assignment.update', $lead) }}">
-                            @csrf
-                            @method('PUT')
-
-                            <div class="grid grid-cols-12 gap-4 items-end">
-                                <x-form.select
-                                    name="assigned_to" label="Assign" :options="$assignableUsers"
-                                    :selected="$lead->assigned_to" placeholder="Unassigned"
-                                    col="col-span-12 sm:col-span-8"
-                                />
-
-                                <div class="col-span-12 sm:col-span-4 flex justify-end">
-                                    <x-button type="submit" icon="ti ti-user-check">Reassign</x-button>
+                                    <dd
+                                        class="m-0 lead-detail-value"
+                                        style="
+                                            font-size: 14px;
+                                            font-weight: 500;
+                                            color: #111827;
+                                            line-height: 1.4;
+                                        "
+                                    >
+                                        {{ $value ?: '—' }}
+                                    </dd>
                                 </div>
                             </div>
-                        </form>
-                    </div>
-                @endcan
+                        @endforeach
 
-                @if ($lead->quotation || Auth::user()->can('update', $lead))
-                    <div class="mt-4">
-                        <div class="flex items-center justify-between gap-3 mb-3 border-b border-[var(--crm-border)] pb-2">
-                            <h6 class="m-0 text-xs font-bold uppercase tracking-wider text-muted">Quotation</h6>
 
-                            <label class="quotation-toggle-label" for="quotation-toggle">
-                                <span class="text-muted text-sm">{{ $lead->quotation ? 'Show' : 'Create' }}</span>
-                                <span class="toggle-switch">
-                                    <input type="checkbox" id="quotation-toggle" @checked($lead->quotation) />
-                                    <span class="toggle-track" aria-hidden="true"></span>
-                                </span>
-                            </label>
+                        {{-- Latest Status (4 Columns) --}}
+                        <div class="col-span-12 md:col-span-4 lg:col-span-4">
+                            <div
+                                class="lead-detail-item"
+                                style="
+                                    border: 1px solid #e5e7eb;
+                                    border-radius: 8px;
+                                    padding: 14px 16px;
+                                    background: #fff;
+                                    min-height: 75px;
+                                    height: 100%;
+                                "
+                            >
+                                <dt
+                                    class="stat-tile-label"
+                                    style="
+                                        font-size: 12px;
+                                        font-weight: 600;
+                                        color: #6b7280;
+                                        margin-bottom: 5px;
+                                    "
+                                >
+                                    Latest status
+                                </dt>
+
+                                <dd
+                                    class="m-0"
+                                    style="
+                                        font-size: 14px;
+                                        font-weight: 500;
+                                        color: #111827;
+                                    "
+                                >
+                                    @if ($lead->status->isClosed())
+                                        <span class="badge badge-off">
+                                            Closed
+                                        </span>
+
+                                        @if ($lead->lost_reason)
+                                            <p class="m-0 mt-1 text-muted text-sm">
+                                                {{ $lead->lost_reason }}
+                                            </p>
+                                        @endif
+                                    @elseif ($latestCall)
+                                        <x-call-status-badge
+                                            :status="$latestCall->call_status"
+                                        />
+                                    @else
+                                        —
+                                    @endif
+                                </dd>
+                            </div>
                         </div>
 
-                        <div id="quotation-panel" @unless ($lead->quotation) hidden @endunless>
-                            @if ($lead->quotation)
-                                <dl class="grid grid-cols-12 gap-4">
-                                    <div class="col-span-12 md:col-span-6">
-                                        <dt class="stat-tile-label">Reference</dt>
-                                        <dd class="m-0 mt-1">{{ $lead->quotation->reference }}</dd>
-                                    </div>
-
-                                    <div class="col-span-12 md:col-span-6">
-                                        <dt class="stat-tile-label">Date</dt>
-                                        <dd class="m-0 mt-1">{{ $lead->quotation->issue_date->format('j M Y') }}</dd>
-                                    </div>
-
-                                    <div class="col-span-12 md:col-span-6">
-                                        <dt class="stat-tile-label">Valid until</dt>
-                                        <dd class="m-0 mt-1">
-                                            {{ $lead->quotation->valid_until?->format('j M Y') ?? '—' }}
-                                            @if ($lead->quotation->isExpired())
-                                                <span class="badge badge-lead-lost">Expired</span>
-                                            @endif
-                                        </dd>
-                                    </div>
-
-                                    <div class="col-span-12 md:col-span-6">
-                                        <dt class="stat-tile-label">Total</dt>
-                                        <dd class="m-0 mt-1">{{ number_format((float) $lead->quotation->total, 2) }}</dd>
-                                    </div>
-                                </dl>
-
-                                <div class="mt-4 flex gap-3 flex-wrap">
-                                    @can('update', $lead)
-                                        <x-button :href="route('leads.quotation.edit', $lead)" icon="ti ti-pencil">
-                                            Edit quotation
-                                        </x-button>
-                                    @endcan
-
-                                    <x-button
-                                        variant="outline-secondary" :href="route('leads.quotation.pdf', $lead)"
-                                        icon="ti ti-download"
+                        {{-- Description (Full Remaining 8 Columns) --}}
+                        @if ($lead->description)
+                            <div class="col-span-12 md:col-span-8 lg:col-span-8">
+                                <div
+                                    class="lead-detail-item w-full"
+                                    style="
+                                        border: 1px solid #e5e7eb;
+                                        border-radius: 8px;
+                                        padding: 14px 16px;
+                                        background: #fff;
+                                        min-height: 75px;
+                                        max-height: 140px;
+                                        overflow-y: auto;
+                                    "
+                                >
+                                    <dt
+                                        class="stat-tile-label"
+                                        style="
+                                            font-size: 12px;
+                                            font-weight: 600;
+                                            color: #6b7280;
+                                            margin-bottom: 5px;
+                                        "
                                     >
-                                        Download PDF
-                                    </x-button>
+                                        Description
+                                    </dt>
+
+                                    <dd
+                                        class="m-0 lead-detail-value"
+                                        style="
+                                            font-size: 14px;
+                                            font-weight: 500;
+                                            color: #111827;
+                                            line-height: 1.6;
+                                            white-space: normal;
+                                            word-break: break-word;
+                                            overflow-wrap: anywhere;
+                                        "
+                                    >
+                                        {!! $lead->description !!}
+                                    </dd>
                                 </div>
-                            @else
-                                <p class="text-muted mb-3">
-                                    Prepare a price quotation for {{ $lead->name }} — customer address, items,
-                                    quantity and rate.
-                                </p>
+                            </div>
+                        @endif
 
-                                @can('update', $lead)
-                                    <x-button :href="route('leads.quotation.create', $lead)" icon="ti ti-file-invoice">
-                                        Create quotation
-                                    </x-button>
-                                @endcan
-                            @endif
+                        <div id="reassignModal" class="custom-modal"style="display:none;">
+                            <div class="custom-modal-overlay" onclick="closeModal('reassignModal')"></div>
+
+                            <div class="custom-modal-dialog">
+
+                                <div class="custom-modal-header">
+
+                                    <h5 class="mb-0">
+                                        Reassign Lead
+                                    </h5>
+
+                                    <button
+                                        type="button"
+                                        class="btn-close"
+                                        onclick="closeModal('reassignModal')"
+                                    ></button>
+
+                                </div>
+
+                                <form
+                                    method="POST"
+                                    action="{{ route('leads.assignment.update', $lead) }}"
+                                >
+                                    @csrf
+                                    @method('PUT')
+
+                                    <div class="custom-modal-body">
+
+                                        <x-form.select
+                                            name="assigned_to"
+                                            :options="$assignableUsers"
+                                            :selected="$lead->assigned_to"
+                                            placeholder="Unassigned"
+                                            col="col-span-12"
+                                        />
+
+                                    </div>
+
+                                    <div class="custom-modal-footer">
+
+                                        <button
+                                            type="button"
+                                            class="btn btn-secondary"
+                                            onclick="closeModal('reassignModal')"
+                                        >
+                                            Cancel
+                                        </button>
+
+                                        <button
+                                            type="submit"
+                                            class="btn btn-primary"
+                                        >
+                                            <i class="ti ti-user-check me-1"></i>
+                                            Reassign
+                                        </button>
+
+                                    </div>
+
+                                </form>
+
+                            </div>
                         </div>
-                    </div>
+                        <div id="quotationModal" class="custom-modal"style="display:none;">
+                            <div class="custom-modal-overlay" onclick="closeModal('quotationModal')"></div>
 
-                    @push('scripts')
-                        <script>
-                            (function () {
-                                var toggle = document.getElementById('quotation-toggle');
-                                var panel = document.getElementById('quotation-panel');
-                                if (!toggle || !panel) return;
+                            <div class="custom-modal-dialog">
 
-                                toggle.addEventListener('change', function () {
-                                    panel.hidden = !this.checked;
-                                });
-                            })();
-                        </script>
-                    @endpush
-                @endif
+                                <div class="custom-modal-header">
+
+                                    <h5 class="mb-0">
+                                        Quotation
+                                    </h5>
+
+                                    <button
+                                        type="button"
+                                        class="btn-close"
+                                        onclick="closeModal('quotationModal')"
+                                    ></button>
+
+                                </div>
+
+                                <div class="custom-modal-body">
+
+                                    @if ($lead->quotation)
+
+                                        <dl class="grid grid-cols-12 gap-4">
+
+                                            <!-- Reference -->
+                                            <div class="col-span-6">
+                                                <dt class="stat-tile-label">
+                                                    Reference
+                                                </dt>
+                                                <dd class="mt-1 fw-bold">
+                                                    {{ $lead->quotation->reference }}
+                                                </dd>
+                                            </div>
+
+                                            <!-- Total (Aligned Right) -->
+                                            <div class="col-span-6 text-end">
+                                                <dt class="stat-tile-label">
+                                                    Total
+                                                </dt>
+                                                <dd class="mt-1 fw-bold">
+                                                    {{ number_format((float) $lead->quotation->total, 2) }}
+                                                </dd>
+                                            </div>
+
+                                        </dl>
+
+                                    @else
+
+                                        <p class="text-muted mb-0">
+                                            No quotation has been created for this lead yet.
+                                        </p>
+
+                                    @endif
+
+                                </div>
+
+                                <div class="custom-modal-footer">
+
+                                    <button
+                                        type="button"
+                                        class="btn btn-secondary"
+                                        onclick="closeModal('quotationModal')"
+                                    >
+                                        Close
+                                    </button>
+
+                                    @if ($lead->quotation)
+
+                                        @can('update', $lead)
+                                            <a
+                                                href="{{ route('leads.quotation.edit', $lead) }}"
+                                                class="btn btn-primary"
+                                            >
+                                                <i class="ti ti-pencil me-1"></i>
+                                                Edit Quotation
+                                            </a>
+                                        @endcan
+
+                                        <a
+                                            href="{{ route('leads.quotation.pdf', $lead) }}"
+                                            class="btn btn-outline-secondary"
+                                        >
+                                            <i class="ti ti-download me-1"></i>
+                                            Download PDF
+                                        </a>
+
+                                    @else
+
+                                        @can('update', $lead)
+                                            <a
+                                                href="{{ route('leads.quotation.create', $lead) }}"
+                                                class="btn btn-primary"
+                                            >
+                                                <i class="ti ti-file-invoice me-1"></i>
+                                                Create Quotation
+                                            </a>
+                                        @endcan
+
+                                    @endif
+
+                                </div>
+
+                            </div>
+                        </div>
+                        @if ($lead->quotation || Auth::user()->can('update', $lead))
+
+                        @push('scripts')
+
+                            <script>
+
+                                (function () {
+
+                                    var toggle =
+                                        document.getElementById('quotation-toggle');
+
+                                    var panel =
+                                        document.getElementById('quotation-panel');
+
+                                    if (!toggle || !panel) {
+                                        return;
+                                    }
+
+                                    toggle.addEventListener('change', function () {
+
+                                        panel.hidden = !this.checked;
+
+                                    });
+
+                                })();
+
+                            </script>
+
+                        @endpush
+
+                    @endif
+                    </dl>
             </x-card>
-
         </div>
         {{-- call history --}}
         <div class="col-span-12 xl:col-span-7">
@@ -360,3 +582,40 @@
     @endcan
 
 @endsection
+
+<script>
+    function openModal(id) {
+        const modal = document.getElementById(id);
+
+        if (!modal) {
+            console.error('Modal not found:', id);
+            return;
+        }
+
+        modal.classList.add('show');
+        modal.style.display = 'flex';
+
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeModal(id) {
+        const modal = document.getElementById(id);
+
+        if (!modal) {
+            return;
+        }
+
+        modal.classList.remove('show');
+        modal.style.display = 'none';
+
+        document.body.style.overflow = '';
+    }
+
+    document.addEventListener('keydown', function (event) {
+        if (event.key === 'Escape') {
+            document.querySelectorAll('.custom-modal.show').forEach(function (modal) {
+                closeModal(modal.id);
+            });
+        }
+    });
+</script>
