@@ -107,6 +107,7 @@ class LeadController extends Controller
             'assignableUsers' => $request->user()->can('leads.assign')
                 ? AssignLeadRequest::assignableOptions()
                 : [],
+            'activities' => app(\App\Services\LeadActivityService::class)->getActivitiesForLead($lead),
         ]);
     }
 

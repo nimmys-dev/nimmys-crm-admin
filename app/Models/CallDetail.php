@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Storage;
 
 /**
  * One logged phone call against a lead.
@@ -37,6 +38,11 @@ class CallDetail extends Model
         'called_time',
         'next_followup_date',
         'duration',
+        'interest',
+        'reason',
+        'is_item_sold',
+        'invoice_number',
+        'invoice_file_path',
     ];
 
     /**
@@ -49,14 +55,13 @@ class CallDetail extends Model
             'called_date' => 'date',
             'next_followup_date' => 'date',
             'duration' => 'integer',
+            'interest' => 'boolean',
+            'is_item_sold' => 'boolean',
         ];
     }
 
     /**
      * Columns the call history may be ordered by.
-     *
-     * Whitelisted because `sort` arrives from the query string and reaches
-     * an ORDER BY.
      *
      * @var list<string>
      */
@@ -111,6 +116,8 @@ class CallDetail extends Model
 
         $query->where(function (Builder $query) use ($escaped) {
             $query->where('remarks', 'like', $escaped)
+                ->orWhere('reason', 'like', $escaped)
+                ->orWhere('invoice_number', 'like', $escaped)
                 ->orWhereHas('caller', fn (Builder $q) => $q->where('name', 'like', $escaped));
         });
     }
@@ -171,6 +178,40 @@ class CallDetail extends Model
     | Helpers
     |--------------------------------------------------------------------------
     */
+
+    public function isAnswered(): bool
+    {
+        return $this->call_status === CallStatus::Answered;
+    }
+
+    public function isNotAnswered(): bool
+    {
+        return $this->call_status === CallStatus::NotAnswered;
+    }
+
+    public function isInterested(): bool
+    {
+        return (bool) $this->interest;
+    }
+
+    public function isItemSold(): bool
+    {
+        return (bool) $this->is_item_sold;
+    }
+
+    public function hasInvoice(): bool
+    {
+        return filled($this->invoice_number) || filled($this->invoice_file_path);
+    }
+
+    public function invoiceUrl(): ?string
+    {
+        if (! $this->invoice_file_path) {
+            return null;
+        }
+
+        return Storage::disk('public')->url($this->invoice_file_path);
+    }
 
     /**
      * The two stored columns combined, for display and sorting in PHP.

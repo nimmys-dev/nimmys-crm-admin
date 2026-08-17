@@ -1,5 +1,5 @@
 {{--
-    Searchable, paginated call history plus the "log a call" form.
+    Searchable, paginated call history plus the "log a call" modal and button.
 
     Injected by CallHistoryComposer.
 
@@ -9,64 +9,26 @@
 
 <x-card title="Call history">
     <x-slot:actions>
-        <span class="text-muted text-sm">{{ $callHistory->total() }} logged</span>
-    </x-slot:actions>
+        <div class="flex items-center gap-3">
+            <span class="text-muted text-xs font-semibold">{{ $callHistory->total() }} calls logged</span>
 
-    {{-- Log a call --}}
-    @can('create', [App\Models\CallDetail::class, $lead])
-        <details class="call-add" @if ($errors->any() && old('call_status')) open @endif>
-            <summary class="call-add-toggle">
-                <i class="ti ti-plus" aria-hidden="true"></i> Log a call
-            </summary>
-
-            <form method="POST" action="{{ route('leads.calls.store', $lead) }}" class="mt-4">
-                @csrf
-
-                @include('leads.partials.call-form', [
-                    'call' => new App\Models\CallDetail,
-                    'statusOptions' => $callStatusOptions,
-                    'callerOptions' => $callerOptions,
-                    'canAttribute' => $canAttributeCall,
-                ])
-
-                <div class="mt-4 flex justify-end">
-                    <x-button type="submit" icon="ti ti-check">Save call</x-button>
-                </div>
-            </form>
-        </details>
-    @endcan
-
-    {{-- Search --}}
-    {{-- <form method="GET" action="{{ route('leads.show', $lead) }}" class="call-filter" role="search">
-        <div class="grid grid-cols-12 gap-4 items-end">
-            <div class="col-span-12 md:col-span-5">
-                <label class="form-label" for="call-search">Search calls</label>
-                <input
-                    type="search" name="call_q" id="call-search"
-                    value="{{ $callFilters['q'] }}"
-                    class="form-control" placeholder="Remarks or caller name"
-                />
-            </div>
-
-            <x-form.select
-                name="call_status" label="Status" :options="$callStatusOptions"
-                :selected="$callFilters['call_status']" placeholder="Any status"
-                col="col-span-12 md:col-span-4"
-            />
-
-            <div class="col-span-12 md:col-span-3 flex items-center gap-2">
-                <x-button type="submit" icon="ti ti-filter">Apply</x-button>
-
-                @if ($callHasActiveFilters)
-                    <x-button variant="outline-secondary" :href="route('leads.show', $lead)" icon="ti ti-x">Reset</x-button>
-                @endif
-            </div>
+            @can('create', [App\Models\CallDetail::class, $lead])
+                <button
+                    type="button"
+                    class="btn btn-primary btn-sm flex items-center gap-1.5 shadow-sm"
+                    onclick="openModal('logCallModal')"
+                    style="white-space: nowrap;"
+                >
+                    <i class="ti ti-phone-plus"></i>
+                    <span>Log Call</span>
+                </button>
+            @endcan
         </div>
-    </form> --}}
+    </x-slot:actions>
 
     <x-dashboard-table
         :rows="$callHistory"
-        :headers="['Date', 'Time', 'Duration', 'Status', 'Called by', 'Remarks', 'Next follow-up']"
+        :headers="['Date', 'Time', 'Call Status', 'Interest', 'Sold / Invoice', 'Next follow-up', 'Called by', 'Remarks', ['label' => '', 'class' => 'w-px text-right']]"
         :empty-message="$callHasActiveFilters
             ? 'No calls match this search.'
             : 'No calls logged for this lead yet.'"
@@ -78,26 +40,63 @@
 
                 <td class="tabular">{{ $call->calledAt()->format('g:i A') }}</td>
 
-                <td class="tabular">{{ $call->durationForHumans() ?? '—' }}</td>
-
                 <td><x-call-status-badge :status="$call->call_status" /></td>
+
+                <td>
+                    @if ($call->isNotAnswered())
+                        <span class="text-muted text-xs">—</span>
+                    @elseif ($call->interest === true)
+                        <span class="badge badge-lead-active">Interested</span>
+                    @elseif ($call->interest === false)
+                        <div>
+                            <span class="badge badge-lead-lost">Not Interested</span>
+                            @if ($call->reason)
+                                <div class="text-xs text-muted mt-1" title="{{ $call->reason }}">
+                                    {{ Str::limit($call->reason, 25) }}
+                                </div>
+                            @endif
+                        </div>
+                    @else
+                        <span class="text-muted text-xs">—</span>
+                    @endif
+                </td>
+
+                <td>
+                    @if ($call->is_item_sold === true)
+                        <div>
+                            <span class="badge badge-lead-won">Sold</span>
+                            @if ($call->invoice_number)
+                                <div class="text-xs font-mono text-muted mt-1 font-semibold">{{ $call->invoice_number }}</div>
+                            @endif
+                            @if ($call->invoice_file_path)
+                                <a href="{{ $call->invoiceUrl() }}" target="_blank" class="inline-flex items-center gap-1 text-xs text-primary mt-1 hover:underline font-medium">
+                                    <i class="ti ti-paperclip"></i> Invoice
+                                </a>
+                            @endif
+                        </div>
+                    @elseif ($call->is_item_sold === false)
+                        <span class="badge badge-off">Not Sold</span>
+                    @else
+                        <span class="text-muted text-xs">—</span>
+                    @endif
+                </td>
+
+                <td><x-followup-badge :date="$call->next_followup_date" /></td>
 
                 <td>{{ $call->caller?->name ?? '—' }}</td>
 
                 <td>
                     @if (filled($call->remarks))
                         <span title="{{ strip_tags($call->remarks) }}">
-                            {{ Str::limit(strip_tags($call->remarks), 50) }}
+                            {{ Str::limit(strip_tags($call->remarks), 40) }}
                         </span>
                     @else
                         —
                     @endif
                 </td>
 
-                <td><x-followup-badge :date="$call->next_followup_date" /></td>
-
-                <!-- <td>
-                    <div class="table-actions">
+                <td class="text-right">
+                    <div class="table-actions flex items-center justify-end gap-1">
                         <x-button
                             variant="light" size="sm"
                             :href="route('leads.calls.show', [$lead, $call])"
@@ -122,11 +121,83 @@
                             />
                         @endcan
                     </div>
-                </td> -->
+                </td>
             </tr>
         @endforeach
     </x-dashboard-table>
 </x-card>
+
+{{-- ========================================================================= --}}
+{{-- LOG CALL MODAL DIALOG                                                     --}}
+{{-- ========================================================================= --}}
+@can('create', [App\Models\CallDetail::class, $lead])
+    <div id="logCallModal" class="custom-modal" style="display: none;">
+        <div class="custom-modal-overlay" onclick="closeModal('logCallModal')"></div>
+
+        <div class="custom-modal-dialog custom-modal-dialog-lg">
+            <div class="custom-modal-header">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-9 h-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center font-bold text-lg">
+                        <i class="ti ti-phone-outgoing"></i>
+                    </div>
+                    <div>
+                        <h5 class="mb-0 text-base font-bold">Log Call Activity</h5>
+                        <p class="text-xs text-muted mb-0">Record call outcome for <span class="font-semibold text-body">{{ $lead->name }}</span> ({{ $lead->reference }})</p>
+                    </div>
+                </div>
+
+                <button
+                    type="button"
+                    class="btn-close"
+                    onclick="closeModal('logCallModal')"
+                ></button>
+            </div>
+
+            <form
+                method="POST"
+                action="{{ route('leads.calls.store', $lead) }}"
+                enctype="multipart/form-data"
+                id="logCallForm"
+            >
+                @csrf
+
+                <div class="custom-modal-body">
+                    @include('leads.partials.call-form', [
+                        'call' => new App\Models\CallDetail,
+                    ])
+                </div>
+
+                <div class="custom-modal-footer bg-light/30">
+                    <button
+                        type="button"
+                        class="btn btn-secondary"
+                        onclick="closeModal('logCallModal')"
+                    >
+                        Cancel
+                    </button>
+
+                    <button
+                        type="submit"
+                        class="btn btn-primary flex items-center gap-1.5 shadow-sm"
+                    >
+                        <i class="ti ti-check"></i>
+                        <span>Save Call Record</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    @if ($errors->any() && old('call_status'))
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                if (typeof openModal === 'function') {
+                    openModal('logCallModal');
+                }
+            });
+        </script>
+    @endif
+@endcan
 
 @foreach ($callHistory as $call)
     @can('delete', $call)

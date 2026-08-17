@@ -150,6 +150,12 @@ class Lead extends Model
         return $this->hasOne(Quotation::class);
     }
 
+    /** @return HasMany<LeadActivity> */
+    public function activities(): HasMany
+    {
+        return $this->hasMany(LeadActivity::class)->latest('id');
+    }
+
     /*
     |--------------------------------------------------------------------------
     | Scopes

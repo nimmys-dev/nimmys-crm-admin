@@ -8,16 +8,28 @@
     @can('update', $lead)
         <x-button :href="route('leads.edit', $lead)" icon="ti ti-pencil">Edit</x-button>
 
-        <!-- @if ($lead->status->isOpen())
-            <x-button
-                variant="danger"
-                icon="ti ti-flag-off"
-                data-pc-toggle="modal"
-                data-pc-target="#close-lead-modal"
+        @can('create', [App\Models\CallDetail::class, $lead])
+            <button
+                type="button"
+                class="btn btn-primary"
+                onclick="openModal('logCallModal')"
+                style="white-space: nowrap;"
             >
-                Close Lead
-            </x-button>
-        @endif -->
+                <i class="ti ti-phone-plus me-1"></i>
+                Log Call
+            </button>
+        @endcan
+
+        {{-- Activity Log --}}
+        <button
+            type="button"
+            class="btn btn-outline-primary"
+            onclick="openModal('activityLogModal')"
+            style="white-space: nowrap;"
+        >
+            <i class="ti ti-history me-1"></i>
+            Activity Log
+        </button>
 
         {{-- Reassign --}}
         @can('assign', $lead)
@@ -580,6 +592,9 @@
             @endpush
         @endif
     @endcan
+
+    {{-- Activity Log Modal --}}
+    @include('leads.partials.activity-log-modal')
 
 @endsection
 

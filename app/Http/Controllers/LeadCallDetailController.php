@@ -26,7 +26,12 @@ class LeadCallDetailController extends Controller
 
     public function store(StoreCallDetailRequest $request, Lead $lead): RedirectResponse
     {
-        $call = $this->calls->createCall($lead, $request->callAttributes(), $request->user());
+        $call = $this->calls->createCall(
+            $lead,
+            $request->callAttributes(),
+            $request->user(),
+            $request->file('invoice_file')
+        );
 
         return redirect()
             ->route('leads.show', $lead)
@@ -76,7 +81,11 @@ class LeadCallDetailController extends Controller
         // call could be edited through a lead it does not belong to.
         abort_unless($call->lead_id === $lead->id, 404);
 
-        $this->calls->updateCall($call, $request->callAttributes());
+        $this->calls->updateCall(
+            $call,
+            $request->callAttributes(),
+            $request->file('invoice_file')
+        );
 
         return redirect()
             ->route('leads.show', $lead)

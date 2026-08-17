@@ -20,28 +20,103 @@
                 </x-slot:actions>
 
                 <dl class="grid grid-cols-12 gap-4">
-                    @php
-                        $details = [
-                            'Lead' => $lead->name.' ('.$lead->reference.')',
-                            'Call status' => $call->call_status->label(),
-                            'Called by' => $call->caller?->name,
-                            'Call date' => $call->called_date->format('d-M-Y'),
-                            'Call time' => $call->calledAt()->format('g:i A'),
-                            'Duration' => $call->durationForHumans(),
-                        ];
-                    @endphp
-
-                    @foreach ($details as $label => $value)
-                        <div class="col-span-12 md:col-span-6">
-                            <dt class="stat-tile-label">{{ $label }}</dt>
-                            <dd class="m-0 mt-1">{{ $value ?: '—' }}</dd>
-                        </div>
-                    @endforeach
+                    <div class="col-span-12 md:col-span-6">
+                        <dt class="stat-tile-label">Lead</dt>
+                        <dd class="m-0 mt-1 font-medium">
+                            <a href="{{ route('leads.show', $lead) }}" class="text-primary hover:underline">
+                                {{ $lead->name }} ({{ $lead->reference }})
+                            </a>
+                        </dd>
+                    </div>
 
                     <div class="col-span-12 md:col-span-6">
-                        <dt class="stat-tile-label">Next follow-up</dt>
-                        <dd class="m-0 mt-1"><x-followup-badge :date="$call->next_followup_date" /></dd>
+                        <dt class="stat-tile-label">Call Status</dt>
+                        <dd class="m-0 mt-1"><x-call-status-badge :status="$call->call_status" /></dd>
                     </div>
+
+                    <div class="col-span-12 md:col-span-6">
+                        <dt class="stat-tile-label">Called by</dt>
+                        <dd class="m-0 mt-1">{{ $call->caller?->name ?? '—' }}</dd>
+                    </div>
+
+                    <div class="col-span-12 md:col-span-6">
+                        <dt class="stat-tile-label">Call date & time</dt>
+                        <dd class="m-0 mt-1">{{ $call->called_date->format('d-M-Y') }} at {{ $call->calledAt()->format('g:i A') }}</dd>
+                    </div>
+
+                    <div class="col-span-12 md:col-span-6">
+                        <dt class="stat-tile-label">Duration</dt>
+                        <dd class="m-0 mt-1">{{ $call->durationForHumans() ?? '—' }}</dd>
+                    </div>
+
+                    {{-- Decision Tree Details --}}
+                    @if ($call->isAnswered())
+                        <div class="col-span-12 md:col-span-6">
+                            <dt class="stat-tile-label">Interest</dt>
+                            <dd class="m-0 mt-1">
+                                @if ($call->interest === true)
+                                    <span class="badge badge-lead-active">Yes (Interested)</span>
+                                @elseif ($call->interest === false)
+                                    <span class="badge badge-lead-lost">No (Not Interested)</span>
+                                @else
+                                    —
+                                @endif
+                            </dd>
+                        </div>
+
+                        @if ($call->interest === false && $call->reason)
+                            <div class="col-span-12">
+                                <dt class="stat-tile-label">Reason for Not Interested</dt>
+                                <dd class="m-0 mt-1 font-medium text-danger-600 dark:text-danger-400">{{ $call->reason }}</dd>
+                            </div>
+                        @endif
+
+                        @if ($call->interest === true)
+                            <div class="col-span-12 md:col-span-6">
+                                <dt class="stat-tile-label">Is item sold?</dt>
+                                <dd class="m-0 mt-1">
+                                    @if ($call->is_item_sold === true)
+                                        <span class="badge badge-lead-won">Yes (Sold)</span>
+                                    @elseif ($call->is_item_sold === false)
+                                        <span class="badge badge-off">No (Not Sold)</span>
+                                    @else
+                                        —
+                                    @endif
+                                </dd>
+                            </div>
+
+                            @if ($call->is_item_sold === true)
+                                @if ($call->invoice_number)
+                                    <div class="col-span-12 md:col-span-6">
+                                        <dt class="stat-tile-label">Invoice Number</dt>
+                                        <dd class="m-0 mt-1 font-mono font-semibold">{{ $call->invoice_number }}</dd>
+                                    </div>
+                                @endif
+
+                                @if ($call->invoice_file_path)
+                                    <div class="col-span-12 md:col-span-6">
+                                        <dt class="stat-tile-label">Invoice Document</dt>
+                                        <dd class="m-0 mt-1">
+                                            <a href="{{ $call->invoiceUrl() }}" target="_blank" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary-50 text-primary-700 rounded text-sm font-medium hover:bg-primary-100 transition">
+                                                <i class="ti ti-download"></i> Download / View Invoice
+                                            </a>
+                                        </dd>
+                                    </div>
+                                @endif
+                            @elseif ($call->is_item_sold === false)
+                                <div class="col-span-12 md:col-span-6">
+                                    <dt class="stat-tile-label">Next follow-up</dt>
+                                    <dd class="m-0 mt-1"><x-followup-badge :date="$call->next_followup_date" /></dd>
+                                </div>
+                            @endif
+                        @endif
+
+                    @elseif ($call->isNotAnswered())
+                        <div class="col-span-12 md:col-span-6">
+                            <dt class="stat-tile-label">Next follow-up</dt>
+                            <dd class="m-0 mt-1"><x-followup-badge :date="$call->next_followup_date" /></dd>
+                        </div>
+                    @endif
 
                     @if ($call->remarks)
                         <div class="col-span-12">
