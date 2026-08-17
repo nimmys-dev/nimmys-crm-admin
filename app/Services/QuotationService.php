@@ -6,6 +6,7 @@ use App\Models\Lead;
 use App\Models\Quotation;
 use App\Models\User;
 use App\Support\QuotationReference;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -24,7 +25,7 @@ class QuotationService
      */
     public function create(Lead $lead, array $attributes, array $items, User $actor): Quotation
     {
-        return QuotationReference::withNext(function (string $reference) use ($lead, $attributes, $items, $actor) {
+        $quotation = QuotationReference::withNext(function (string $reference) use ($lead, $attributes, $items, $actor) {
             $quotation = $lead->quotation()->create([
                 ...$attributes,
                 ...$this->calculateTotals($items, $attributes['discount_percent'] ?? null, $attributes['tax_percent'] ?? null),
@@ -36,6 +37,10 @@ class QuotationService
 
             return $quotation;
         });
+
+        app(LeadActivityService::class)->logQuotation($lead, $actor, $quotation, 'created');
+
+        return $quotation;
     }
 
     /**
@@ -44,7 +49,7 @@ class QuotationService
      */
     public function update(Quotation $quotation, array $attributes, array $items): Quotation
     {
-        return DB::transaction(function () use ($quotation, $attributes, $items) {
+        $updated = DB::transaction(function () use ($quotation, $attributes, $items) {
             $quotation->update([
                 ...$attributes,
                 ...$this->calculateTotals($items, $attributes['discount_percent'] ?? null, $attributes['tax_percent'] ?? null),
@@ -54,6 +59,13 @@ class QuotationService
 
             return $quotation->refresh();
         });
+
+        $effectiveActor = Auth::user() ?? User::first();
+        if ($effectiveActor) {
+            app(LeadActivityService::class)->logQuotation($quotation->lead, $effectiveActor, $updated, 'updated');
+        }
+
+        return $updated;
     }
 
     public function delete(Quotation $quotation): void

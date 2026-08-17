@@ -8,7 +8,7 @@
         <div class="col-span-12 xl:col-span-8">
             <x-card :title="'Edit call — ' . $lead->reference">
 
-                <form method="POST" action="{{ route('leads.calls.update', [$lead, $call]) }}">
+                <form method="POST" action="{{ route('leads.calls.update', [$lead, $call]) }}" enctype="multipart/form-data">
                     @csrf
                     @method('PUT')
 

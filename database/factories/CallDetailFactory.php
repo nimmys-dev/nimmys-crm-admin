@@ -19,12 +19,17 @@ class CallDetailFactory extends Factory
     {
         return [
             'lead_id' => Lead::factory(),
-            'call_status' => CallStatus::Connected,
+            'call_status' => CallStatus::Answered,
+            'interest' => true,
+            'is_item_sold' => false,
+            'reason' => null,
+            'invoice_number' => null,
+            'invoice_file_path' => null,
             'remarks' => $this->faker->sentence(),
             'called_by' => null,
             'called_date' => today(),
             'called_time' => '10:30:00',
-            'next_followup_date' => null,
+            'next_followup_date' => today()->addDays(3),
             'duration' => $this->faker->numberBetween(15, 900),
         ];
     }
@@ -32,6 +37,45 @@ class CallDetailFactory extends Factory
     public function status(CallStatus $status): static
     {
         return $this->state(fn () => ['call_status' => $status]);
+    }
+
+    public function notAnswered(): static
+    {
+        return $this->state(fn () => [
+            'call_status' => CallStatus::NotAnswered,
+            'interest' => null,
+            'reason' => null,
+            'is_item_sold' => null,
+            'invoice_number' => null,
+            'invoice_file_path' => null,
+            'duration' => null,
+            'next_followup_date' => today()->addDays(2),
+        ]);
+    }
+
+    public function notInterested(string $reason = 'Not needed'): static
+    {
+        return $this->state(fn () => [
+            'call_status' => CallStatus::Answered,
+            'interest' => false,
+            'reason' => $reason,
+            'is_item_sold' => null,
+            'invoice_number' => null,
+            'invoice_file_path' => null,
+            'next_followup_date' => null,
+        ]);
+    }
+
+    public function sold(string $invoiceNumber = 'INV-1001'): static
+    {
+        return $this->state(fn () => [
+            'call_status' => CallStatus::Answered,
+            'interest' => true,
+            'is_item_sold' => true,
+            'reason' => null,
+            'invoice_number' => $invoiceNumber,
+            'next_followup_date' => null,
+        ]);
     }
 
     public function by(int $userId): static

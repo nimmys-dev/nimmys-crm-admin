@@ -158,6 +158,11 @@ class LeadQuotationController extends Controller
             'logoDataUri' => $this->logoDataUri($company),
         ])->setPaper('a4');
 
+        $actor = $request->user();
+        if ($actor) {
+            app(\App\Services\LeadActivityService::class)->logQuotation($lead, $actor, $quotation, 'downloaded');
+        }
+
         return $pdf->download("Quotation-{$quotation->reference}.pdf");
     }
 

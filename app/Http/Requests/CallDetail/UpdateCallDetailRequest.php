@@ -12,4 +12,14 @@ class UpdateCallDetailRequest extends StoreCallDetailRequest
     {
         return $this->user()?->can('update', $this->route('call')) ?? false;
     }
+
+    protected function isInvoiceFileRequired(): bool
+    {
+        $call = $this->route('call');
+        if ($call && $call->invoice_file_path) {
+            return false;
+        }
+
+        return parent::isInvoiceFileRequired();
+    }
 }

@@ -9,6 +9,7 @@ use App\Models\LeadFollowUp;
 use App\Models\User;
 use App\Support\LeadReference;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -20,7 +21,10 @@ use Illuminate\Support\Facades\DB;
  */
 class LeadService
 {
-    public function __construct(private readonly LeadRepository $leads) {}
+    public function __construct(
+        private readonly LeadRepository $leads,
+        private readonly LeadActivityService $activityService
+    ) {}
 
     /**
      * Create a lead, allocating its reference inside the same transaction so
@@ -30,7 +34,7 @@ class LeadService
      */
     public function create(array $attributes, User $actor): Lead
     {
-        return LeadReference::withNext(function (string $reference) use ($attributes, $actor) {
+        $createdLead = LeadReference::withNext(function (string $reference) use ($attributes, $actor) {
             $attributes['reference'] = $reference;
             $attributes['created_by'] = $actor->id;
 
@@ -42,6 +46,10 @@ class LeadService
 
             return $this->leads->create($this->withClosureState($attributes, null));
         });
+
+        $this->activityService->logCreated($createdLead, $actor, $attributes);
+
+        return $createdLead;
     }
 
     /**
@@ -49,7 +57,13 @@ class LeadService
      */
     public function update(Lead $lead, array $attributes, User $actor): Lead
     {
-        return $this->leads->update($lead, $this->withClosureState($attributes, $lead));
+        $original = $lead->getRawOriginal();
+        $updatedLead = $this->leads->update($lead, $this->withClosureState($attributes, $lead));
+        $changes = $updatedLead->getChanges();
+
+        $this->activityService->logUpdated($updatedLead, $actor, $changes, $original);
+
+        return $updatedLead;
     }
 
     public function delete(Lead $lead): void
@@ -63,9 +77,18 @@ class LeadService
      * Kept separate from update() because it is a distinct permission
      * (leads.assign) and a distinct audit event.
      */
-    public function assign(Lead $lead, ?int $userId): Lead
+    public function assign(Lead $lead, ?int $userId, ?User $actor = null): Lead
     {
-        return $this->leads->update($lead, ['assigned_to' => $userId]);
+        $oldUser = $lead->owner;
+        $updatedLead = $this->leads->update($lead, ['assigned_to' => $userId]);
+        $newUser = $userId ? User::find($userId) : null;
+        $effectiveActor = $actor ?? Auth::user() ?? $oldUser ?? $newUser ?? User::first();
+
+        if ($effectiveActor) {
+            $this->activityService->logAssigned($updatedLead, $effectiveActor, $oldUser, $newUser);
+        }
+
+        return $updatedLead;
     }
 
     /**
@@ -77,12 +100,19 @@ class LeadService
      * (closed_at, clearing a stale lost_reason) is still handled the same
      * way as a full update, via withClosureState().
      */
-    public function close(Lead $lead, LeadStatus $status, ?string $reason = null): Lead
+    public function close(Lead $lead, LeadStatus $status, ?string $reason = null, ?User $actor = null): Lead
     {
-        return $this->leads->update($lead, $this->withClosureState([
+        $updatedLead = $this->leads->update($lead, $this->withClosureState([
             'status' => $status,
             'lost_reason' => $reason,
         ], $lead));
+
+        $effectiveActor = $actor ?? Auth::user() ?? User::first();
+        if ($effectiveActor) {
+            $this->activityService->logClosed($updatedLead, $effectiveActor, $status, $reason);
+        }
+
+        return $updatedLead;
     }
 
     /*
@@ -102,7 +132,7 @@ class LeadService
      */
     public function addFollowUp(Lead $lead, array $attributes, User $actor): LeadFollowUp
     {
-        return DB::transaction(function () use ($lead, $attributes, $actor) {
+        $followUp = DB::transaction(function () use ($lead, $attributes, $actor) {
             $followUp = $lead->followUps()->create([
                 ...$attributes,
                 'user_id' => $actor->id,
@@ -117,6 +147,10 @@ class LeadService
 
             return $followUp;
         });
+
+        $this->activityService->logFollowUp($lead, $actor, $followUp);
+
+        return $followUp;
     }
 
     public function completeFollowUp(LeadFollowUp $followUp, ?string $outcome = null): LeadFollowUp

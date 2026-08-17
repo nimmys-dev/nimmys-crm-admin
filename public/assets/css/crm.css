@@ -1161,3 +1161,397 @@ body.modal-open {
     padding: 15px 20px;
     border-top: 1px solid #e5e7eb;
 }
+
+.custom-modal-dialog-lg {
+    max-width: 720px;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.custom-modal-dialog-lg .custom-modal-body {
+    overflow-y: auto;
+    max-height: calc(90vh - 130px);
+}
+
+/* ------------------------------------------------ Call Log Decision UI */
+.decision-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+}
+
+@media (max-width: 640px) {
+    .decision-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.decision-tile {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    border: 2px solid #e2e8f0;
+    border-radius: 10px;
+    background: #ffffff;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+    user-select: none;
+}
+
+[data-pc-theme='dark'] .decision-tile {
+    background: #1e2227;
+    border-color: #333a42;
+}
+
+.decision-tile:hover {
+    border-color: #cbd5e1;
+    background: #f8fafc;
+    transform: translateY(-1px);
+}
+
+[data-pc-theme='dark'] .decision-tile:hover {
+    border-color: #475569;
+    background: #252b33;
+}
+
+.decision-tile.active {
+    border-color: var(--crm-accent, #7a0000);
+    background: color-mix(in srgb, var(--crm-accent, #7a0000) 6%, #ffffff);
+    box-shadow: 0 4px 12px color-mix(in srgb, var(--crm-accent, #7a0000) 15%, transparent);
+}
+
+[data-pc-theme='dark'] .decision-tile.active {
+    background: color-mix(in srgb, var(--crm-accent, #a83232) 18%, #1e2227);
+    border-color: var(--crm-accent, #a83232);
+}
+
+.decision-tile.active-success {
+    border-color: #10b981;
+    background: #ecfdf5;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.15);
+}
+
+[data-pc-theme='dark'] .decision-tile.active-success {
+    background: rgba(16, 185, 129, 0.15);
+    border-color: #10b981;
+}
+
+.decision-tile.active-danger {
+    border-color: #ef4444;
+    background: #fef2f2;
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.15);
+}
+
+[data-pc-theme='dark'] .decision-tile.active-danger {
+    background: rgba(239, 68, 68, 0.15);
+    border-color: #ef4444;
+}
+
+.decision-tile-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    background: #f1f5f9;
+    color: #475569;
+    flex-shrink: 0;
+    transition: all 0.2s ease;
+}
+
+[data-pc-theme='dark'] .decision-tile-icon {
+    background: #2c333d;
+    color: #94a3b8;
+}
+
+.decision-tile.active .decision-tile-icon {
+    background: var(--crm-accent, #7a0000);
+    color: #ffffff;
+}
+
+.decision-tile.active-success .decision-tile-icon {
+    background: #10b981;
+    color: #ffffff;
+}
+
+.decision-tile.active-danger .decision-tile-icon {
+    background: #ef4444;
+    color: #ffffff;
+}
+
+.decision-tile-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.decision-tile-title {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: #1e293b;
+    line-height: 1.25;
+}
+
+[data-pc-theme='dark'] .decision-tile-title {
+    color: #f1f5f9;
+}
+
+.decision-tile-desc {
+    font-size: 0.75rem;
+    color: #64748b;
+    margin-top: 2px;
+    line-height: 1.2;
+}
+
+[data-pc-theme='dark'] .decision-tile-desc {
+    color: #94a3b8;
+}
+
+.decision-tile-check {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 2px solid #cbd5e1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    color: transparent;
+    transition: all 0.2s ease;
+}
+
+.decision-tile.active .decision-tile-check,
+.decision-tile.active-success .decision-tile-check,
+.decision-tile.active-danger .decision-tile-check {
+    background: currentColor;
+    border-color: transparent;
+}
+
+.decision-tile.active .decision-tile-check i,
+.decision-tile.active-success .decision-tile-check i,
+.decision-tile.active-danger .decision-tile-check i {
+    color: #ffffff;
+}
+
+/* Branch Cards */
+.branch-card {
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    background: #f8fafc;
+    padding: 16px;
+    animation: fadeInBranch 0.25s ease-out;
+}
+
+[data-pc-theme='dark'] .branch-card {
+    background: #181b20;
+    border-color: #2b3038;
+}
+
+@keyframes fadeInBranch {
+    from {
+        opacity: 0;
+        transform: translateY(-6px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.reason-pills-wrap {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 8px;
+}
+
+.reason-pill {
+    display: inline-block;
+    padding: 4px 10px;
+    font-size: 0.75rem;
+    border-radius: 16px;
+    background: #e2e8f0;
+    color: #334155;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    user-select: none;
+}
+
+[data-pc-theme='dark'] .reason-pill {
+    background: #2b3038;
+    color: #cbd5e1;
+}
+
+.reason-pill:hover {
+    background: #cbd5e1;
+    color: #0f172a;
+    transform: scale(1.02);
+}
+
+[data-pc-theme='dark'] .reason-pill:hover {
+    background: #3b424d;
+    color: #ffffff;
+}
+
+/* Upload drop box */
+.call-upload-box {
+    border: 2px dashed #cbd5e1;
+    border-radius: 10px;
+    padding: 18px 16px;
+    text-align: center;
+    background: #ffffff;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+[data-pc-theme='dark'] .call-upload-box {
+    background: #1e2227;
+    border-color: #3b424d;
+}
+
+.call-upload-box:hover {
+    border-color: var(--crm-accent, #7a0000);
+    background: #fcfdfe;
+}
+
+/* ------------------------------------------------ Activity Log Timeline */
+.activity-filter-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+[data-pc-theme='dark'] .activity-filter-tabs {
+    border-color: #2e343d;
+}
+
+.activity-filter-btn {
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #64748b;
+    background: #f1f5f9;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+[data-pc-theme='dark'] .activity-filter-btn {
+    background: #252b33;
+    color: #94a3b8;
+}
+
+.activity-filter-btn:hover {
+    background: #e2e8f0;
+    color: #1e293b;
+}
+
+.activity-filter-btn.active {
+    background: var(--crm-accent, #7a0000);
+    color: #ffffff;
+}
+
+.activity-timeline {
+    position: relative;
+    padding-left: 28px;
+    margin-top: 16px;
+}
+
+.activity-timeline::before {
+    content: '';
+    position: absolute;
+    top: 10px;
+    bottom: 10px;
+    left: 11px;
+    width: 2px;
+    background: #e2e8f0;
+}
+
+[data-pc-theme='dark'] .activity-timeline::before {
+    background: #333a42;
+}
+
+.activity-item {
+    position: relative;
+    margin-bottom: 20px;
+    animation: fadeInActivity 0.25s ease-out;
+}
+
+.activity-item:last-child {
+    margin-bottom: 0;
+}
+
+@keyframes fadeInActivity {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.activity-dot {
+    position: absolute;
+    left: -28px;
+    top: 4px;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    box-shadow: 0 0 0 4px #ffffff;
+    z-index: 2;
+}
+
+[data-pc-theme='dark'] .activity-dot {
+    box-shadow: 0 0 0 4px #181b20;
+}
+
+.activity-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 12px 16px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    transition: all 0.2s ease;
+}
+
+[data-pc-theme='dark'] .activity-card {
+    background: #1e2227;
+    border-color: #2e343d;
+}
+
+.activity-card:hover {
+    border-color: #cbd5e1;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+}
+
+.activity-meta-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    color: #475569;
+}
+
+[data-pc-theme='dark'] .activity-meta-badge {
+    background: #252b33;
+    border-color: #333a42;
+    color: #94a3b8;
+}
