@@ -68,8 +68,15 @@
                             @if ($call->invoice_number)
                                 <div class="text-xs font-mono text-muted mt-1 font-semibold">{{ $call->invoice_number }}</div>
                             @endif
-                            @if ($call->invoice_file_path)
+                            <!-- @if ($call->invoice_file_path)
                                 <a href="{{ $call->invoiceUrl() }}" target="_blank" class="inline-flex items-center gap-1 text-xs text-primary mt-1 hover:underline font-medium">
+                                    <i class="ti ti-paperclip"></i> Invoice
+                                </a>
+                            @endif -->
+                            @if ($call->invoice_file_path)
+                                <a href="{{ Storage::url($call->invoice_file_path) }}"
+                                target="_blank"
+                                class="inline-flex items-center gap-1 text-xs text-primary mt-1 hover:underline font-medium">
                                     <i class="ti ti-paperclip"></i> Invoice
                                 </a>
                             @endif
@@ -111,7 +118,7 @@
                             />
                         @endcan
 
-                        @can('delete', $call)
+                        <!-- @can('delete', $call)
                             <x-button
                                 variant="light" size="sm"
                                 icon="ti ti-trash"
@@ -119,7 +126,7 @@
                                 data-pc-target="#delete-call-{{ $call->id }}"
                                 aria-label="Delete call"
                             />
-                        @endcan
+                        @endcan -->
                     </div>
                 </td>
             </tr>
