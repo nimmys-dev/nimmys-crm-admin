@@ -11,9 +11,17 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\DB;
 use App\Support\QuotationReference;
+use App\Models\CompanyProfile;
+use App\Services\CompanyLogoService;
 
 class LeadController extends Controller
 {
+    protected CompanyLogoService $logos;
+
+    public function __construct(CompanyLogoService $logos)
+    {
+        $this->logos = $logos;
+    }
     // public function createLead(Request $request): JsonResponse
     // {
     //     $validated = $request->validate([
@@ -1094,6 +1102,194 @@ class LeadController extends Controller
                 'from' => $leads->firstItem(),
                 'to' => $leads->lastItem(),
             ],
+        ], 200);
+    }
+
+    public function quotationPdfDetails(
+            Request $request,
+            Lead $lead
+        ): JsonResponse {
+
+        // FIND QUOTATION
+
+        $quotation = $lead->quotation;
+
+        if (!$quotation) {
+            return response()->json([
+                'status' => false,
+                'status_code' => 404,
+                'message' => 'Quotation not found for this lead',
+            ], 404);
+        }
+
+        // LOAD ITEMS
+        $quotation->load('items');
+
+        // =========================================
+        // COMPANY
+        // =========================================
+
+        $company = CompanyProfile::current();
+
+        // =========================================
+        // RESPONSE
+        // =========================================
+
+        return response()->json([
+
+            'status' => true,
+
+            'status_code' => 200,
+
+            'message' => 'Quotation PDF details retrieved successfully',
+
+            'data' => [
+
+                // =====================================
+                // LEAD DETAILS
+                // =====================================
+
+                'lead' => [
+
+                    'id' =>
+                        $lead->id,
+
+                    'reference' =>
+                        $lead->reference,
+
+                    'name' =>
+                        $lead->name,
+
+                    'phone' =>
+                        $lead->phone,
+
+                    'source' =>
+                        $lead->source?->value ?? $lead->source,
+
+                    'assigned_to' =>
+                        $lead->owner?->name,
+
+                    'description' =>
+                        $lead->description,
+                ],
+
+                // =====================================
+                // QUOTATION DETAILS
+                // =====================================
+
+                'quotation' => [
+
+                    'id' =>
+                        $quotation->id,
+
+                    'reference' =>
+                        $quotation->reference,
+
+                    'customer_name' =>
+                        $quotation->customer_name,
+
+                    'customer_address' =>
+                        $quotation->customer_address,
+
+                    'issue_date' =>
+                        $quotation->issue_date,
+
+                    'terms' =>
+                        $quotation->terms,
+
+                    'subtotal' =>
+                        $quotation->subtotal,
+
+                    'discount_percent' =>
+                        $quotation->discount_percent,
+
+                    'tax_percent' =>
+                        $quotation->tax_percent,
+
+                    'total' =>
+                        $quotation->total,
+
+                    // =================================
+                    // ITEMS
+                    // =================================
+
+                    'items' =>
+                        $quotation->items
+                            ->map(function ($item) {
+
+                                return [
+
+                                    'id' =>
+                                        $item->id,
+
+                                    'description' =>
+                                        $item->description,
+
+                                    'quantity' =>
+                                        $item->quantity,
+
+                                    'rate' =>
+                                        $item->rate,
+
+                                    'basic_rate' =>
+                                        $item->basic_rate,
+
+                                    'tax_percent' =>
+                                        $item->tax_percent,
+
+                                    'tax_amount' =>
+                                        $item->tax_amount,
+
+                                    'amount' =>
+                                        $item->amount,
+
+                                    'sort_order' =>
+                                        $item->sort_order,
+                                ];
+                            })
+                            ->values()
+                            ->toArray(),
+                ],
+
+                // =====================================
+                // COMPANY DETAILS
+                // =====================================
+
+                'company' => [
+
+                    'id' =>
+                        $company->id,
+
+                    'name' =>
+                        $company->name,
+
+                    'address_line' =>
+                        $company->address_line,
+
+                    'city' =>
+                        $company->city,
+
+                    'state' =>
+                        $company->state,
+
+                    'postal_code' =>
+                        $company->postal_code,
+
+                    'country' =>
+                        $company->country,
+
+                    'phone' =>
+                        $company->phone,
+
+                    'email' =>
+                        $company->email,
+
+                    'logo' => $company->logo_path
+                    ? url('storage/' . $company->logo_path)
+                    : null,
+                ],
+            ],
+
         ], 200);
     }
 }

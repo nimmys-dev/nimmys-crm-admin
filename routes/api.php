@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\StaffController;
 use App\Http\Controllers\Api\LeadController;
+use App\Http\Controllers\Api\SettingsController;
 
 
 Route::post('/login', [AuthController::class, 'login']);
@@ -29,4 +30,11 @@ Route::middleware('auth:sanctum')->group(function () {
      Route::get('/leads', [LeadController::class, 'leadList']);
      Route::get('/lead-sources', [LeadController::class, 'getLeadSources']);
      Route::get('/lead-assignees', [LeadController::class, 'getLeadAssignees']);
+     Route::get('/leads/{lead}/quotation/pdf-details',[LeadController::class, 'quotationPdfDetails']);
+
+    //settings
+    Route::get('/company-profile',[SettingsController::class, 'companyProfile']);
+    Route::post('/company-profile/update',[SettingsController::class, 'updateCompanyProfile']);
+
+   
 });
