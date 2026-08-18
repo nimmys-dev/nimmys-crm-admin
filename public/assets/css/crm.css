@@ -1555,3 +1555,30 @@ body.modal-open {
     border-color: #333a42;
     color: #94a3b8;
 }
+.page-actions-responsive {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: nowrap;
+}
+
+/* Phone screen only */
+@media (max-width: 576px) {
+    .page-actions-responsive {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+        width: 100%;
+    }
+
+    .page-actions-responsive > * {
+        width: 100%;
+        min-width: 0;
+    }
+
+    .page-actions-responsive .btn {
+        width: 100%;
+        justify-content: center;
+        white-space: nowrap !important;
+    }
+}

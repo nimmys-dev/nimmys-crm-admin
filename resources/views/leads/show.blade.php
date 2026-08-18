@@ -3,6 +3,7 @@
 @section('title', $lead->name)
 
 @section('page-actions')
+<div class="page-actions-responsive">
     <x-button variant="outline-secondary" :href="route('leads.index')" icon="ti ti-arrow-left">Back</x-button>
 
     @can('update', $lead)
@@ -60,6 +61,7 @@
 
         @endif
     @endcan
+</div>
 @endsection
 
 @section('content')
