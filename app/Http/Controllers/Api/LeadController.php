@@ -9,51 +9,355 @@ use App\Enums\LeadSource;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\DB;
+use App\Support\QuotationReference;
 
 class LeadController extends Controller
 {
+    // public function createLead(Request $request): JsonResponse
+    // {
+    //     $validated = $request->validate([
+    //         'name' => 'required|string|max:255',
+    //         'phone' => 'required|string|max:20',
+
+    //         'source' => [
+    //             'nullable',
+    //             Rule::enum(LeadSource::class),
+    //         ],
+
+    //         'assigned_to' => 'nullable|exists:users,id',
+    //         'description' => 'nullable|string',
+    //     ]);
+
+    //     $lastLead = Lead::latest('id')->first();
+
+    //     $nextNumber = $lastLead
+    //         ? ((int) str_replace('LEAD-', '', $lastLead->reference)) + 1
+    //         : 1;
+
+    //     $reference = 'LEAD-' . str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
+
+    //     $lead = Lead::create([
+    //         'reference' => $reference,
+    //         'status' => 'new',
+    //         'priority' => 'medium',
+    //         'name' => $validated['name'],
+    //         'phone' => $validated['phone'],
+    //         'source' => $validated['source'] ?? null,
+    //         'assigned_to' => $validated['assigned_to'] ?? null,
+    //         'description' => $validated['description'] ?? null,
+    //         'created_by' => auth()->id(),
+    //     ]);
+
+    //     return response()->json([
+    //         'status' => true,
+    //         'status_code' => 201,
+    //         'message' => 'Lead created successfully',
+    //         'data' => $lead,
+    //     ], 201);
+    // }
+
+
     public function createLead(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'phone' => 'required|string|max:20',
 
-            'source' => [
-                'nullable',
-                Rule::enum(LeadSource::class),
-            ],
+            'name' => ['required','string','max:255',],
+            'phone' => ['required','string','max:20',],
+            'source' => ['nullable',Rule::enum(LeadSource::class),],
+            'assigned_to' => ['nullable','exists:users,id',],
+            'description' => ['nullable','string',],
 
-            'assigned_to' => 'nullable|exists:users,id',
-            'description' => 'nullable|string',
+            // QUOTATION
+
+            'quotation' => ['required','array', ],
+            'quotation.customer_name' => [ 'required','string','max:255',],
+            'quotation.customer_address' => [ 'nullable','string','max:1000',],
+            'quotation.issue_date' => ['required','date',],
+            'quotation.terms' => ['nullable','string',],
+
+            // QUOTATION ITEMS
+
+            'quotation.items' => ['required', 'array','min:1',],
+            'quotation.items.*.description' => ['required','string','max:500',],
+            'quotation.items.*.quantity' => ['required','numeric','min:1',],
+            'quotation.items.*.rate' => ['required','numeric','min:0',],
+            'quotation.items.*.tax_percent' => ['nullable','numeric','min:0','max:100',],
         ]);
 
-        $lastLead = Lead::latest('id')->first();
+        // CREATE LEAD + QUOTATION
 
-        $nextNumber = $lastLead
-            ? ((int) str_replace('LEAD-', '', $lastLead->reference)) + 1
-            : 1;
+        $result = QuotationReference::withNext(
+            function (string $quotationReference) use (
+                $validated,
+                $request
+            ) {
+                // GENERATE LEAD REFERENCE
+                $lastLead = Lead::latest('id')->first();
+                $nextLeadNumber = $lastLead
+                    ? (
+                        (int) str_replace(
+                            'LEAD-',
+                            '',
+                            $lastLead->reference
+                        )
+                    ) + 1
+                    : 1;
+                $leadReference = 'LEAD-' . str_pad(
+                    $nextLeadNumber,
+                    4,
+                    '0',
+                    STR_PAD_LEFT
+                );
 
-        $reference = 'LEAD-' . str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
+                // CREATE LEAD
 
-        $lead = Lead::create([
-            'reference' => $reference,
-            'status' => 'new',
-            'priority' => 'medium',
-            'name' => $validated['name'],
-            'phone' => $validated['phone'],
-            'source' => $validated['source'] ?? null,
-            'assigned_to' => $validated['assigned_to'] ?? null,
-            'description' => $validated['description'] ?? null,
-            'created_by' => auth()->id(),
-        ]);
+                $lead = Lead::create([
+                    'reference' => $leadReference,
+                    'name' => $validated['name'],
+                    'phone' => $validated['phone'],
+                    'source' =>$validated['source'] ?? null,
+                    'assigned_to' =>$validated['assigned_to'] ?? null,
+                    'description' =>$validated['description'] ?? null,
+                    'created_by' =>$request->user()->id,
+                ]);
 
+                // QUOTATION DATA
+                $quotationData = $validated['quotation'];
+
+                // CALCULATE QUOTATION TOTAL
+                $quotationSubtotal = 0;
+                foreach ($quotationData['items'] as $item) {
+
+                    $quantity = (float) $item['quantity'];
+                    $rate = (float) $item['rate'];
+
+                    $quotationSubtotal +=
+                        $quantity * $rate;
+                }
+
+                $quotationSubtotal = round(
+                    $quotationSubtotal,
+                    2
+                );
+
+                // CREATE QUOTATION
+                $quotation = $lead->quotation()->create([
+                    'reference' => $quotationReference,
+                    'customer_name' =>$quotationData['customer_name'],
+                    'customer_address' =>$quotationData['customer_address'] ?? null,
+                    'issue_date' => $quotationData['issue_date'],
+                    'terms' =>$quotationData['terms']?? null,
+                    'subtotal' =>$quotationSubtotal,
+                    'discount_percent' =>null,
+                    'tax_percent' =>null,
+                    'total' => 0,
+                    'created_by' =>$request->user()->id,
+                ]);
+
+
+                // CREATE QUOTATION ITEMS
+
+                foreach (
+                    $quotationData['items']
+                    as $index => $item
+                ) {
+
+                    $quantity = (float) $item['quantity'];
+                    $rate = (float) $item['rate'];
+                    $taxPercent = isset($item['tax_percent'])
+                        ? (float) $item['tax_percent']
+                        : 18.0;
+
+                    // BASIC RATE
+                    //
+                    // If rate includes tax:
+                    // 25000 / 1.18 = 21186.44
+                    //
+
+                    $basicRate = $taxPercent > 0
+                        ? round(
+                            $rate / (
+                                1 + ($taxPercent / 100)
+                            ),
+                            2
+                        )
+                        : $rate;
+
+                    // TAX AMOUNT
+
+                    $taxAmount = round(
+                        ($rate - $basicRate) * $quantity,
+                        2
+                    );
+
+
+                    // AMOUNT
+                    // quotation_items.amount is required
+
+                    $amount = round(
+                        $quantity * $rate,
+                        2
+                    );
+
+                    // CREATE ITEM
+
+                    $quotation->items()->create([
+
+                        'description' =>
+                            $item['description'],
+
+                        'quantity' =>
+                            number_format(
+                                $quantity,
+                                2,
+                                '.',
+                                ''
+                            ),
+
+                        'rate' =>
+                            number_format(
+                                $rate,
+                                2,
+                                '.',
+                                ''
+                            ),
+
+                        'tax_percent' =>
+                            number_format(
+                                $taxPercent,
+                                2,
+                                '.',
+                                ''
+                            ),
+
+                        'basic_rate' =>
+                            number_format(
+                                $basicRate,
+                                2,
+                                '.',
+                                ''
+                            ),
+
+                        'tax_amount' =>
+                            number_format(
+                                $taxAmount,
+                                2,
+                                '.',
+                                ''
+                            ),
+
+                        'amount' =>
+                            number_format(
+                                $amount,
+                                2,
+                                '.',
+                                ''
+                            ),
+
+                        'sort_order' =>
+                            $index,
+                    ]);
+                }
+
+
+                // =============================================
+                // CALCULATE FINAL QUOTATION TOTAL
+                // =============================================
+
+                $quotationTotal = $quotation
+                    ->items()
+                    ->sum('amount');
+
+
+                // =============================================
+                // UPDATE QUOTATION
+                // =============================================
+
+                $quotation->update([
+
+                    'total' =>
+                        number_format(
+                            (float) $quotationTotal,
+                            2,
+                            '.',
+                            ''
+                        ),
+                ]);
+
+                // LOAD ITEMS
+                $quotation->load('items');
+
+                // RETURN
+                return [
+
+                    'lead' =>$lead,
+                    'quotation' =>$quotation,
+                ];
+            }
+        );
+
+
+        // API RESPONSE
         return response()->json([
+
             'status' => true,
             'status_code' => 201,
-            'message' => 'Lead created successfully',
-            'data' => $lead,
+            'message' =>'Lead and quotation created successfully',
+            'data' => [
+                // LEAD
+                'lead' => [
+                    'id' =>$result['lead']->id,
+                    'reference' =>$result['lead']->reference,
+                    'name' =>$result['lead']->name,
+                    'phone' =>$result['lead']->phone,
+                    'source' =>$result['lead']->source?->value,
+                    'assigned_to' =>$result['lead']->assigned_to,
+                    'description' =>$result['lead']->description,
+                    'created_by' =>$result['lead']->created_by,
+                    'created_at' =>$result['lead']->created_at,
+                ],
+
+                // QUOTATION
+                'quotation' => [
+                    'id' =>$result['quotation']->id,
+                    'reference' =>$result['quotation']->reference,
+                    'customer_name' =>$result['quotation']->customer_name,
+                    'customer_address' =>$result['quotation']->customer_address,
+                    'issue_date' =>$result['quotation']->issue_date,
+                    'terms' =>$result['quotation']->terms,
+                    'subtotal' =>$result['quotation']->subtotal,
+                    'total' =>$result['quotation']->total,
+
+                    // ITEMS
+
+                    'items' =>
+                        $result['quotation']
+                            ->items
+                            ->map(function ($item) {
+
+                                return [
+                                    'id' =>$item->id,
+                                    'description' =>$item->description,
+                                    'quantity' =>$item->quantity,
+                                    'rate' =>$item->rate,
+                                    'basic_rate' =>$item->basic_rate,
+                                    'tax_percent' =>$item->tax_percent,
+                                    'tax_amount' =>$item->tax_amount,
+                                    'amount' =>$item->amount,
+                                    'sort_order' =>$item->sort_order,
+                                ];
+                            })
+                            ->values()
+                            ->toArray(),
+                ],
+            ],
+
         ], 201);
     }
+
+
+
 
     public function viewLead($id): JsonResponse
     {
