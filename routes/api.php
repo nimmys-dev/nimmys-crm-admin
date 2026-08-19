@@ -31,6 +31,8 @@ Route::middleware('auth:sanctum')->group(function () {
      Route::get('/lead-sources', [LeadController::class, 'getLeadSources']);
      Route::get('/lead-assignees', [LeadController::class, 'getLeadAssignees']);
      Route::get('/leads/{lead}/quotation/pdf-details',[LeadController::class, 'quotationPdfDetails']);
+     Route::post('/leads/{lead}/calls',[LeadController::class, 'addCall']);
+     Route::get('/leads/{lead}/calls/{call}',[LeadController::class, 'getCallDetails']);
 
     //settings
     Route::get('/company-profile',[SettingsController::class, 'companyProfile']);

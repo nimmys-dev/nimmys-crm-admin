@@ -13,14 +13,21 @@ use Illuminate\Support\Facades\DB;
 use App\Support\QuotationReference;
 use App\Models\CompanyProfile;
 use App\Services\CompanyLogoService;
+use App\Services\CallDetailService;
+use App\Http\Requests\Api\StoreCallDetailRequest;
+use App\Models\CallDetail;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\Storage;
 
 class LeadController extends Controller
 {
     protected CompanyLogoService $logos;
+    protected CallDetailService $calls;
 
-    public function __construct(CompanyLogoService $logos)
+    public function __construct(CompanyLogoService $logos ,CallDetailService $calls)
     {
         $this->logos = $logos;
+        $this->calls = $calls;
     }
     // public function createLead(Request $request): JsonResponse
     // {
@@ -1120,191 +1127,556 @@ class LeadController extends Controller
         ], 200);
     }
 
-    public function quotationPdfDetails(
-            Request $request,
-            Lead $lead
-        ): JsonResponse {
+    // public function quotationPdfDetails(
+    //         Request $request,
+    //         Lead $lead
+    //     ): JsonResponse {
 
-        // FIND QUOTATION
+    //     // FIND QUOTATION
 
-        $quotation = $lead->quotation;
+    //     $quotation = $lead->quotation;
 
-        if (!$quotation) {
-            return response()->json([
-                'status' => false,
-                'status_code' => 404,
-                'message' => 'Quotation not found for this lead',
-            ], 404);
-        }
+    //     if (!$quotation) {
+    //         return response()->json([
+    //             'status' => false,
+    //             'status_code' => 404,
+    //             'message' => 'Quotation not found for this lead',
+    //         ], 404);
+    //     }
 
-        // LOAD ITEMS
-        $quotation->load('items');
+    //     // LOAD ITEMS
+    //     $quotation->load('items');
 
-        // =========================================
-        // COMPANY
-        // =========================================
+    //     // =========================================
+    //     // COMPANY
+    //     // =========================================
 
-        $company = CompanyProfile::current();
+    //     $company = CompanyProfile::current();
 
-        // =========================================
-        // RESPONSE
-        // =========================================
+    //     // =========================================
+    //     // RESPONSE
+    //     // =========================================
 
+    //     return response()->json([
+
+    //         'status' => true,
+
+    //         'status_code' => 200,
+
+    //         'message' => 'Quotation PDF details retrieved successfully',
+
+    //         'data' => [
+
+    //             // =====================================
+    //             // LEAD DETAILS
+    //             // =====================================
+
+    //             'lead' => [
+
+    //                 'id' =>
+    //                     $lead->id,
+
+    //                 'reference' =>
+    //                     $lead->reference,
+
+    //                 'name' =>
+    //                     $lead->name,
+
+    //                 'phone' =>
+    //                     $lead->phone,
+
+    //                 'source' =>
+    //                     $lead->source?->value ?? $lead->source,
+
+    //                 'assigned_to' =>
+    //                     $lead->owner?->name,
+
+    //                 'description' =>
+    //                     $lead->description,
+    //             ],
+
+    //             // =====================================
+    //             // QUOTATION DETAILS
+    //             // =====================================
+
+    //             'quotation' => [
+
+    //                 'id' =>
+    //                     $quotation->id,
+
+    //                 'reference' =>
+    //                     $quotation->reference,
+
+    //                 'customer_name' =>
+    //                     $quotation->customer_name,
+
+    //                 'customer_address' =>
+    //                     $quotation->customer_address,
+
+    //                 'issue_date' =>
+    //                     $quotation->issue_date,
+
+    //                 'terms' =>
+    //                     $quotation->terms,
+
+    //                 'subtotal' =>
+    //                     $quotation->subtotal,
+
+    //                 'discount_percent' =>
+    //                     $quotation->discount_percent,
+
+    //                 'tax_percent' =>
+    //                     $quotation->tax_percent,
+
+    //                 'total' =>
+    //                     $quotation->total,
+
+    //                 // =================================
+    //                 // ITEMS
+    //                 // =================================
+
+    //                 'items' =>
+    //                     $quotation->items
+    //                         ->map(function ($item) {
+
+    //                             return [
+
+    //                                 'id' =>
+    //                                     $item->id,
+
+    //                                 'description' =>
+    //                                     $item->description,
+
+    //                                 'quantity' =>
+    //                                     $item->quantity,
+
+    //                                 'rate' =>
+    //                                     $item->rate,
+
+    //                                 'basic_rate' =>
+    //                                     $item->basic_rate,
+
+    //                                 'tax_percent' =>
+    //                                     $item->tax_percent,
+
+    //                                 'tax_amount' =>
+    //                                     $item->tax_amount,
+
+    //                                 'amount' =>
+    //                                     $item->amount,
+
+    //                                 'sort_order' =>
+    //                                     $item->sort_order,
+    //                             ];
+    //                         })
+    //                         ->values()
+    //                         ->toArray(),
+    //             ],
+
+    //             // =====================================
+    //             // COMPANY DETAILS
+    //             // =====================================
+
+    //             'company' => [
+
+    //                 'id' =>
+    //                     $company->id,
+
+    //                 'name' =>
+    //                     $company->name,
+
+    //                 'address_line' =>
+    //                     $company->address_line,
+
+    //                 'city' =>
+    //                     $company->city,
+
+    //                 'state' =>
+    //                     $company->state,
+
+    //                 'postal_code' =>
+    //                     $company->postal_code,
+
+    //                 'country' =>
+    //                     $company->country,
+
+    //                 'phone' =>
+    //                     $company->phone,
+
+    //                 'email' =>
+    //                     $company->email,
+
+    //                 'logo' => $company->logo_path
+    //                 ? url('storage/' . $company->logo_path)
+    //                 : null,
+    //             ],
+    //         ],
+
+    //     ], 200);
+    // }
+public function quotationPdfDetails(
+    Request $request,
+    Lead $lead
+): JsonResponse {
+
+    // =========================================
+    // FIND QUOTATION
+    // =========================================
+
+    $quotation = $lead->quotation;
+
+    if (!$quotation) {
         return response()->json([
+            'status' => false,
+            'status_code' => 404,
+            'message' => 'Quotation not found for this lead',
+        ], 404);
+    }
 
-            'status' => true,
 
-            'status_code' => 200,
+    // =========================================
+    // LOAD ITEMS
+    // =========================================
 
-            'message' => 'Quotation PDF details retrieved successfully',
+    $quotation->load('items');
 
-            'data' => [
 
-                // =====================================
-                // LEAD DETAILS
-                // =====================================
+    // =========================================
+    // COMPANY
+    // =========================================
 
-                'lead' => [
+    $company = CompanyProfile::current();
 
-                    'id' =>
-                        $lead->id,
 
-                    'reference' =>
-                        $lead->reference,
+    // =========================================
+    // LOGO DATA URI
+    // =========================================
 
-                    'name' =>
-                        $lead->name,
+    $logoDataUri = null;
 
-                    'phone' =>
-                        $lead->phone,
+    if ($company?->logo_path) {
 
-                    'source' =>
-                        $lead->source?->value ?? $lead->source,
+        $logoPath = storage_path(
+            'app/public/' . $company->logo_path
+        );
 
-                    'assigned_to' =>
-                        $lead->owner?->name,
+        if (file_exists($logoPath)) {
 
-                    'description' =>
-                        $lead->description,
-                ],
+            $mimeType = mime_content_type($logoPath);
 
-                // =====================================
-                // QUOTATION DETAILS
-                // =====================================
+            $logoDataUri = 'data:' . $mimeType . ';base64,' .
+                base64_encode(
+                    file_get_contents($logoPath)
+                );
+        }
+    }
 
-                'quotation' => [
 
-                    'id' =>
-                        $quotation->id,
+    // =========================================
+    // GENERATE PDF
+    // =========================================
 
-                    'reference' =>
-                        $quotation->reference,
+    $pdf = Pdf::loadView('quotations.pdf', [
+        'lead' => $lead,
+        'quotation' => $quotation,
+        'company' => $company,
+        'logoDataUri' => $logoDataUri,
+    ]);
 
-                    'customer_name' =>
-                        $quotation->customer_name,
 
-                    'customer_address' =>
-                        $quotation->customer_address,
+    // =========================================
+    // FILE NAME
+    // =========================================
 
-                    'issue_date' =>
-                        $quotation->issue_date,
 
-                    'terms' =>
-                        $quotation->terms,
+    $fileName = $quotation->reference . '.pdf';
 
-                    'subtotal' =>
-                        $quotation->subtotal,
+    $path = 'quotations/' . $fileName;
 
-                    'discount_percent' =>
-                        $quotation->discount_percent,
+    Storage::disk('public')->put(
+        $path,
+        $pdf->output()
+    );
 
-                    'tax_percent' =>
-                        $quotation->tax_percent,
+    $pdfUrl = url('storage/' . $path);
 
-                    'total' =>
-                        $quotation->total,
 
-                    // =================================
-                    // ITEMS
-                    // =================================
+    // =========================================
+    // RESPONSE
+    // =========================================
 
-                    'items' =>
-                        $quotation->items
-                            ->map(function ($item) {
+    return response()->json([
 
-                                return [
+        'status' => true,
 
-                                    'id' =>
-                                        $item->id,
+        'status_code' => 200,
 
-                                    'description' =>
-                                        $item->description,
+        'message' => 'Quotation PDF generated successfully',
 
-                                    'quantity' =>
-                                        $item->quantity,
+        'data' => [
 
-                                    'rate' =>
-                                        $item->rate,
+            // =====================================
+            // LEAD DETAILS
+            // =====================================
 
-                                    'basic_rate' =>
-                                        $item->basic_rate,
+            'lead' => [
 
-                                    'tax_percent' =>
-                                        $item->tax_percent,
+                'id' =>
+                    $lead->id,
 
-                                    'tax_amount' =>
-                                        $item->tax_amount,
+                'reference' =>
+                    $lead->reference,
 
-                                    'amount' =>
-                                        $item->amount,
+                'name' =>
+                    $lead->name,
 
-                                    'sort_order' =>
-                                        $item->sort_order,
-                                ];
-                            })
-                            ->values()
-                            ->toArray(),
-                ],
+                'phone' =>
+                    $lead->phone,
 
-                // =====================================
-                // COMPANY DETAILS
-                // =====================================
+                'source' =>
+                    $lead->source?->value ?? $lead->source,
 
-                'company' => [
+                'assigned_to' =>
+                    $lead->owner?->name,
 
-                    'id' =>
-                        $company->id,
-
-                    'name' =>
-                        $company->name,
-
-                    'address_line' =>
-                        $company->address_line,
-
-                    'city' =>
-                        $company->city,
-
-                    'state' =>
-                        $company->state,
-
-                    'postal_code' =>
-                        $company->postal_code,
-
-                    'country' =>
-                        $company->country,
-
-                    'phone' =>
-                        $company->phone,
-
-                    'email' =>
-                        $company->email,
-
-                    'logo' => $company->logo_path
-                    ? url('storage/' . $company->logo_path)
-                    : null,
-                ],
+                'description' =>
+                    $lead->description,
             ],
 
-        ], 200);
+
+            // =====================================
+            // QUOTATION DETAILS
+            // =====================================
+
+            'quotation' => [
+
+                'id' =>
+                    $quotation->id,
+
+                'reference' =>
+                    $quotation->reference,
+
+                'customer_name' =>
+                    $quotation->customer_name,
+
+                'customer_address' =>
+                    $quotation->customer_address,
+
+                'issue_date' =>
+                    $quotation->issue_date,
+
+                'terms' =>
+                    $quotation->terms,
+
+                'subtotal' =>
+                    $quotation->subtotal,
+
+                'discount_percent' =>
+                    $quotation->discount_percent,
+
+                'tax_percent' =>
+                    $quotation->tax_percent,
+
+                'total' =>
+                    $quotation->total,
+
+
+                // =================================
+                // ITEMS
+                // =================================
+
+                'items' => $quotation->items
+                    ->map(function ($item) {
+
+                        return [
+
+                            'id' =>
+                                $item->id,
+
+                            'description' =>
+                                $item->description,
+
+                            'quantity' =>
+                                $item->quantity,
+
+                            'rate' =>
+                                $item->rate,
+
+                            'basic_rate' =>
+                                $item->basic_rate,
+
+                            'tax_percent' =>
+                                $item->tax_percent,
+
+                            'tax_amount' =>
+                                $item->tax_amount,
+
+                            'amount' =>
+                                $item->amount,
+
+                            'sort_order' =>
+                                $item->sort_order,
+                        ];
+                    })
+                    ->values()
+                    ->toArray(),
+            ],
+
+
+            // =====================================
+            // COMPANY DETAILS
+            // =====================================
+
+            'company' => [
+
+                'id' =>
+                    $company?->id,
+
+                'name' =>
+                    $company?->name,
+
+                'address_line' =>
+                    $company?->address_line,
+
+                'city' =>
+                    $company?->city,
+
+                'state' =>
+                    $company?->state,
+
+                'postal_code' =>
+                    $company?->postal_code,
+
+                'country' =>
+                    $company?->country,
+
+                'phone' =>
+                    $company?->phone,
+
+                'email' =>
+                    $company?->email,
+
+                'logo' => $company?->logo_path
+                    ? url('storage/' . $company->logo_path)
+                    : null,
+            ],
+
+
+            // =====================================
+            // PDF URL
+            // =====================================
+
+            'pdf_url' => $pdfUrl,
+        ],
+
+    ], 200);
+}
+
+    public function addCall(StoreCallDetailRequest $request, Lead $lead): JsonResponse
+    {
+        try {
+
+            $call = $this->calls->createCall(
+                $lead,
+                $request->callAttributes(),
+                $request->user(),
+                $request->file('invoice_file')
+            );
+
+            $call->load([
+                'caller:id,name',
+                'lead:id,reference,name',
+            ]);
+
+            return response()->json([
+                'status' => true,
+                'status_code' => 201,
+                'message' => "Call logged as {$call->call_status->label()}.",
+                'data' => [
+                    'id' => $call->id,
+                    'lead_id' => $call->lead_id,
+                    'lead_reference' => $call->lead?->reference,
+                    'lead_name' => $call->lead?->name,
+                    'called_by' => $call->caller?->name,
+                    'called_date' => $call->called_date,
+                    'called_time' => $call->called_time,
+                    'duration' => $call->duration,
+                    'call_status' => $call->call_status?->value,
+                    'call_status_label' => $call->call_status?->label(),
+                    'interest' => $call->interest,
+                    'reason' => $call->reason,
+                    'is_item_sold' => $call->is_item_sold,
+                    'invoice_number' => $call->invoice_number,
+                    'next_followup_date' => $call->next_followup_date,
+                    'remarks' => $call->remarks,
+                    'invoice_file' => $call->invoiceUrl(),
+                    'created_at' => $call->created_at,
+                ],
+            ], 201);
+
+        } catch (\Throwable $e) {
+
+            return response()->json([
+                'status' => false,
+                'status_code' => 500,
+                'message' => 'Failed to log call.',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function getCallDetails(Lead $lead, CallDetail $call): JsonResponse
+    {
+        try {
+
+            if ($call->lead_id !== $lead->id) {
+                return response()->json([
+                    'status' => false,
+                    'status_code' => 404,
+                    'message' => 'Call does not belong to this lead.',
+                    'data' => null,
+                ], 404);
+            }
+
+            $call->load([
+                'caller:id,name',
+                'lead:id,reference,name',
+            ]);
+
+            return response()->json([
+                'status' => true,
+                'status_code' => 200,
+                'message' => 'Call detail retrieved successfully.',
+                'data' => [
+                    'id' => $call->id,
+                    'lead_id' => $call->lead_id,
+                    'lead_reference' => $call->lead?->reference,
+                    'lead_name' => $call->lead?->name,
+                    'called_by' => $call->caller?->name,
+                    'called_date' => $call->called_date,
+                    'called_time' => $call->called_time,
+                    'duration' => $call->duration,
+                    'call_status' => $call->call_status?->value,
+                    'call_status_label' => $call->call_status?->label(),
+                    'interest' => $call->interest,
+                    'reason' => $call->reason,
+                    'is_item_sold' => $call->is_item_sold,
+                    'invoice_number' => $call->invoice_number,
+                    'next_followup_date' => $call->next_followup_date,
+                    'remarks' => $call->remarks,
+                    'invoice_file' => $call->invoiceUrl(),
+                    'created_at' => $call->created_at,
+                ],
+            ], 200);
+
+        } catch (\Throwable $e) {
+
+            return response()->json([
+                'status' => false,
+                'status_code' => 500,
+                'message' => 'Failed to retrieve call details.',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
     }
 }
