@@ -1067,41 +1067,56 @@ class LeadController extends Controller
 
     public function leadList(Request $request): JsonResponse
     {
+        // PAGINATION
         $perPage = (int) $request->get('per_page', 10);
+        $perPage = min(max($perPage, 1), 100);
 
-        $leads = Lead::with([
+        // SEARCH
+        $search = trim($request->get('search', ''));
+        $query = Lead::with([
             'owner:id,name',
             'creator:id,name',
-        ])
-            ->latest('id')
-            ->paginate($perPage);
+        ]);
+        if ($search !== '') {
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('phone', 'like', "%{$search}%")
+                    ->orWhere('reference', 'like', "%{$search}%")
+                    ->orWhereHas('owner', function ($ownerQuery) use ($search) {
+                        $ownerQuery->where('name', 'like', "%{$search}%");
+                    });
 
+            });
+        }
+        $leads = $query->latest('id')->paginate($perPage);
         $data = $leads->getCollection()->map(function ($lead) {
             return [
-                'id' => $lead->id,
-                'reference' => $lead->reference,
-                'name' => $lead->name,
-                'phone' => $lead->phone,
-                'source' => $lead->source,
-                'assigned_to' => $lead->owner?->name,
-                'created_by' => $lead->creator?->name,
-                'description' => $lead->description,
+                'id' =>$lead->id,
+                'reference' =>$lead->reference,
+                'name' =>$lead->name,
+                'phone' =>$lead->phone,
+                'source' =>$lead->source?->value ?? $lead->source,
+                'assigned_to' =>$lead->owner?->name,
+                'created_by' =>$lead->creator?->name,
+                'description' =>$lead->description,
             ];
-        });
-
+            })->values();
         return response()->json([
-            'status' => true,
-            'status_code' => 200,
-            'message' => 'Leads retrieved successfully',
-            'data' => $data,
+
+            'status' =>true,
+            'status_code' =>200,
+            'message' =>'Leads retrieved successfully',
+            'data' =>$data,
+
             'pagination' => [
-                'current_page' => $leads->currentPage(),
-                'per_page' => $leads->perPage(),
-                'total' => $leads->total(),
-                'last_page' => $leads->lastPage(),
-                'from' => $leads->firstItem(),
-                'to' => $leads->lastItem(),
+                'current_page' =>$leads->currentPage(),
+                'per_page' =>$leads->perPage(),
+                'total' =>$leads->total(),
+                'last_page' =>$leads->lastPage(),
+                'from' =>$leads->firstItem(),
+                'to' =>$leads->lastItem(),
             ],
+
         ], 200);
     }
 
