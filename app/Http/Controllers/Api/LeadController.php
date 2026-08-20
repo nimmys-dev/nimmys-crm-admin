@@ -127,6 +127,7 @@ class LeadController extends Controller
                 'source' => $validated['source'] ?? null,
                 'assigned_to' => $validated['assigned_to'] ?? null,
                 'description' => $validated['description'] ?? null,
+                'has_quotation' => !empty($validated['quotation']),
                 'created_by' => $request->user()->id,
             ]);
 
@@ -340,6 +341,7 @@ class LeadController extends Controller
                     'source' =>$result['lead']->source?->value,
                     'assigned_to' =>$result['lead']->assigned_to,
                     'description' =>$result['lead']->description,
+                    'has_quotation' => (bool) $result['lead']->has_quotation,
                     'created_by' =>$result['lead']->created_by,
                     'created_at' =>$result['lead']->created_at,
                 ],
@@ -414,6 +416,7 @@ class LeadController extends Controller
                 'assigned_to' => $lead->owner?->name,
                 'created_by' => $lead->creator?->name,
                 'description' => $lead->description,
+                'has_quotation' => (bool) $lead->has_quotation,
 
                 'quotation' => $quotation ? [
                     'id' =>$quotation->id,
@@ -988,6 +991,9 @@ class LeadController extends Controller
 
                     'description' =>
                         $result['lead']->description,
+
+                    'has_quotation' =>
+                        (bool) $result['lead']->has_quotation,
                 ],
 
 
@@ -1114,7 +1120,7 @@ class LeadController extends Controller
                 'created_by' =>$lead->creator?->name,
                 'description' =>$lead->description,
                  // Quotation exists or not
-                'has_quotation' => (bool) $lead->quotation_exists,
+                'has_quotation' => (bool) $lead->has_quotation,
             ];
             })->values();
         return response()->json([
@@ -1450,6 +1456,9 @@ public function quotationPdfDetails(
 
                 'description' =>
                     $lead->description,
+
+                'has_quotation' =>
+                    (bool) $lead->has_quotation,
             ],
 
 
