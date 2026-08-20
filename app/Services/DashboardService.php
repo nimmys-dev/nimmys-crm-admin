@@ -76,8 +76,79 @@ class DashboardService
             'employees_with_lead_access' => $headcount['with_lead_access'],
             'employees_without_lead_access' => $headcount['without_lead_access'],
             'upcoming_increments' => $this->upcomingIncrementQuery()->count(),
+       
         ];
     }
+
+    // public function getDashboardLeadStatistics(User $user): array
+    // {
+    //     $query = Lead::query();
+    //     return [
+    //         'unattended' => (clone $query)
+    //             ->whereNull('assigned_to')
+    //             ->count(),
+
+    //         'today_followup' => (clone $query)
+    //             ->whereDate('next_follow_up_at', today())
+    //             ->count(),
+
+    //         'overdue_followup' => (clone $query)
+    //             ->whereDate('next_follow_up_at', '<', today())
+    //             ->count(),
+
+    //         'upcoming_followup' => (clone $query)
+    //             ->whereDate('next_follow_up_at', '>', today())
+    //             ->count(),
+    //             // Logged-in user's leads
+    //         'your_leads' => Lead::query()
+    //             ->where('assigned_to', $user->id)
+    //             ->count(),
+
+    //         // Admin: ALL leads
+    //         'total_leads' => Lead::query()
+    //             ->count(),
+    //         ];
+    // }
+
+
+    public function getDashboardLeadStatistics(User $user): array
+{
+    $query = Lead::query();
+
+    // Admin → all leads
+    // Manager / Employee → logged-in user's leads
+    if (!$user->isAdmin()) {
+        $query->where('assigned_to', $user->id);
+    }
+
+    return [
+        'unattended' => (clone $query)
+            ->whereNull('assigned_to')
+            ->count(),
+
+        'today_followup' => (clone $query)
+            ->whereDate('next_follow_up_at', today())
+            ->count(),
+
+        'overdue_followup' => (clone $query)
+            ->whereDate('next_follow_up_at', '<', today())
+            ->count(),
+
+        'upcoming_followup' => (clone $query)
+            ->whereDate('next_follow_up_at', '>', today())
+            ->count(),
+
+        // Logged-in user's leads
+        'your_leads' => Lead::query()
+            ->where('assigned_to', $user->id)
+            ->count(),
+
+        // All roles → all leads
+        'total_leads' => Lead::query()
+            ->count(),
+    ];
+}
+
 
     /**
      * Figures narrowed to the shop this Manager runs.

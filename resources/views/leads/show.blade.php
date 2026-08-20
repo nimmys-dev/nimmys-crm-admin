@@ -20,7 +20,16 @@
                 Log Call
             </button>
         @endcan
-
+        @if ($lead->status->isOpen())
+            <x-button
+                variant="danger"
+                icon="ti ti-flag-off"
+                data-pc-toggle="modal"
+                data-pc-target="#close-lead-modal"
+            >
+                Close Lead
+            </x-button>
+        @endif
         {{-- Activity Log --}}
         <button
             type="button"

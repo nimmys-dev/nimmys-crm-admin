@@ -1,92 +1,166 @@
-@extends('layouts.app')
+@extends('layouts.app') 
 
-@section('title', 'Dashboard')
+@section('title', 'Dashboard') 
 
-@section('content')
+@section('content') 
 
-    {{--
-        Stat row. 12-column grid: one card per row on mobile, two on tablet,
-        three from xl. The counts are tabular-figure aligned so the row reads
-        as a set rather than five unrelated numbers.
-    --}}
-    <div class="grid grid-cols-12 gap-x-6">
+    {{-- Dashboard Duty Summary --}}
+    <div class="dashboard-stats">
 
-        <div class="col-span-12 md:col-span-6 xl:col-span-4">
-            <x-stat-card
-                label="Total shops"
-                :value="$stats['shops']"
-                :meta="$stats['active_shops'] . ' active'"
-                icon="ti ti-building-store"
-                :href="route('shops.index')"
-            />
+        {{-- Today's Duty --}}
+        <div class="stat-card">
+                <div class="stat-content">
+                    <p>Today's Duty</p>
+                    <h3>0</h3>
+                </div>
+
+                <div class="stat-icon today-icon">
+                    <i class="ti ti-calendar-event"></i>
+                </div>
         </div>
 
-        <div class="col-span-12 md:col-span-6 xl:col-span-4">
-            <x-stat-card
-                label="Total managers"
-                :value="$stats['managers']"
-                icon="ti ti-user-shield"
-                :href="route('staff.index', ['role' => \App\Enums\UserRole::Manager->value])"
-            />
+        {{-- Overdue Duty --}}
+        <div class="stat-card">
+            <div class="stat-content">
+                <p>Overdue Duty</p>
+                <h3>0</h3>
+            </div>
+
+            <div class="stat-icon overdue-icon">
+                <i class="ti ti-alert-circle"></i>
+            </div>
         </div>
 
-        <div class="col-span-12 md:col-span-6 xl:col-span-4">
-            <x-stat-card
-                label="Total employees"
-                :value="$stats['employees']"
-                icon="ti ti-users"
-                :href="route('staff.index', ['role' => \App\Enums\UserRole::Employee->value])"
-            />
+        {{-- Upcoming Duty --}}
+        <div class="stat-card">
+            <div class="stat-content">
+                <p>Upcoming Duty</p>
+                <h3>0</h3>
+            </div>
+
+            <div class="stat-icon upcoming-icon">
+                <i class="ti ti-calendar-time"></i>
+            </div>
         </div>
 
-        <div class="col-span-12 md:col-span-6 xl:col-span-4">
-            <x-stat-card
-                label="Employees with lead access"
-                :value="$stats['employees_with_lead_access']"
-                icon="ti ti-lock-open"
-                tone="success"
-            />
-        </div>
+        {{-- Approval Pending --}}
+        <div class="stat-card">
+            <div class="stat-content">
+                <p>Approval Pending</p>
+                <h3>0</h3>
+            </div>
 
-        <div class="col-span-12 md:col-span-6 xl:col-span-4">
-            <x-stat-card
-                label="Employees without lead access"
-                :value="$stats['employees_without_lead_access']"
-                icon="ti ti-lock"
-            />
-        </div>
-
-        <div class="col-span-12 md:col-span-6 xl:col-span-4">
-            <x-stat-card
-                label="Upcoming increments"
-                :value="$stats['upcoming_increments']"
-                :meta="'Next ' . \App\Models\User::INCREMENT_REMINDER_DAYS . ' days'"
-                icon="ti ti-calendar-dollar"
-                :tone="$stats['upcoming_increments'] > 0 ? 'warning' : 'default'"
-            />
+            <div class="stat-icon pending-icon">
+                <i class="ti ti-clock-hour-4"></i>
+            </div>
         </div>
 
     </div>
 
-    {{-- Increments span the full width: five columns need the room. --}}
-    <div class="grid grid-cols-12 gap-x-6">
-        <div class="col-span-12">
-            @include('dashboard.widgets.upcoming-increments', ['canManageStaff' => true])
+
+    {{-- Leads Card --}}
+    <div class="mt-6 bg-white rounded-xl border border-gray-200 shadow-sm p-5">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-semibold text-gray-800">
+               MY Leads
+            </h3>
+            <a href="{{ route('leads.index') }}"
+            class="text-sm text-primary">
+                View All
+            </a>
+        </div>
+
+        <div class="leads-inner-grid">
+            {{-- Unattended Leads --}}
+            <a href="{{ route('leads.index', ['filter' => 'unattended']) }}"
+            class="lead-stat-box">
+                <div>
+                    <p>Unattended Leads</p>
+                    <h4>{{ $leadStats['unattended'] ?? 0 }}</h4>
+                </div>
+                <div class="lead-stat-icon unattended-icon">
+                    <i class="ti ti-user-question"></i>
+                </div>
+            </a>
+
+            {{-- Today's Follow Up --}}
+            <a href="{{ route('leads.index', ['filter' => 'today_followup']) }}"class="lead-stat-box">
+                <div>
+                    <p>Today's Follow Up</p>
+                    <h4>{{ $leadStats['today_followup'] ?? 0 }}</h4>
+                </div>
+                <div class="lead-stat-icon today-followup-icon">
+                    <i class="ti ti-calendar-event"></i>
+                </div>
+            </a>
+
+            {{-- Overdue Follow Up --}}
+            <a href="{{ route('leads.index', ['filter' => 'overdue_followup']) }}"
+            class="lead-stat-box">
+                <div>
+                    <p>Overdue Follow Up</p>
+                    <h4>{{ $leadStats['overdue_followup'] ?? 0 }}</h4>
+                </div>
+                <div class="lead-stat-icon overdue-followup-icon">
+                    <i class="ti ti-alert-circle"></i>
+                </div>
+            </a>
+
+            {{-- Upcoming Follow Up --}}
+            <a href="{{ route('leads.index', ['filter' => 'upcoming_followup']) }}"
+            class="lead-stat-box">
+                <div>
+                    <p>Upcoming Follow Up</p>
+                    <h4>{{ $leadStats['upcoming_followup'] ?? 0 }}</h4>
+                </div>
+                <div class="lead-stat-icon upcoming-followup-icon">
+                    <i class="ti ti-calendar-time"></i>
+                </div>
+            </a>
         </div>
     </div>
 
-    <div class="grid grid-cols-12 gap-x-6">
-        <div class="col-span-12 xl:col-span-6">
-            @include('dashboard.widgets.recent-employees', ['canManageStaff' => true])
-        </div>
+    {{-- Your Leads & Total Leads --}}
+    <div class="leads-total-row">
+        {{-- Your Leads --}}
+        <a href="{{ route('leads.index', ['filter' => 'my_leads']) }}" class="lead-total-box your-leads-box">
+            <div>
+                <p>Your Leads</p>
+                <h4>{{ $leadStats['your_leads'] ?? 0 }}</h4>
+            </div>
+            <div class="lead-total-icon your-leads-icon">
+                <i class="ti ti-user"></i>
+            </div>
+        </a>
 
-        <div class="col-span-12 xl:col-span-6">
-            @include('dashboard.widgets.recent-shops')
-        </div>
+        {{-- Total Leads --}}
+        <a href="{{ route('leads.index') }}"class="lead-total-box total-leads-box">
+            <div>
+                <p>Total Leads</p>
+                <h4>{{ $leadStats['total_leads'] ?? 0 }}</h4>
+            </div>
+            <div class="lead-total-icon total-leads-icon">
+                <i class="ti ti-users"></i>
+            </div>
+        </a>
     </div>
+    {{-- Reports Card --}}
+    <div class="mt-6 bg-white rounded-xl border border-gray-200 shadow-sm p-5">
+        {{-- Performance Action --}}
+        <a href="{{ route('reports.index') }}" class="performance-action">
+            <div class="performance-action-icon">
+                <i class="ti ti-chart-bar"></i>
+            </div>
+            <div class="performance-action-content">
+                <h4>Track Your Performance</h4>
+                <p>
+                    Treak your leads and performance
+                </p>
+            </div>
+            <div class="performance-arrow">
+                <i class="ti ti-arrow-right"></i>
+            </div>
+        </a>
 
-    @include('dashboard.widgets.leads')
-
-    @include('dashboard.widgets.future')
-
+    </div>
 @endsection

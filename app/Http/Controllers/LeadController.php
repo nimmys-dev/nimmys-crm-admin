@@ -41,15 +41,152 @@ class LeadController extends Controller
         private readonly LeadService $service,
     ) {}
 
+    // public function index(LeadIndexRequest $request): View
+    // {
+    //     return view('leads.index', [
+    //         'pageTitle' => 'Lead Management',
+    //         'breadcrumbs' => [['label' => 'Leads']],
+    //         'leads' => $this->leads->paginate($request->user(), $request->filters()),
+    //         'filters' => $request->filters(),
+    //         'hasActiveFilters' => $request->hasActiveFilters(),
+    //         'statistics' => $this->leads->statistics($request->user()),
+    //         ...$this->formOptions($request),
+    //     ]);
+    // }
+
     public function index(LeadIndexRequest $request): View
     {
+        $user = $request->user();
+        $filters = $request->filters();
+        $dashboardFilter = $request->query('filter');
+        $query = Lead::query()->with(['owner','latestCall',]);
+
+        /* Dashboard Filter */
+
+        switch ($dashboardFilter) {
+
+            case 'unattended':
+
+                $query->whereNull('assigned_to');
+
+                if (!$user->isAdmin()) {
+                    $query->where('assigned_to', $user->id);
+                }
+
+                break;
+
+            case 'today_followup':
+
+                if (!$user->isAdmin()) {
+                    $query->where('assigned_to', $user->id);
+                }
+
+                $query->whereHas('latestCall', function ($q) {
+                    $q->whereDate('next_followup_date', today());
+                });
+
+                break;
+
+            case 'overdue_followup':
+
+                if (!$user->isAdmin()) {
+                    $query->where('assigned_to', $user->id);
+                }
+
+                $query->whereHas('latestCall', function ($q) {
+                    $q->whereDate('next_followup_date', '<', today());
+                });
+
+                break;
+
+            case 'upcoming_followup':
+
+                if (!$user->isAdmin()) {
+                    $query->where('assigned_to', $user->id);
+                }
+
+                $query->whereHas('latestCall', function ($q) {
+                    $q->whereDate('next_followup_date', '>', today());
+                });
+
+                break;
+
+            case 'my_leads':
+            case 'your_leads':
+
+                $query->where('assigned_to', $user->id);
+
+                break;
+        }
+
+        /* Search */
+
+        if ($request->filled('q')) {
+            $search = $request->q;
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('company', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%")
+                    ->orWhere('phone', 'like', "%{$search}%")
+                    ->orWhere('reference', 'like', "%{$search}%");
+
+            });
+        }
+
+        /* Status */
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        /*Priority*/
+        if ($request->filled('priority')) {
+            $query->where('priority', $request->priority);
+        }
+
+        /*Source*/
+        if ($request->filled('source')) {
+            $query->where('source', $request->source);
+        }
+
+        /*Assigned User*/
+        if ($request->filled('assigned_to')) {
+            $query->where('assigned_to', $request->assigned_to);
+        }
+
+        /*Shop*/
+        if ($request->filled('shop_id')) {
+            $query->where('shop_id', $request->shop_id);
+        }
+
+        /*Due Filter*/
+        if ($request->input('due') === 'overdue') {
+            $query->whereHas('latestCall', function ($q) {
+                $q->whereDate('next_followup_date', '<', today());
+            });
+        }
+
+        /*Sorting*/
+        $sort = $request->input('sort', 'created_at');
+        $direction = $request->input('direction', 'desc');
+        $query->orderBy($sort, $direction);
+
+        /*Pagination*/
+        $leads = $query
+            ->paginate($request->input('per_page', 15))
+            ->withQueryString();
+
         return view('leads.index', [
             'pageTitle' => 'Lead Management',
-            'breadcrumbs' => [['label' => 'Leads']],
-            'leads' => $this->leads->paginate($request->user(), $request->filters()),
-            'filters' => $request->filters(),
+            'breadcrumbs' => [
+                ['label' => 'Leads']
+            ],
+
+            'filters' => $filters,
+            'leads' => $leads,
             'hasActiveFilters' => $request->hasActiveFilters(),
-            'statistics' => $this->leads->statistics($request->user()),
+            'statistics' => $this->leads->statistics(
+                $request->user()
+            ),
             ...$this->formOptions($request),
         ]);
     }

@@ -33,6 +33,8 @@ Route::middleware('auth:sanctum')->group(function () {
      Route::get('/leads/{lead}/quotation/pdf-details',[LeadController::class, 'quotationPdfDetails']);
      Route::post('/leads/{lead}/calls',[LeadController::class, 'addCall']);
      Route::get('/leads/{lead}/calls/{call}',[LeadController::class, 'getCallDetails']);
+     Route::put('/leads/{lead}/close',[LeadController::class, 'update']);
+     Route::get('/lead-call-history/{lead}/calls',[LeadController::class, 'callHistory']);
 
     //settings
     Route::get('/company-profile',[SettingsController::class, 'companyProfile']);

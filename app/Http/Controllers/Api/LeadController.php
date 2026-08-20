@@ -18,16 +18,23 @@ use App\Http\Requests\Api\StoreCallDetailRequest;
 use App\Models\CallDetail;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Storage;
+use App\Http\Requests\Lead\CloseLeadRequest;
+use App\Enums\LeadStatus;
+use App\Services\LeadService;
+use Illuminate\Http\RedirectResponse;
 
 class LeadController extends Controller
 {
     protected CompanyLogoService $logos;
     protected CallDetailService $calls;
+   
+       
 
-    public function __construct(CompanyLogoService $logos ,CallDetailService $calls)
+   public function __construct(CompanyLogoService $logos,CallDetailService $calls,private readonly LeadService $service)
     {
-        $this->logos = $logos;
-        $this->calls = $calls;
+    $this->logos = $logos;
+    $this->calls = $calls;
+
     }
     // public function createLead(Request $request): JsonResponse
     // {
@@ -1106,6 +1113,8 @@ class LeadController extends Controller
                 'assigned_to' =>$lead->owner?->name,
                 'created_by' =>$lead->creator?->name,
                 'description' =>$lead->description,
+                 // Quotation exists or not
+                'has_quotation' => (bool) $lead->quotation_exists,
             ];
             })->values();
         return response()->json([
@@ -1679,4 +1688,108 @@ public function quotationPdfDetails(
             ], 500);
         }
     }
+
+    public function update(CloseLeadRequest $request,Lead $lead): JsonResponse 
+    {
+        try {
+
+            $status = LeadStatus::from(
+                $request->validated('status')
+            );
+
+            $this->service->close(
+                $lead,
+                $status,
+                $request->validated('lost_reason')
+            );
+
+            $lead->refresh();
+
+            return response()->json([
+                'status' => true,
+                'status_code' => 200,
+                'message' => "Lead {$lead->reference} was marked {$status->label()}.",
+                'data' => [
+                    'id' => $lead->id,
+                    'reference' => $lead->reference,
+                    'status' => $lead->status,
+                ],
+            ], 200);
+
+        } catch (\Throwable $e) {
+
+            return response()->json([
+                'status' => false,
+                'status_code' => 500,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+   
+    public function callHistory(Request $request, Lead $lead): JsonResponse
+    {
+        $perPage = $request->input('per_page', 15);
+
+        $calls = $lead->callDetails()
+            ->with([
+                'caller:id,name',
+            ])
+            ->latest('called_date')
+            ->paginate($perPage)
+            ->withQueryString();
+
+        return response()->json([
+            'status' => true,
+            'status_code' => 200,
+            'message' => 'Call history fetched successfully.',
+            'data' => $calls->map(function ($call) {
+                return [
+                    'id' => $call->id,
+                    'called_date' => $call->called_date?->format('d-M-Y'),
+                    'called_time' => $call->calledAt()?->format('g:i A'),
+
+                    'call_status' => $call->call_status,
+
+                    'interest' => $call->interest,
+
+                    'reason' => $call->reason,
+
+                    'is_item_sold' => $call->is_item_sold,
+
+                    'invoice_number' => $call->invoice_number,
+
+                    'invoice_file_path' => $call->invoice_file_path,
+
+                    'invoice_url' => $call->invoice_file_path
+                        ? asset('storage/' . $call->invoice_file_path)
+                        : null,
+
+                    'next_followup_date' => $call->next_followup_date,
+
+                    'called_by' => $call->caller
+                        ? [
+                            'id' => $call->caller->id,
+                            'name' => $call->caller->name,
+                        ]
+                        : null,
+
+                    'remarks' => $call->remarks,
+
+                    'created_at' => $call->created_at,
+                ];
+            }),
+
+            'pagination' => [
+                'current_page' => $calls->currentPage(),
+                'last_page' => $calls->lastPage(),
+                'per_page' => $calls->perPage(),
+                'total' => $calls->total(),
+                'from' => $calls->firstItem(),
+                'to' => $calls->lastItem(),
+            ],
+        ]);
+    }
+
+
 }

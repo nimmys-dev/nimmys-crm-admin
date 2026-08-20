@@ -68,6 +68,7 @@ class DashboardController extends Controller
             'recentShops' => $this->dashboard->getRecentShops(),
             'leadStats' => $this->dashboard->getLeadStatistics($user),
             'dueFollowUps' => $this->dashboard->getDueFollowUps($user),
+            'leadStats' => $this->dashboard->getDashboardLeadStatistics($user),
         ]);
     }
 
@@ -95,6 +96,7 @@ class DashboardController extends Controller
             // Manager works the whole pipeline they can see.
             'leadStats' => $this->dashboard->getLeadStatistics($user),
             'dueFollowUps' => $this->dashboard->getDueFollowUps($user),
+            'leadStats' => $this->dashboard->getDashboardLeadStatistics($user),
         ]);
     }
 }
