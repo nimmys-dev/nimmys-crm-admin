@@ -1689,7 +1689,7 @@ public function quotationPdfDetails(
         }
     }
 
-    public function update(CloseLeadRequest $request,Lead $lead): JsonResponse 
+    public function closeLead(CloseLeadRequest $request,Lead $lead): JsonResponse 
     {
         try {
 
