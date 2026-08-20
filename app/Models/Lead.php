@@ -40,6 +40,7 @@ class Lead extends Model
         'next_follow_up_at',
         'last_contacted_at',
         'description',
+        'has_quotation',
         'lost_reason',
         'closed_at',
     ];
@@ -53,6 +54,7 @@ class Lead extends Model
             'status' => LeadStatus::class,
             'source' => LeadSource::class,
             'priority' => LeadPriority::class,
+            'has_quotation' => 'boolean',
             'value' => 'decimal:2',
             'next_follow_up_at' => 'date',
             'last_contacted_at' => 'datetime',
@@ -66,6 +68,7 @@ class Lead extends Model
     protected $attributes = [
         'status' => LeadStatus::New->value,
         'priority' => LeadPriority::Medium->value,
+        'has_quotation' => false,
     ];
 
     /**

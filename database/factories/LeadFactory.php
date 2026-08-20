@@ -34,7 +34,13 @@ class LeadFactory extends Factory
             'assigned_to' => null,
             'created_by' => null,
             'description' => '<p>'.$this->faker->sentence().'</p>',
+            'has_quotation' => false,
         ];
+    }
+
+    public function hasQuotation(bool $has = true): static
+    {
+        return $this->state(fn () => ['has_quotation' => $has]);
     }
 
     public function status(LeadStatus $status): static

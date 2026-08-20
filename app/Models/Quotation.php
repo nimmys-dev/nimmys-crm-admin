@@ -27,6 +27,23 @@ class Quotation extends Model
     /** @use HasFactory<QuotationFactory> */
     use HasFactory;
 
+    protected static function booted(): void
+    {
+        static::created(function (Quotation $quotation) {
+            $quotation->lead()->update(['has_quotation' => true]);
+            if ($quotation->relationLoaded('lead') && $quotation->lead) {
+                $quotation->lead->has_quotation = true;
+            }
+        });
+
+        static::deleted(function (Quotation $quotation) {
+            $quotation->lead()->update(['has_quotation' => false]);
+            if ($quotation->relationLoaded('lead') && $quotation->lead) {
+                $quotation->lead->has_quotation = false;
+            }
+        });
+    }
+
     /**
      * @var list<string>
      */

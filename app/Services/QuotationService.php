@@ -35,6 +35,8 @@ class QuotationService
 
             $this->syncItems($quotation, $items);
 
+            $lead->forceFill(['has_quotation' => true])->save();
+
             return $quotation;
         });
 
@@ -70,7 +72,9 @@ class QuotationService
 
     public function delete(Quotation $quotation): void
     {
+        $lead = $quotation->lead;
         $quotation->delete();
+        $lead?->forceFill(['has_quotation' => false])->save();
     }
 
     /**
