@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\task\TaskRequest;
+use App\Http\Requests\Task\TaskRequest;
 use App\Models\Task;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
