@@ -50,13 +50,11 @@ class TaskRequest extends FormRequest
 
             'start_time' => [
                 'nullable',
-                'date_format:H:i',
                 'required_if:task_type,daily',
             ],
 
             'end_time' => [
                 'nullable',
-                'date_format:H:i',
                 'required_if:task_type,daily',
                 'after:start_time',
             ],
