@@ -149,6 +149,7 @@ Route::middleware(['auth', 'web.access'])->group(function () {
     Route::get('reports', [ReportController::class, 'index'])
         ->middleware('can:reports.view')
         ->name('reports.index');
+    Route::resource('tasks', TaskController::class);
 
     /*
      | Account

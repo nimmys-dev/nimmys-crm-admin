@@ -42,7 +42,7 @@ return [
 
     [
         'label'      => 'Dashboard',
-        'icon'       => 'ti ti-layout-dashboard',
+        'icon'       => 'ti ti-home',
         'route'      => 'dashboard',
         'active'     => 'dashboard',
         'permission' => 'dashboard.view',
