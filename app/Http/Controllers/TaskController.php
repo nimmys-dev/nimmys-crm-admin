@@ -97,8 +97,8 @@ class TaskController extends Controller
 
                 'manager' =>
                     $query->where(
-                        'department_id',
-                        $user->department_id
+                        'assigned_to',
+                        $user->assigned_to
                     ),
 
                 'user' =>
