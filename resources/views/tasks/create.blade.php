@@ -317,47 +317,45 @@
 
                 <div id="monthly_fields" class="task-fields">
 
-                    <div class="row">
+                    <div class="mb-3">
 
-                        {{-- Start Date --}}
-                        <div class="col-md-6 mb-3">
+                        <label class="form-label">
+                            Select Monthly Date Range
+                            <span class="text-danger">*</span>
+                        </label>
 
-                            <label class="form-label">
-                                Start Date <span class="text-danger">*</span>
-                            </label>
+                        <div id="monthly-calendar"></div>
 
-                            <input type="date"
-                                   name="monthly_start_date"
-                                   value="{{ old('monthly_start_date') }}"
-                                   class="form-control @error('monthly_start_date') is-invalid @enderror">
+                        {{-- Hidden fields --}}
+                        <input type="hidden"
+                            name="monthly_start_date"
+                            id="monthly_start_date"
+                            value="{{ old('monthly_start_date') }}">
 
-                            @error('monthly_start_date')
-                                <div class="invalid-feedback">
-                                    {{ $message }}
-                                </div>
-                            @enderror
+                        <input type="hidden"
+                            name="monthly_end_date"
+                            id="monthly_end_date"
+                            value="{{ old('monthly_end_date') }}">
 
-                        </div>
+                        @error('monthly_start_date')
+                            <div class="text-danger mt-1">
+                                {{ $message }}
+                            </div>
+                        @enderror
 
+                        @error('monthly_end_date')
+                            <div class="text-danger mt-1">
+                                {{ $message }}
+                            </div>
+                        @enderror
 
-                        {{-- End Date --}}
-                        <div class="col-md-6 mb-3">
-
-                            <label class="form-label">
-                                End Date <span class="text-danger">*</span>
-                            </label>
-
-                            <input type="date"
-                                   name="monthly_end_date"
-                                   value="{{ old('monthly_end_date') }}"
-                                   class="form-control @error('monthly_end_date') is-invalid @enderror">
-
-                            @error('monthly_end_date')
-                                <div class="invalid-feedback">
-                                    {{ $message }}
-                                </div>
-                            @enderror
-
+                        <div class="mt-2">
+                            <strong>Selected:</strong>
+                            <span id="selected-monthly-dates">
+                                {{ old('monthly_start_date') && old('monthly_end_date')
+                                    ? old('monthly_start_date') . ' - ' . old('monthly_end_date')
+                                    : 'No dates selected' }}
+                            </span>
                         </div>
 
                     </div>
@@ -704,5 +702,72 @@ document.addEventListener('DOMContentLoaded', function () {
 
 });
 </script>
+@push('scripts')
+
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
+<script>
+
+document.addEventListener('DOMContentLoaded', function () {
+
+    const startInput = document.getElementById('monthly_start_date');
+    const endInput = document.getElementById('monthly_end_date');
+    const selectedText = document.getElementById('selected-monthly-dates');
+
+    flatpickr("#monthly-calendar", {
+
+        inline: true,
+
+        mode: "range",
+
+        dateFormat: "Y-m-d",
+
+        onChange: function(selectedDates, dateStr, instance) {
+
+            if (selectedDates.length === 1) {
+
+                startInput.value =
+                    instance.formatDate(
+                        selectedDates[0],
+                        "Y-m-d"
+                    );
+
+                endInput.value = "";
+
+                selectedText.textContent =
+                    startInput.value;
+
+            }
+
+            if (selectedDates.length === 2) {
+
+                startInput.value =
+                    instance.formatDate(
+                        selectedDates[0],
+                        "Y-m-d"
+                    );
+
+                endInput.value =
+                    instance.formatDate(
+                        selectedDates[1],
+                        "Y-m-d"
+                    );
+
+                selectedText.textContent =
+                    startInput.value + " - " + endInput.value;
+            }
+        }
+
+    });
+
+});
+
+</script>
+@push('styles')
+<link rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+@endpush
+
+@endpush
 
 @endsection
