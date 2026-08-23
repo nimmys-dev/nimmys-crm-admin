@@ -1404,7 +1404,8 @@ public function quotationPdfDetails(
     // =========================================
 
 
-    $fileName = $quotation->reference . '.pdf';
+    $safeReference = str_replace(['/', '\\'], '-', $quotation->reference);
+    $fileName = $safeReference . '.pdf';
 
     $path = 'quotations/' . $fileName;
 

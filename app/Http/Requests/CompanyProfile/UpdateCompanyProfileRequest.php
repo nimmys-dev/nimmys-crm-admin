@@ -18,6 +18,7 @@ class UpdateCompanyProfileRequest extends FormRequest
     {
         return [
             'name' => ['required', 'string', 'max:255'],
+            'quotation_prefix' => ['nullable', 'string', 'max:20', 'regex:/^[A-Za-z0-9\-\/]+$/'],
             'address_line' => ['nullable', 'string', 'max:255'],
             'city' => ['nullable', 'string', 'max:100'],
             'state' => ['nullable', 'string', 'max:100'],
@@ -38,6 +39,7 @@ class UpdateCompanyProfileRequest extends FormRequest
     public function messages(): array
     {
         return [
+            'quotation_prefix.regex' => 'The quotation prefix may only contain letters, numbers, hyphens and slashes.',
             'phone.regex' => 'The phone may contain only digits, spaces and + - ( ).',
         ];
     }

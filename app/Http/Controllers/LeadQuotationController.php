@@ -163,7 +163,9 @@ class LeadQuotationController extends Controller
             app(\App\Services\LeadActivityService::class)->logQuotation($lead, $actor, $quotation, 'downloaded');
         }
 
-        return $pdf->download("Quotation-{$quotation->reference}.pdf");
+        $safeReference = str_replace(['/', '\\'], '-', $quotation->reference);
+
+        return $pdf->download("Quotation-{$safeReference}.pdf");
     }
 
     /**

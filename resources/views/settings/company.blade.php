@@ -16,7 +16,8 @@
                     @method('PUT')
 
                     <div class="grid grid-cols-12 gap-4">
-                        <x-form.input name="name" label="Company name" :value="$company->name" required col="col-span-12" />
+                        <x-form.input name="name" label="Company name" :value="$company->name" required col="col-span-12 md:col-span-8" />
+                        <x-form.input name="quotation_prefix" label="Quotation prefix" :value="$company->quotation_prefix ?? 'QTN'" hint="Prefix for sequential quotation numbers (e.g. QTN produces QTN-0001 or QTN/ produces QTN/0001)." placeholder="QTN or QTN/" col="col-span-12 md:col-span-4" />
 
                         <x-form.input name="address_line" label="Address" :value="$company->address_line" col="col-span-12" />
 
