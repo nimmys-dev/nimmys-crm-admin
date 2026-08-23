@@ -761,6 +761,111 @@
 {{-- ========================================================= --}}
 
 <script>
+// document.addEventListener('DOMContentLoaded', function () {
+
+//     const taskType = document.getElementById('task_type');
+
+//     const dailyFields = document.getElementById('daily_fields');
+//     const weeklyFields = document.getElementById('weekly_fields');
+//     const monthlyFields = document.getElementById('monthly_fields');
+//     const quarterlyFields = document.getElementById('quarterly_fields');
+
+//     function hideAllFields() {
+//         dailyFields.style.display = 'none';
+//         weeklyFields.style.display = 'none';
+//         monthlyFields.style.display = 'none';
+//         quarterlyFields.style.display = 'none';
+//     }
+
+//     function showFields(type) {
+
+//         hideAllFields();
+
+//         if (type === 'daily') {
+//             dailyFields.style.display = 'block';
+//         }
+
+//         if (type === 'weekly') {
+//             weeklyFields.style.display = 'block';
+//         }
+
+//         if (type === 'monthly') {
+//             monthlyFields.style.display = 'block';
+//         }
+
+//         if (type === 'quarterly') {
+//             quarterlyFields.style.display = 'block';
+//         }
+//     }
+
+//     taskType.addEventListener('change', function () {
+//         showFields(this.value);
+//     });
+
+//     // Show existing task type fields
+//     showFields(taskType.value);
+
+
+//     /*
+//     |--------------------------------------------------------------------------
+//     | Quarterly Date
+//     |--------------------------------------------------------------------------
+//     */
+
+//     const quarter = document.getElementById('quarter');
+
+//     const quarterStart =
+//         document.getElementById('quarter_start_date');
+
+//     const quarterEnd =
+//         document.getElementById('quarter_end_date');
+
+
+//     quarter.addEventListener('change', function () {
+
+//         let year = new Date().getFullYear();
+
+//         switch (this.value) {
+
+//             case 'q1':
+
+//                 quarterStart.value = `${year}-04-01`;
+//                 quarterEnd.value = `${year}-06-30`;
+
+//                 break;
+
+//             case 'q2':
+
+//                 quarterStart.value = `${year}-07-01`;
+//                 quarterEnd.value = `${year}-09-30`;
+
+//                 break;
+
+//             case 'q3':
+
+//                 quarterStart.value = `${year}-10-01`;
+//                 quarterEnd.value = `${year}-12-31`;
+
+//                 break;
+
+//             case 'q4':
+
+//                 quarterStart.value = `${year + 1}-01-01`;
+//                 quarterEnd.value = `${year + 1}-03-31`;
+
+//                 break;
+
+//             default:
+
+//                 quarterStart.value = '';
+//                 quarterEnd.value = '';
+
+//                 break;
+//         }
+
+//     });
+
+// });
 document.addEventListener('DOMContentLoaded', function () {
 
     const taskType = document.getElementById('task_type');
@@ -769,32 +874,38 @@ document.addEventListener('DOMContentLoaded', function () {
     const weeklyFields = document.getElementById('weekly_fields');
     const monthlyFields = document.getElementById('monthly_fields');
     const quarterlyFields = document.getElementById('quarterly_fields');
+    const yearlyFields = document.getElementById('yearly_fields'); // Yearly fields ചേർത്തു
 
     function hideAllFields() {
-        dailyFields.style.display = 'none';
-        weeklyFields.style.display = 'none';
-        monthlyFields.style.display = 'none';
-        quarterlyFields.style.display = 'none';
+        if (dailyFields) dailyFields.style.display = 'none';
+        if (weeklyFields) weeklyFields.style.display = 'none';
+        if (monthlyFields) monthlyFields.style.display = 'none';
+        if (quarterlyFields) quarterlyFields.style.display = 'none';
+        if (yearlyFields) yearlyFields.style.display = 'none'; // ഇവിടെ Hide ചെയ്യുക
     }
 
     function showFields(type) {
 
         hideAllFields();
 
-        if (type === 'daily') {
+        if (type === 'daily' && dailyFields) {
             dailyFields.style.display = 'block';
         }
 
-        if (type === 'weekly') {
+        if (type === 'weekly' && weeklyFields) {
             weeklyFields.style.display = 'block';
         }
 
-        if (type === 'monthly') {
+        if (type === 'monthly' && monthlyFields) {
             monthlyFields.style.display = 'block';
         }
 
-        if (type === 'quarterly') {
+        if (type === 'quarterly' && quarterlyFields) {
             quarterlyFields.style.display = 'block';
+        }
+
+        if (type === 'yearly' && yearlyFields) {
+            yearlyFields.style.display = 'block'; // Yearly ആകുമ്പോൾ മാത്രം Show ചെയ്യും
         }
     }
 
@@ -802,69 +913,47 @@ document.addEventListener('DOMContentLoaded', function () {
         showFields(this.value);
     });
 
-    // Show existing task type fields
+    // Page load ചെയ്യുമ്പോൾ നിലവിലുള്ള task type അനുസരിച്ച് ഫീൽഡുകൾ കാണിക്കുക
     showFields(taskType.value);
 
 
     /*
     |--------------------------------------------------------------------------
-    | Quarterly Date
+    | Quarterly Date Handling
     |--------------------------------------------------------------------------
     */
-
     const quarter = document.getElementById('quarter');
+    const quarterStart = document.getElementById('quarter_start_date');
+    const quarterEnd = document.getElementById('quarter_end_date');
 
-    const quarterStart =
-        document.getElementById('quarter_start_date');
+    if (quarter) {
+        quarter.addEventListener('change', function () {
+            let year = new Date().getFullYear();
 
-    const quarterEnd =
-        document.getElementById('quarter_end_date');
-
-
-    quarter.addEventListener('change', function () {
-
-        let year = new Date().getFullYear();
-
-        switch (this.value) {
-
-            case 'q1':
-
-                quarterStart.value = `${year}-04-01`;
-                quarterEnd.value = `${year}-06-30`;
-
-                break;
-
-            case 'q2':
-
-                quarterStart.value = `${year}-07-01`;
-                quarterEnd.value = `${year}-09-30`;
-
-                break;
-
-            case 'q3':
-
-                quarterStart.value = `${year}-10-01`;
-                quarterEnd.value = `${year}-12-31`;
-
-                break;
-
-            case 'q4':
-
-                quarterStart.value = `${year + 1}-01-01`;
-                quarterEnd.value = `${year + 1}-03-31`;
-
-                break;
-
-            default:
-
-                quarterStart.value = '';
-                quarterEnd.value = '';
-
-                break;
-        }
-
-    });
-
+            switch (this.value) {
+                case 'q1':
+                    quarterStart.value = `${year}-04-01`;
+                    quarterEnd.value = `${year}-06-30`;
+                    break;
+                case 'q2':
+                    quarterStart.value = `${year}-07-01`;
+                    quarterEnd.value = `${year}-09-30`;
+                    break;
+                case 'q3':
+                    quarterStart.value = `${year}-10-01`;
+                    quarterEnd.value = `${year}-12-31`;
+                    break;
+                case 'q4':
+                    quarterStart.value = `${year + 1}-01-01`;
+                    quarterEnd.value = `${year + 1}-03-31`;
+                    break;
+                default:
+                    quarterStart.value = '';
+                    quarterEnd.value = '';
+                    break;
+            }
+        });
+    }
 });
 </script>
 <script>
