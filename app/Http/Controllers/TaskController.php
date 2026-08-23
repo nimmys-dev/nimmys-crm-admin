@@ -7,25 +7,80 @@ use App\Models\Task;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
+use Illuminate\Http\Request;
 
 class TaskController extends Controller
 {
     /**
      * Task list
      */
-    public function index(): View
-    {
-        $tasks = Task::with([
+//     public function index(): View
+// {
+//     $user = auth()->user();
+
+//     $tasks = Task::query()
+//         // Filter query based on user role
+//         ->when(!$user->hasRole('admin'), function ($query) use ($user) {
+//             match ($user->role) {
+//                 'manager' => $query->where('department_id', $user->department_id),
+//                 'user'    => $query->where('assigned_to', $user->id),
+//                 default   => $query->where('assigned_to', $user->id),
+//             };
+//         })
+//         ->with([
+//             'assignedUser:id,name',
+//             'approvedBy:id,name',
+//         ])
+//         ->latest()
+//         ->paginate(10);
+
+//     return view('tasks.index', compact('tasks'));
+// }
+
+
+
+public function index(Request $request): View
+{
+    $user = auth()->user();
+
+    $tasks = Task::query()
+        // Role-based scoping
+        ->when(!$user->hasRole('admin'), function ($query) use ($user) {
+            match ($user->role) {
+                'manager' => $query->where('department_id', $user->department_id),
+                'user'    => $query->where('assigned_to', $user->id),
+                default   => $query->where('assigned_to', $user->id),
+            };
+        })
+        // Filter: Title Search
+        ->when($request->filled('title'), function ($query) use ($request) {
+            $query->where('title', 'like', '%' . $request->title . '%');
+        })
+        // Filter: Assigned To
+        ->when($request->filled('assigned_to'), function ($query) use ($request) {
+            $query->where('assigned_to', $request->assigned_to);
+        })
+        // Filter: Approved By
+        ->when($request->filled('approved_by'), function ($query) use ($request) {
+            $query->where('approved_by', $request->approved_by);
+        })
+        // Filter: Task Type
+        ->when($request->filled('task_type'), function ($query) use ($request) {
+            $query->where('task_type', $request->task_type);
+        })
+        ->with([
             'assignedUser:id,name',
             'approvedBy:id,name',
         ])
         ->latest()
-        ->paginate(10);
+        ->paginate(10)
+        ->withQueryString(); // Preserves filter params during pagination
 
-        return view('tasks.index', compact('tasks'));
-    }
+    // Fetch users for the filter dropdowns
+    $users = User::select('id', 'name')->orderBy('name')->get();
 
-
+    return view('tasks.index', compact('tasks', 'users'));
+}
     /**
      * Create task page
      */

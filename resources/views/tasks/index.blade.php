@@ -11,216 +11,232 @@
             Add Task
         </a>
         <x-card title="Tasks">
-            <div class="task-datatable-wrapper">
-                <x-datatable
-                    class="task-datatable"
-                    :headers="[
-                        'Title',
-                        'Assigned To',
-                        'Approved By',
-                        'Type',
-                        'Schedule',
-                        'Status',
-                        'Actions'
-                    ]"
-                    empty-message="No tasks found."
-                    empty-icon="ti ti-checklist"
+
+    {{-- Filters --}}
+    <form method="GET" action="{{ route('tasks.index') }}" class="mb-4">
+        <div class="row g-3 align-items-end">
+
+            {{-- Title Search --}}
+            <div class="col-md-3">
+                <label class="form-label">Search</label>
+                <input
+                    type="text"
+                    name="title"
+                    class="form-control"
+                    placeholder="Search task title..."
+                    value="{{ request('title') }}"
                 >
+            </div>
 
-                    @forelse($tasks as $task)
+            {{-- Assigned To --}}
+            <div class="col-md-2">
+                <label class="form-label">Assigned To</label>
+                <select name="assigned_to" class="form-select">
+                    <option value="">All</option>
 
-                        <tr>
+                    @foreach($users as $user)
+                        <option value="{{ $user->id }}"
+                            {{ request('assigned_to') == $user->id ? 'selected' : '' }}>
+                            {{ $user->name }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
 
-                            {{-- Title --}}
-                            <td class="task-title">
+            {{-- Approved By --}}
+            <div class="col-md-2">
+                <label class="form-label">Approved By</label>
+                <select name="approved_by" class="form-select">
+                    <option value="">All</option>
 
-                                <span class="task-name">
-                                    {{ $task->title }}
-                                </span>
+                    @foreach($users as $user)
+                        <option value="{{ $user->id }}"
+                            {{ request('approved_by') == $user->id ? 'selected' : '' }}>
+                            {{ $user->name }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
 
-                                <!-- @if($task->description)
+            {{-- Buttons --}}
+            <div class="col-md-3 d-flex gap-2 mt-3">
 
-                                    <div class="task-description">
-                                        {{ Str::limit($task->description, 60) }}
-                                    </div>
+                <button type="submit" class="btn btn-primary">
+                    <i class="ti ti-search"></i>
+                    Search
+                </button>
 
-                                @endif -->
-
-                            </td>
-
-
-                            {{-- Assigned To --}}
-                            <td>
-                                {{ $task->assignedUser?->name ?? '-' }}
-                            </td>
-
-
-                            {{-- Approved By --}}
-                            <td>
-                                {{ $task->approvedBy?->name ?? '-' }}
-                            </td>
-
-
-                            {{-- Type --}}
-                            <td>
-
-                                @php
-                                    $typeClass = match($task->task_type) {
-                                        'daily' => 'task-type daily',
-                                        'weekly' => 'task-type weekly',
-                                        'monthly' => 'task-type monthly',
-                                        'quarterly' => 'task-type quarterly',
-                                        default => 'task-type',
-                                    };
-                                @endphp
-
-                                <span class="{{ $typeClass }}">
-                                    {{ ucfirst($task->task_type) }}
-                                </span>
-
-                            </td>
-
-
-                            {{-- Schedule --}}
-                            <td class="task-schedule">
-
-                                @if($task->task_type === 'daily')
-
-                                    <div>
-                                        {{ \Carbon\Carbon::parse($task->start_time)->format('h:i A') }}
-                                        -
-                                        {{ \Carbon\Carbon::parse($task->end_time)->format('h:i A') }}
-                                    </div>
-
-                                @elseif($task->task_type === 'weekly')
-
-                                    <div>
-                                        {{ ucfirst($task->week_start_day) }}
-                                        -
-                                        {{ ucfirst($task->week_end_day) }}
-                                    </div>
-
-                                @elseif($task->task_type === 'monthly')
-
-                                    <div>
-                                        {{ $task->monthly_start_date?->format('d M Y') }}
-                                        -
-                                        {{ $task->monthly_end_date?->format('d M Y') }}
-                                    </div>
-
-                                @elseif($task->task_type === 'quarterly')
-
-                                    <strong>
-                                        {{ strtoupper($task->quarter) }}
-                                    </strong>
-
-                                    <div class="schedule-sub">
-                                        {{ $task->quarter_start_date?->format('d M Y') }}
-                                        -
-                                        {{ $task->quarter_end_date?->format('d M Y') }}
-                                    </div>
-
-                                @endif
-
-                            </td>
-
-
-                            {{-- Status --}}
-                            <td>
-
-                                @php
-                                    $statusClass = match($task->status) {
-                                        'pending' => 'task-status pending',
-                                        'in_progress' => 'task-status progress',
-                                        'completed' => 'task-status completed',
-                                        default => 'task-status',
-                                    };
-                                @endphp
-
-                                <span class="{{ $statusClass }}">
-                                    {{ ucwords(str_replace('_', ' ', $task->status)) }}
-                                </span>
-
-                            </td>
-
-
-                            {{-- Actions --}}
-                            <td>
-
-                                <div class="task-actions">
-
-                                    {{-- View --}}
-                                    <a href="{{ route('tasks.show', $task) }}"
-                                       class="task-action-btn"
-                                       title="View">
-
-                                        <i class="ti ti-eye"></i>
-
-                                    </a>
-
-
-                                    {{-- Edit --}}
-                                    <a href="{{ route('tasks.edit', $task) }}"
-                                       class="task-action-btn"
-                                       title="Edit">
-
-                                        <i class="ti ti-edit"></i>
-
-                                    </a>
-
-
-                                    {{-- Delete --}}
-                                    <form action="{{ route('tasks.destroy', $task) }}"
-                                          method="POST"
-                                          onsubmit="return confirm('Are you sure you want to delete this task?');">
-
-                                        @csrf
-                                        @method('DELETE')
-
-                                        <button type="submit"
-                                                class="task-action-btn delete"
-                                                title="Delete">
-
-                                            <i class="ti ti-trash"></i>
-
-                                        </button>
-
-                                    </form>
-
-                                </div>
-
-                            </td>
-
-                        </tr>
-
-                    @empty
-
-                        <tr>
-                            <td colspan="7"
-                                class="text-center py-5 text-muted">
-
-                                No tasks found.
-
-                            </td>
-                        </tr>
-
-                    @endforelse
-
-                </x-datatable>
+                <a href="{{ route('tasks.index') }}" class="btn btn-light">
+                    <i class="ti ti-refresh"></i>
+                    Reset
+                </a>
 
             </div>
 
+        </div>
+    </form>
 
-            {{-- Pagination --}}
-            @if($tasks->hasPages())
 
-                <div class="mt-4">
-                    {{ $tasks->links() }}
-                </div>
+    {{-- Task Table --}}
+    <div class="task-datatable-wrapper">
 
-            @endif
+        <x-datatable
+            class="task-datatable"
+            :headers="[
+                'Title',
+                'Assigned To',
+                'Approved By',
+                'Type',
+                'Schedule',
+                'Status',
+                'Actions'
+            ]"
+            empty-message="No tasks found."
+            empty-icon="ti ti-checklist"
+        >
 
-        </x-card>
+            @forelse($tasks as $task)
+
+                <tr>
+
+                    <td class="task-title">
+                        <span class="task-name">
+                            {{ $task->title }}
+                        </span>
+                    </td>
+
+                    <td>
+                        {{ $task->assignedUser?->name ?? '-' }}
+                    </td>
+
+                    <td>
+                        {{ $task->approvedBy?->name ?? '-' }}
+                    </td>
+
+                    <td>
+                        @php
+                            $typeClass = match($task->task_type) {
+                                'daily' => 'task-type daily',
+                                'weekly' => 'task-type weekly',
+                                'monthly' => 'task-type monthly',
+                                'quarterly' => 'task-type quarterly',
+                                default => 'task-type',
+                            };
+                        @endphp
+
+                        <span class="{{ $typeClass }}">
+                            {{ ucfirst($task->task_type) }}
+                        </span>
+                    </td>
+
+                    <td class="task-schedule">
+
+                        @if($task->task_type === 'daily')
+
+                            {{ \Carbon\Carbon::parse($task->start_time)->format('h:i A') }}
+                            -
+                            {{ \Carbon\Carbon::parse($task->end_time)->format('h:i A') }}
+
+                        @elseif($task->task_type === 'weekly')
+
+                            {{ ucfirst($task->week_start_day) }}
+                            -
+                            {{ ucfirst($task->week_end_day) }}
+
+                        @elseif($task->task_type === 'monthly')
+
+                            {{ $task->monthly_start_date?->format('d M Y') }}
+                            -
+                            {{ $task->monthly_end_date?->format('d M Y') }}
+
+                        @elseif($task->task_type === 'quarterly')
+
+                            <strong>
+                                {{ strtoupper($task->quarter) }}
+                            </strong>
+
+                            <div class="schedule-sub">
+                                {{ $task->quarter_start_date?->format('d M Y') }}
+                                -
+                                {{ $task->quarter_end_date?->format('d M Y') }}
+                            </div>
+
+                        @endif
+
+                    </td>
+
+                    <td>
+                        @php
+                            $statusClass = match($task->status) {
+                                'pending' => 'task-status pending',
+                                'in_progress' => 'task-status progress',
+                                'completed' => 'task-status completed',
+                                default => 'task-status',
+                            };
+                        @endphp
+
+                        <span class="{{ $statusClass }}">
+                            {{ ucwords(str_replace('_', ' ', $task->status)) }}
+                        </span>
+                    </td>
+
+                    <td>
+                        <div class="task-actions">
+
+                            <a href="{{ route('tasks.show', $task) }}"
+                               class="task-action-btn"
+                               title="View">
+                                <i class="ti ti-eye"></i>
+                            </a>
+
+                            <a href="{{ route('tasks.edit', $task) }}"
+                               class="task-action-btn"
+                               title="Edit">
+                                <i class="ti ti-edit"></i>
+                            </a>
+
+                            <form action="{{ route('tasks.destroy', $task) }}"
+                                  method="POST"
+                                  onsubmit="return confirm('Are you sure you want to delete this task?');">
+
+                                @csrf
+                                @method('DELETE')
+
+                                <button type="submit"
+                                        class="task-action-btn delete"
+                                        title="Delete">
+                                    <i class="ti ti-trash"></i>
+                                </button>
+
+                            </form>
+
+                        </div>
+                    </td>
+
+                </tr>
+
+            @empty
+
+                <tr>
+                    <td colspan="7" class="text-center py-5 text-muted">
+                        No tasks found.
+                    </td>
+                </tr>
+
+            @endforelse
+
+        </x-datatable>
+
+    </div>
+
+    {{-- Pagination --}}
+    @if($tasks->hasPages())
+        <div class="mt-4">
+            {{ $tasks->links() }}
+        </div>
+    @endif
+
+</x-card>
 
     </div>
 
