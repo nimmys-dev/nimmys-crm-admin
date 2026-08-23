@@ -32,6 +32,12 @@ class TaskRequest extends FormRequest
                 'exists:users,id',
             ],
 
+            /*
+            |--------------------------------------------------------------------------
+            | Task Type
+            |--------------------------------------------------------------------------
+            */
+
             'task_type' => [
                 'required',
                 Rule::in([
@@ -39,8 +45,10 @@ class TaskRequest extends FormRequest
                     'weekly',
                     'monthly',
                     'quarterly',
+                    'yearly',
                 ]),
             ],
+
 
             /*
             |--------------------------------------------------------------------------
@@ -58,6 +66,7 @@ class TaskRequest extends FormRequest
                 'required_if:task_type,daily',
                 'after:start_time',
             ],
+
 
             /*
             |--------------------------------------------------------------------------
@@ -93,6 +102,7 @@ class TaskRequest extends FormRequest
                 'required_if:task_type,weekly',
             ],
 
+
             /*
             |--------------------------------------------------------------------------
             | Monthly
@@ -111,6 +121,7 @@ class TaskRequest extends FormRequest
                 'required_if:task_type,monthly',
                 'after_or_equal:monthly_start_date',
             ],
+
 
             /*
             |--------------------------------------------------------------------------
@@ -142,6 +153,27 @@ class TaskRequest extends FormRequest
                 'after_or_equal:quarter_start_date',
             ],
 
+
+            /*
+            |--------------------------------------------------------------------------
+            | Yearly
+            |--------------------------------------------------------------------------
+            */
+
+            'yearly_start_date' => [
+                'nullable',
+                'date',
+                'required_if:task_type,yearly',
+            ],
+
+            'yearly_end_date' => [
+                'nullable',
+                'date',
+                'required_if:task_type,yearly',
+                'after_or_equal:yearly_start_date',
+            ],
+
+
             /*
             |--------------------------------------------------------------------------
             | Description
@@ -152,6 +184,7 @@ class TaskRequest extends FormRequest
                 'nullable',
                 'string',
             ],
+
 
             /*
             |--------------------------------------------------------------------------
@@ -167,23 +200,35 @@ class TaskRequest extends FormRequest
                     'completed',
                 ]),
             ],
+
         ];
     }
+
 
     public function attributes(): array
     {
         return [
+
             'assigned_to' => 'assigned user',
+
             'approved_by' => 'approver',
 
             'week_start_day' => 'week start day',
+
             'week_end_day' => 'week end day',
 
             'monthly_start_date' => 'start date',
+
             'monthly_end_date' => 'end date',
 
             'quarter_start_date' => 'start date',
+
             'quarter_end_date' => 'end date',
+
+            'yearly_start_date' => 'start date',
+
+            'yearly_end_date' => 'end date',
+
         ];
     }
 }

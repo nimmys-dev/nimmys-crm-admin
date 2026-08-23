@@ -148,6 +148,10 @@
                                 @selected(old('task_type', $task->task_type) == 'quarterly')>
                                 Quarterly
                             </option>
+                            <option value="yearly"
+                                @selected(old('task_type', $task->task_type) == 'yearly')>
+                                Yearly
+                            </option>
 
                         </select>
 
@@ -312,7 +316,7 @@
                 {{-- MONTHLY --}}
                 {{-- ========================================================= --}}
 
-                <div id="monthly_fields" class="task-fields">
+                <!-- <div id="monthly_fields" class="task-fields">
 
                     <div class="mb-3">
 
@@ -413,8 +417,138 @@
 
                     </div>
 
+                </div> -->
+<div id="monthly_fields" class="task-fields">
+
+    <div class="mb-3">
+
+        <label class="form-label">
+            Monthly Date Range
+            <span class="text-danger">*</span>
+        </label>
+
+        {{-- Selected dates --}}
+        <div class="selected-date-info mb-2">
+
+            <div>
+                <strong>Start Date:</strong>
+                <span id="selected-start-date">
+                    {{ old('monthly_start_date', $task->monthly_start_date?->format('Y-m-d')) ?: '-' }}
+                </span>
+            </div>
+
+            <div>
+                <strong>End Date:</strong>
+                <span id="selected-end-date">
+                    {{ old('monthly_end_date', $task->monthly_end_date?->format('Y-m-d')) ?: '-' }}
+                </span>
+            </div>
+
+        </div>
+
+        {{-- Open calendar button --}}
+        <button type="button"
+                class="btn btn-primary mb-3"
+                id="open-monthly-calendar">
+            <i class="ti ti-calendar"></i>
+            Select / Change Dates
+        </button>
+
+
+        {{-- Calendar wrapper --}}
+        <div id="monthly-calendar-wrapper" style="display: none;">
+
+            <div class="custom-calendar">
+
+                {{-- Calendar Header --}}
+                <div class="calendar-header">
+
+                    <button type="button"
+                            class="calendar-nav"
+                            id="prev-month">
+                        <i class="ti ti-chevron-left"></i>
+                    </button>
+
+                    <div id="calendar-month-year"></div>
+
+                    <button type="button"
+                            class="calendar-nav"
+                            id="next-month">
+                        <i class="ti ti-chevron-right"></i>
+                    </button>
+
                 </div>
 
+
+                {{-- Week Days --}}
+                <div class="calendar-weekdays">
+                    <div>Sun</div>
+                    <div>Mon</div>
+                    <div>Tue</div>
+                    <div>Wed</div>
+                    <div>Thu</div>
+                    <div>Fri</div>
+                    <div>Sat</div>
+                </div>
+
+
+                {{-- Dates --}}
+                <div id="calendar-days"
+                     class="calendar-days">
+                </div>
+
+
+                {{-- Calendar Footer --}}
+                <div class="calendar-footer mt-3 text-end">
+
+                    <button type="button"
+                            class="btn btn-secondary"
+                            id="cancel-monthly-calendar">
+                        Cancel
+                    </button>
+
+                    <button type="button"
+                            class="btn btn-success"
+                            id="ok-monthly-calendar"
+                            disabled>
+                        <i class="ti ti-check"></i>
+                        OK
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        {{-- Hidden inputs --}}
+        <input type="hidden"
+               name="monthly_start_date"
+               id="monthly_start_date"
+               value="{{ old('monthly_start_date', $task->monthly_start_date?->format('Y-m-d')) }}">
+
+        <input type="hidden"
+               name="monthly_end_date"
+               id="monthly_end_date"
+               value="{{ old('monthly_end_date', $task->monthly_end_date?->format('Y-m-d')) }}">
+
+
+        @error('monthly_start_date')
+            <div class="text-danger mt-1">
+                {{ $message }}
+            </div>
+        @enderror
+
+        @error('monthly_end_date')
+            <div class="text-danger mt-1">
+                {{ $message }}
+            </div>
+        @enderror
+
+    </div>
+
+</div>
 
                 {{-- ========================================================= --}}
                 {{-- QUARTERLY --}}
@@ -504,6 +638,58 @@
                                    class="form-control @error('quarter_end_date') is-invalid @enderror">
 
                             @error('quarter_end_date')
+                                <div class="invalid-feedback">
+                                    {{ $message }}
+                                </div>
+                            @enderror
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <!-- yearly -->
+                <div id="yearly_fields" class="task-fields">
+
+                    <div class="row">
+
+                        {{-- Start Date --}}
+                        <div class="col-md-6 mb-3">
+
+                            <label class="form-label">
+                                Start Date <span class="text-danger">*</span>
+                            </label>
+
+                            <input type="date"
+                                name="yearly_start_date"
+                                id="yearly_start_date"
+                                value="{{ old('yearly_start_date', $task->yearly_start_date?->format('Y-m-d')) }}"
+                                class="form-control @error('yearly_start_date') is-invalid @enderror">
+
+                            @error('yearly_start_date')
+                                <div class="invalid-feedback">
+                                    {{ $message }}
+                                </div>
+                            @enderror
+
+                        </div>
+
+
+                        {{-- End Date --}}
+                        <div class="col-md-6 mb-3">
+
+                            <label class="form-label">
+                                End Date <span class="text-danger">*</span>
+                            </label>
+
+                            <input type="date"
+                                name="yearly_end_date"
+                                id="yearly_end_date"
+                                value="{{ old('yearly_end_date', $task->yearly_end_date?->format('Y-m-d')) }}"
+                                class="form-control @error('yearly_end_date') is-invalid @enderror">
+
+                            @error('yearly_end_date')
                                 <div class="invalid-feedback">
                                     {{ $message }}
                                 </div>
@@ -683,7 +869,389 @@ document.addEventListener('DOMContentLoaded', function () {
 </script>
 <script>
 
+// document.addEventListener('DOMContentLoaded', function () {
+
+//     const calendarDays =
+//         document.getElementById('calendar-days');
+
+//     const monthYear =
+//         document.getElementById('calendar-month-year');
+
+//     const prevButton =
+//         document.getElementById('prev-month');
+
+//     const nextButton =
+//         document.getElementById('next-month');
+
+//     const startInput =
+//         document.getElementById('monthly_start_date');
+
+//     const endInput =
+//         document.getElementById('monthly_end_date');
+
+//     const selectedStart =
+//         document.getElementById('selected-start-date');
+
+//     const selectedEnd =
+//         document.getElementById('selected-end-date');
+
+
+//     /*
+//     |--------------------------------------------------------------------------
+//     | Existing values from edit page
+//     |--------------------------------------------------------------------------
+//     */
+
+//     let startDate = startInput.value
+//         ? new Date(startInput.value + 'T00:00:00')
+//         : null;
+
+//     let endDate = endInput.value
+//         ? new Date(endInput.value + 'T00:00:00')
+//         : null;
+
+
+//     /*
+//     |--------------------------------------------------------------------------
+//     | Open calendar on existing start date
+//     |--------------------------------------------------------------------------
+//     */
+
+//     let currentDate = startDate
+//         ? new Date(startDate)
+//         : new Date();
+
+
+//     /*
+//     |--------------------------------------------------------------------------
+//     | Format date
+//     |--------------------------------------------------------------------------
+//     */
+
+//     function formatDate(date) {
+
+//         const year = date.getFullYear();
+
+//         const month = String(
+//             date.getMonth() + 1
+//         ).padStart(2, '0');
+
+//         const day = String(
+//             date.getDate()
+//         ).padStart(2, '0');
+
+//         return `${year}-${month}-${day}`;
+//     }
+
+
+//     /*
+//     |--------------------------------------------------------------------------
+//     | Render Calendar
+//     |--------------------------------------------------------------------------
+//     */
+
+//     function renderCalendar() {
+
+//         calendarDays.innerHTML = '';
+
+
+//         const year =
+//             currentDate.getFullYear();
+
+//         const month =
+//             currentDate.getMonth();
+
+
+//         const monthName =
+//             currentDate.toLocaleString('default', {
+//                 month: 'long'
+//             });
+
+
+//         monthYear.textContent =
+//             `${monthName} ${year}`;
+
+
+//         /*
+//         |--------------------------------------------------------------------------
+//         | First day of month
+//         |--------------------------------------------------------------------------
+//         */
+
+//         const firstDay =
+//             new Date(year, month, 1).getDay();
+
+
+//         /*
+//         |--------------------------------------------------------------------------
+//         | Number of days
+//         |--------------------------------------------------------------------------
+//         */
+
+//         const daysInMonth =
+//             new Date(year, month + 1, 0).getDate();
+
+
+//         /*
+//         |--------------------------------------------------------------------------
+//         | Empty cells
+//         |--------------------------------------------------------------------------
+//         */
+
+//         for (let i = 0; i < firstDay; i++) {
+
+//             const empty =
+//                 document.createElement('div');
+
+//             empty.className =
+//                 'calendar-day empty';
+
+//             calendarDays.appendChild(empty);
+//         }
+
+
+//         /*
+//         |--------------------------------------------------------------------------
+//         | Dates
+//         |--------------------------------------------------------------------------
+//         */
+
+//         for (let day = 1; day <= daysInMonth; day++) {
+
+//             const date =
+//                 new Date(year, month, day);
+
+//             const dateString =
+//                 formatDate(date);
+
+
+//             const button =
+//                 document.createElement('div');
+
+//             button.className =
+//                 'calendar-day';
+
+//             button.textContent =
+//                 day;
+
+
+//             /*
+//             |--------------------------------------------------------------------------
+//             | Start Date
+//             |--------------------------------------------------------------------------
+//             */
+
+//             if (
+//                 startDate &&
+//                 dateString === formatDate(startDate)
+//             ) {
+
+//                 button.classList.add(
+//                     'start-date'
+//                 );
+//             }
+
+
+//             /*
+//             |--------------------------------------------------------------------------
+//             | End Date
+//             |--------------------------------------------------------------------------
+//             */
+
+//             if (
+//                 endDate &&
+//                 dateString === formatDate(endDate)
+//             ) {
+
+//                 button.classList.add(
+//                     'end-date'
+//                 );
+//             }
+
+
+//             /*
+//             |--------------------------------------------------------------------------
+//             | Single selected date
+//             |--------------------------------------------------------------------------
+//             */
+
+//             if (
+//                 startDate &&
+//                 endDate &&
+//                 dateString === formatDate(startDate) &&
+//                 dateString === formatDate(endDate)
+//             ) {
+
+//                 button.classList.add(
+//                     'selected'
+//                 );
+//             }
+
+
+//             /*
+//             |--------------------------------------------------------------------------
+//             | Range
+//             |--------------------------------------------------------------------------
+//             */
+
+//             if (
+//                 startDate &&
+//                 endDate &&
+//                 date > startDate &&
+//                 date < endDate
+//             ) {
+
+//                 button.classList.add(
+//                     'in-range'
+//                 );
+//             }
+
+
+//             /*
+//             |--------------------------------------------------------------------------
+//             | Click Date
+//             |--------------------------------------------------------------------------
+//             */
+
+//             button.addEventListener(
+//                 'click',
+//                 function () {
+
+//                     /*
+//                     | First click
+//                     */
+
+//                     if (
+//                         !startDate ||
+//                         (startDate && endDate)
+//                     ) {
+
+//                         startDate =
+//                             new Date(date);
+
+//                         endDate = null;
+
+//                     }
+
+//                     /*
+//                     | Second click
+//                     */
+
+//                     else {
+
+//                         if (date < startDate) {
+
+//                             endDate =
+//                                 new Date(startDate);
+
+//                             startDate =
+//                                 new Date(date);
+
+//                         } else {
+
+//                             endDate =
+//                                 new Date(date);
+//                         }
+
+//                     }
+
+
+//                     /*
+//                     |--------------------------------------------------------------------------
+//                     | Update hidden inputs
+//                     |--------------------------------------------------------------------------
+//                     */
+
+//                     startInput.value =
+//                         startDate
+//                             ? formatDate(startDate)
+//                             : '';
+
+//                     endInput.value =
+//                         endDate
+//                             ? formatDate(endDate)
+//                             : '';
+
+
+//                     /*
+//                     |--------------------------------------------------------------------------
+//                     | Update displayed values
+//                     |--------------------------------------------------------------------------
+//                     */
+
+//                     selectedStart.textContent =
+//                         startDate
+//                             ? formatDate(startDate)
+//                             : '-';
+
+//                     selectedEnd.textContent =
+//                         endDate
+//                             ? formatDate(endDate)
+//                             : '-';
+
+
+//                     renderCalendar();
+
+//                 }
+//             );
+
+
+//             calendarDays.appendChild(button);
+//         }
+
+//     }
+
+
+//     /*
+//     |--------------------------------------------------------------------------
+//     | Previous Month
+//     |--------------------------------------------------------------------------
+//     */
+
+//     prevButton.addEventListener('click', function () {
+
+//         currentDate.setMonth(
+//             currentDate.getMonth() - 1
+//         );
+
+//         renderCalendar();
+
+//     });
+
+
+//     /*
+//     |--------------------------------------------------------------------------
+//     | Next Month
+//     |--------------------------------------------------------------------------
+//     */
+
+//     nextButton.addEventListener('click', function () {
+
+//         currentDate.setMonth(
+//             currentDate.getMonth() + 1
+//         );
+
+//         renderCalendar();
+
+//     });
+
+
+//     /*
+//     |--------------------------------------------------------------------------
+//     | Initial Render
+//     |--------------------------------------------------------------------------
+//     */
+
+//     renderCalendar();
+
+// });
+
+</script>
+<script>
 document.addEventListener('DOMContentLoaded', function () {
+
+    const calendarWrapper =
+        document.getElementById('monthly-calendar-wrapper');
 
     const calendarDays =
         document.getElementById('calendar-days');
@@ -696,6 +1264,15 @@ document.addEventListener('DOMContentLoaded', function () {
 
     const nextButton =
         document.getElementById('next-month');
+
+    const openButton =
+        document.getElementById('open-monthly-calendar');
+
+    const okButton =
+        document.getElementById('ok-monthly-calendar');
+
+    const cancelButton =
+        document.getElementById('cancel-monthly-calendar');
 
     const startInput =
         document.getElementById('monthly_start_date');
@@ -712,7 +1289,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     /*
     |--------------------------------------------------------------------------
-    | Existing values from edit page
+    | Existing values
     |--------------------------------------------------------------------------
     */
 
@@ -727,7 +1304,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     /*
     |--------------------------------------------------------------------------
-    | Open calendar on existing start date
+    | Current Calendar Month
     |--------------------------------------------------------------------------
     */
 
@@ -738,7 +1315,22 @@ document.addEventListener('DOMContentLoaded', function () {
 
     /*
     |--------------------------------------------------------------------------
-    | Format date
+    | Temporary dates
+    |--------------------------------------------------------------------------
+    */
+
+    let tempStartDate = startDate
+        ? new Date(startDate)
+        : null;
+
+    let tempEndDate = endDate
+        ? new Date(endDate)
+        : null;
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Format Date
     |--------------------------------------------------------------------------
     */
 
@@ -760,6 +1352,132 @@ document.addEventListener('DOMContentLoaded', function () {
 
     /*
     |--------------------------------------------------------------------------
+    | Open Calendar
+    |--------------------------------------------------------------------------
+    */
+
+    openButton.addEventListener('click', function () {
+
+        tempStartDate = startDate
+            ? new Date(startDate)
+            : null;
+
+        tempEndDate = endDate
+            ? new Date(endDate)
+            : null;
+
+        currentDate = tempStartDate
+            ? new Date(tempStartDate)
+            : new Date();
+
+        calendarWrapper.style.display = 'block';
+
+        updateOkButton();
+
+        renderCalendar();
+
+    });
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Close Calendar
+    |--------------------------------------------------------------------------
+    */
+
+    function closeCalendar() {
+
+        calendarWrapper.style.display = 'none';
+
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | OK Button
+    |--------------------------------------------------------------------------
+    */
+
+    okButton.addEventListener('click', function () {
+
+        if (!tempStartDate || !tempEndDate) {
+            return;
+        }
+
+        // Save selected dates
+        startDate = new Date(tempStartDate);
+        endDate = new Date(tempEndDate);
+
+
+        // Update hidden fields
+        startInput.value =
+            formatDate(startDate);
+
+        endInput.value =
+            formatDate(endDate);
+
+
+        // Update displayed dates
+        selectedStart.textContent =
+            formatDate(startDate);
+
+        selectedEnd.textContent =
+            formatDate(endDate);
+
+
+        // Close calendar
+        closeCalendar();
+
+    });
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Cancel Button
+    |--------------------------------------------------------------------------
+    */
+
+    cancelButton.addEventListener('click', function () {
+
+        // Restore original dates
+        tempStartDate = startDate
+            ? new Date(startDate)
+            : null;
+
+        tempEndDate = endDate
+            ? new Date(endDate)
+            : null;
+
+        closeCalendar();
+
+        renderCalendar();
+
+    });
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Enable / Disable OK
+    |--------------------------------------------------------------------------
+    */
+
+    function updateOkButton() {
+
+        if (tempStartDate && tempEndDate) {
+
+            okButton.disabled = false;
+
+        } else {
+
+            okButton.disabled = true;
+
+        }
+
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
     | Render Calendar
     |--------------------------------------------------------------------------
     */
@@ -767,7 +1485,6 @@ document.addEventListener('DOMContentLoaded', function () {
     function renderCalendar() {
 
         calendarDays.innerHTML = '';
-
 
         const year =
             currentDate.getFullYear();
@@ -786,21 +1503,9 @@ document.addEventListener('DOMContentLoaded', function () {
             `${monthName} ${year}`;
 
 
-        /*
-        |--------------------------------------------------------------------------
-        | First day of month
-        |--------------------------------------------------------------------------
-        */
-
         const firstDay =
             new Date(year, month, 1).getDay();
 
-
-        /*
-        |--------------------------------------------------------------------------
-        | Number of days
-        |--------------------------------------------------------------------------
-        */
 
         const daysInMonth =
             new Date(year, month + 1, 0).getDate();
@@ -821,6 +1526,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 'calendar-day empty';
 
             calendarDays.appendChild(empty);
+
         }
 
 
@@ -830,7 +1536,11 @@ document.addEventListener('DOMContentLoaded', function () {
         |--------------------------------------------------------------------------
         */
 
-        for (let day = 1; day <= daysInMonth; day++) {
+        for (
+            let day = 1;
+            day <= daysInMonth;
+            day++
+        ) {
 
             const date =
                 new Date(year, month, day);
@@ -856,13 +1566,12 @@ document.addEventListener('DOMContentLoaded', function () {
             */
 
             if (
-                startDate &&
-                dateString === formatDate(startDate)
+                tempStartDate &&
+                dateString === formatDate(tempStartDate)
             ) {
 
-                button.classList.add(
-                    'start-date'
-                );
+                button.classList.add('start-date');
+
             }
 
 
@@ -873,32 +1582,12 @@ document.addEventListener('DOMContentLoaded', function () {
             */
 
             if (
-                endDate &&
-                dateString === formatDate(endDate)
+                tempEndDate &&
+                dateString === formatDate(tempEndDate)
             ) {
 
-                button.classList.add(
-                    'end-date'
-                );
-            }
+                button.classList.add('end-date');
 
-
-            /*
-            |--------------------------------------------------------------------------
-            | Single selected date
-            |--------------------------------------------------------------------------
-            */
-
-            if (
-                startDate &&
-                endDate &&
-                dateString === formatDate(startDate) &&
-                dateString === formatDate(endDate)
-            ) {
-
-                button.classList.add(
-                    'selected'
-                );
             }
 
 
@@ -909,108 +1598,78 @@ document.addEventListener('DOMContentLoaded', function () {
             */
 
             if (
-                startDate &&
-                endDate &&
-                date > startDate &&
-                date < endDate
+                tempStartDate &&
+                tempEndDate &&
+                date > tempStartDate &&
+                date < tempEndDate
             ) {
 
-                button.classList.add(
-                    'in-range'
-                );
+                button.classList.add('in-range');
+
             }
 
 
             /*
             |--------------------------------------------------------------------------
-            | Click Date
+            | Date Click
             |--------------------------------------------------------------------------
             */
 
-            button.addEventListener(
-                'click',
-                function () {
+            button.addEventListener('click', function (event) {
 
-                    /*
-                    | First click
-                    */
-
-                    if (
-                        !startDate ||
-                        (startDate && endDate)
-                    ) {
-
-                        startDate =
-                            new Date(date);
-
-                        endDate = null;
-
-                    }
-
-                    /*
-                    | Second click
-                    */
-
-                    else {
-
-                        if (date < startDate) {
-
-                            endDate =
-                                new Date(startDate);
-
-                            startDate =
-                                new Date(date);
-
-                        } else {
-
-                            endDate =
-                                new Date(date);
-                        }
-
-                    }
+                event.stopPropagation();
 
 
-                    /*
-                    |--------------------------------------------------------------------------
-                    | Update hidden inputs
-                    |--------------------------------------------------------------------------
-                    */
+                /*
+                | First date
+                */
 
-                    startInput.value =
-                        startDate
-                            ? formatDate(startDate)
-                            : '';
+                if (
+                    !tempStartDate ||
+                    (tempStartDate && tempEndDate)
+                ) {
 
-                    endInput.value =
-                        endDate
-                            ? formatDate(endDate)
-                            : '';
+                    tempStartDate =
+                        new Date(date);
 
-
-                    /*
-                    |--------------------------------------------------------------------------
-                    | Update displayed values
-                    |--------------------------------------------------------------------------
-                    */
-
-                    selectedStart.textContent =
-                        startDate
-                            ? formatDate(startDate)
-                            : '-';
-
-                    selectedEnd.textContent =
-                        endDate
-                            ? formatDate(endDate)
-                            : '-';
-
-
-                    renderCalendar();
+                    tempEndDate = null;
 
                 }
-            );
+
+
+                /*
+                | Second date
+                */
+
+                else {
+
+                    if (date < tempStartDate) {
+
+                        tempEndDate =
+                            new Date(tempStartDate);
+
+                        tempStartDate =
+                            new Date(date);
+
+                    } else {
+
+                        tempEndDate =
+                            new Date(date);
+
+                    }
+
+                }
+
+
+                updateOkButton();
+
+                renderCalendar();
+
+            });
 
 
             calendarDays.appendChild(button);
+
         }
 
     }
@@ -1022,7 +1681,9 @@ document.addEventListener('DOMContentLoaded', function () {
     |--------------------------------------------------------------------------
     */
 
-    prevButton.addEventListener('click', function () {
+    prevButton.addEventListener('click', function (event) {
+
+        event.stopPropagation();
 
         currentDate.setMonth(
             currentDate.getMonth() - 1
@@ -1039,7 +1700,9 @@ document.addEventListener('DOMContentLoaded', function () {
     |--------------------------------------------------------------------------
     */
 
-    nextButton.addEventListener('click', function () {
+    nextButton.addEventListener('click', function (event) {
+
+        event.stopPropagation();
 
         currentDate.setMonth(
             currentDate.getMonth() + 1
@@ -1052,14 +1715,34 @@ document.addEventListener('DOMContentLoaded', function () {
 
     /*
     |--------------------------------------------------------------------------
-    | Initial Render
+    | Click Outside Calendar
+    |--------------------------------------------------------------------------
+    */
+
+    document.addEventListener('click', function (event) {
+
+        if (
+            calendarWrapper.style.display === 'block' &&
+            !calendarWrapper.contains(event.target) &&
+            event.target !== openButton
+        ) {
+
+            closeCalendar();
+
+        }
+
+    });
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Initial Calendar Render
     |--------------------------------------------------------------------------
     */
 
     renderCalendar();
 
 });
-
 </script>
 @push('styles')
 <link rel="stylesheet"

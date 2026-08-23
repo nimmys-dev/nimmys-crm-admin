@@ -147,6 +147,10 @@
                                 @selected(old('task_type') == 'quarterly')>
                                 Quarterly
                             </option>
+                            <option value="yearly"
+                                @selected(old('task_type') == 'yearly')>
+                                Yearly
+                            </option>
 
                         </select>
 
@@ -188,11 +192,8 @@
                             @enderror
 
                         </div>
-
-
                         {{-- End Time --}}
                         <div class="col-md-6 mb-3">
-
                             <label class="form-label">
                                 End Time <span class="text-danger">*</span>
                             </label>
@@ -315,7 +316,7 @@
                 {{-- MONTHLY --}}
                 {{-- ========================================================= --}}
 
-                <div id="monthly_fields" class="task-fields">
+                <!-- <div id="monthly_fields" class="task-fields">
 
                     <div class="mb-3">
 
@@ -360,6 +361,46 @@
 
                     </div>
 
+                </div> -->
+
+                <div id="monthly_fields" class="task-fields">
+                    <div class="mb-3">
+                        <label class="form-label">
+                            Select Monthly Date Range <span class="text-danger">*</span>
+                        </label>
+
+                        <!-- Calendar Open Button -->
+                        <div>
+                            <button type="button" class="btn btn-outline-primary mb-2" id="toggle-calendar-btn">
+                                <i class="ti ti-calendar"></i> Pick Date Range
+                            </button>
+                        </div>
+
+                        <!-- Inline Calendar Wrapper (Initially Hidden) -->
+                        <div id="calendar-wrapper" style="display: none;" class="mt-2 mb-2">
+                            <div id="monthly-calendar"></div>
+                        </div>
+
+                        {{-- Hidden Input Fields --}}
+                        <input type="hidden" name="monthly_start_date" id="monthly_start_date" value="{{ old('monthly_start_date') }}">
+                        <input type="hidden" name="monthly_end_date" id="monthly_end_date" value="{{ old('monthly_end_date') }}">
+
+                        @error('monthly_start_date')
+                            <div class="text-danger mt-1">{{ $message }}</div>
+                        @enderror
+                        @error('monthly_end_date')
+                            <div class="text-danger mt-1">{{ $message }}</div>
+                        @enderror
+
+                        <div class="mt-2">
+                            <strong>Selected:</strong>
+                            <span id="selected-monthly-dates">
+                                {{ old('monthly_start_date') && old('monthly_end_date')
+                                    ? old('monthly_start_date') . ' - ' . old('monthly_end_date')
+                                    : 'No dates selected' }}
+                            </span>
+                        </div>
+                    </div>
                 </div>
 
 
@@ -464,6 +505,61 @@
 
                 </div>
 
+                {{-- ========================================================= --}}
+                {{-- YEARLY --}}
+                {{-- ========================================================= --}}
+
+                <div id="yearly_fields" class="task-fields">
+
+                    <div class="row">
+
+                        {{-- Start Date --}}
+                        <div class="col-md-6 mb-3">
+
+                            <label class="form-label">
+                                Start Date <span class="text-danger">*</span>
+                            </label>
+
+                            <input type="date"
+                                name="yearly_start_date"
+                                id="yearly_start_date"
+                                value="{{ old('yearly_start_date') }}"
+                                class="form-control @error('yearly_start_date') is-invalid @enderror">
+
+                            @error('yearly_start_date')
+                                <div class="invalid-feedback">
+                                    {{ $message }}
+                                </div>
+                            @enderror
+
+                        </div>
+
+
+                        {{-- End Date --}}
+                        <div class="col-md-6 mb-3">
+
+                            <label class="form-label">
+                                End Date <span class="text-danger">*</span>
+                            </label>
+
+                            <input type="date"
+                                name="yearly_end_date"
+                                id="yearly_end_date"
+                                value="{{ old('yearly_end_date') }}"
+                                class="form-control @error('yearly_end_date') is-invalid @enderror">
+
+                            @error('yearly_end_date')
+                                <div class="invalid-feedback">
+                                    {{ $message }}
+                                </div>
+                            @enderror
+
+                        </div>
+
+                    </div>
+
+                </div>
+
 
                 {{-- ========================================================= --}}
                 {{-- DESCRIPTION --}}
@@ -528,10 +624,20 @@ document.addEventListener('DOMContentLoaded', function () {
 
     const taskType = document.getElementById('task_type');
 
-    const dailyFields = document.getElementById('daily_fields');
-    const weeklyFields = document.getElementById('weekly_fields');
-    const monthlyFields = document.getElementById('monthly_fields');
-    const quarterlyFields = document.getElementById('quarterly_fields');
+    const dailyFields =
+        document.getElementById('daily_fields');
+
+    const weeklyFields =
+        document.getElementById('weekly_fields');
+
+    const monthlyFields =
+        document.getElementById('monthly_fields');
+
+    const quarterlyFields =
+        document.getElementById('quarterly_fields');
+
+    const yearlyFields =
+        document.getElementById('yearly_fields');
 
 
     /*
@@ -542,10 +648,25 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function hideAllFields() {
 
-        dailyFields.style.display = 'none';
-        weeklyFields.style.display = 'none';
-        monthlyFields.style.display = 'none';
-        quarterlyFields.style.display = 'none';
+        if (dailyFields) {
+            dailyFields.style.display = 'none';
+        }
+
+        if (weeklyFields) {
+            weeklyFields.style.display = 'none';
+        }
+
+        if (monthlyFields) {
+            monthlyFields.style.display = 'none';
+        }
+
+        if (quarterlyFields) {
+            quarterlyFields.style.display = 'none';
+        }
+
+        if (yearlyFields) {
+            yearlyFields.style.display = 'none';
+        }
 
     }
 
@@ -560,20 +681,52 @@ document.addEventListener('DOMContentLoaded', function () {
 
         hideAllFields();
 
-        if (type === 'daily') {
-            dailyFields.style.display = 'block';
-        }
+        switch (type) {
 
-        if (type === 'weekly') {
-            weeklyFields.style.display = 'block';
-        }
+            case 'daily':
 
-        if (type === 'monthly') {
-            monthlyFields.style.display = 'block';
-        }
+                if (dailyFields) {
+                    dailyFields.style.display = 'block';
+                }
 
-        if (type === 'quarterly') {
-            quarterlyFields.style.display = 'block';
+                break;
+
+
+            case 'weekly':
+
+                if (weeklyFields) {
+                    weeklyFields.style.display = 'block';
+                }
+
+                break;
+
+
+            case 'monthly':
+
+                if (monthlyFields) {
+                    monthlyFields.style.display = 'block';
+                }
+
+                break;
+
+
+            case 'quarterly':
+
+                if (quarterlyFields) {
+                    quarterlyFields.style.display = 'block';
+                }
+
+                break;
+
+
+            case 'yearly':
+
+                if (yearlyFields) {
+                    yearlyFields.style.display = 'block';
+                }
+
+                break;
+
         }
 
     }
@@ -585,29 +738,38 @@ document.addEventListener('DOMContentLoaded', function () {
     |--------------------------------------------------------------------------
     */
 
-    taskType.addEventListener('change', function () {
+    if (taskType) {
 
-        showFields(this.value);
+        taskType.addEventListener('change', function () {
 
-    });
+            showFields(this.value);
 
+        });
 
-    /*
-    |--------------------------------------------------------------------------
-    | Show Old Value After Validation Error
-    |--------------------------------------------------------------------------
-    */
-
-    showFields(taskType.value);
+    }
 
 
     /*
     |--------------------------------------------------------------------------
-    | Quarterly Date
+    | Show Existing / Old Task Type
     |--------------------------------------------------------------------------
     */
 
-    const quarter = document.getElementById('quarter');
+    if (taskType) {
+
+        showFields(taskType.value);
+
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | QUARTERLY
+    |--------------------------------------------------------------------------
+    */
+
+    const quarter =
+        document.getElementById('quarter');
 
     const quarterStart =
         document.getElementById('quarter_start_date');
@@ -616,89 +778,256 @@ document.addEventListener('DOMContentLoaded', function () {
         document.getElementById('quarter_end_date');
 
 
-    quarter.addEventListener('change', function () {
+    if (
+        quarter &&
+        quarterStart &&
+        quarterEnd
+    ) {
 
-        let year = new Date().getFullYear();
+        quarter.addEventListener('change', function () {
 
-        switch (this.value) {
+            const year =
+                new Date().getFullYear();
+
+
+            switch (this.value) {
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | Q1 - April to June
+                |--------------------------------------------------------------------------
+                */
+
+                case 'q1':
+
+                    quarterStart.value =
+                        `${year}-04-01`;
+
+                    quarterEnd.value =
+                        `${year}-06-30`;
+
+                    break;
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | Q2 - July to September
+                |--------------------------------------------------------------------------
+                */
+
+                case 'q2':
+
+                    quarterStart.value =
+                        `${year}-07-01`;
+
+                    quarterEnd.value =
+                        `${year}-09-30`;
+
+                    break;
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | Q3 - October to December
+                |--------------------------------------------------------------------------
+                */
+
+                case 'q3':
+
+                    quarterStart.value =
+                        `${year}-10-01`;
+
+                    quarterEnd.value =
+                        `${year}-12-31`;
+
+                    break;
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | Q4 - January to March
+                |--------------------------------------------------------------------------
+                */
+
+                case 'q4':
+
+                    quarterStart.value =
+                        `${year + 1}-01-01`;
+
+                    quarterEnd.value =
+                        `${year + 1}-03-31`;
+
+                    break;
+
+
+                default:
+
+                    quarterStart.value = '';
+                    quarterEnd.value = '';
+
+                    break;
+
+            }
+
+        });
+
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | YEARLY
+    |--------------------------------------------------------------------------
+    */
+
+    const yearlyStart =
+        document.getElementById('yearly_start_date');
+
+    const yearlyEnd =
+        document.getElementById('yearly_end_date');
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Yearly Start Date Change
+    |--------------------------------------------------------------------------
+    |
+    | Example:
+    |
+    | Start: 2026-04-01
+    | End:   2026-05-01
+    |
+    | Start: 2026-08-15
+    | End:   2026-09-15
+    |
+    |--------------------------------------------------------------------------
+    */
+
+    if (
+        yearlyStart &&
+        yearlyEnd
+    ) {
+
+        yearlyStart.addEventListener('change', function () {
+
+            if (!this.value) {
+
+                yearlyEnd.value = '';
+
+                return;
+
+            }
+
+
+            const startDate =
+                new Date(this.value + 'T00:00:00');
+
+
+            const startYear =
+                startDate.getFullYear();
+
+            const startMonth =
+                startDate.getMonth();
+
+            const startDay =
+                startDate.getDate();
+
 
             /*
             |--------------------------------------------------------------------------
-            | Q1 - April to June
+            | Calculate next month
             |--------------------------------------------------------------------------
             */
 
-            case 'q1':
-
-                quarterStart.value =
-                    `${year}-04-01`;
-
-                quarterEnd.value =
-                    `${year}-06-30`;
-
-                break;
+            const endDate =
+                new Date(
+                    startYear,
+                    startMonth + 1,
+                    startDay
+                );
 
 
             /*
             |--------------------------------------------------------------------------
-            | Q2 - July to September
+            | Don't allow next year
             |--------------------------------------------------------------------------
             */
 
-            case 'q2':
+            if (
+                endDate.getFullYear() !== startYear
+            ) {
 
-                quarterStart.value =
-                    `${year}-07-01`;
+                yearlyEnd.value = '';
 
-                quarterEnd.value =
-                    `${year}-09-30`;
+                return;
 
-                break;
+            }
 
 
             /*
             |--------------------------------------------------------------------------
-            | Q3 - October to December
+            | Format End Date
             |--------------------------------------------------------------------------
             */
 
-            case 'q3':
+            const endYear =
+                endDate.getFullYear();
 
-                quarterStart.value =
-                    `${year}-10-01`;
+            const endMonth =
+                String(
+                    endDate.getMonth() + 1
+                ).padStart(2, '0');
 
-                quarterEnd.value =
-                    `${year}-12-31`;
-
-                break;
-
-
-            /*
-            |--------------------------------------------------------------------------
-            | Q4 - January to March
-            |--------------------------------------------------------------------------
-            */
-
-            case 'q4':
-
-                quarterStart.value =
-                    `${year + 1}-01-01`;
-
-                quarterEnd.value =
-                    `${year + 1}-03-31`;
-
-                break;
+            const endDay =
+                String(
+                    endDate.getDate()
+                ).padStart(2, '0');
 
 
-            default:
+            yearlyEnd.value =
+                `${endYear}-${endMonth}-${endDay}`;
 
-                quarterStart.value = '';
-                quarterEnd.value = '';
+        });
 
-                break;
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Yearly Initial Values
+    |--------------------------------------------------------------------------
+    |
+    | Only set default dates when creating a new task.
+    | Existing edit values will NOT be overwritten.
+    |--------------------------------------------------------------------------
+    */
+
+    if (
+        taskType &&
+        taskType.value === 'yearly' &&
+        yearlyStart &&
+        yearlyEnd
+    ) {
+
+        if (
+            !yearlyStart.value &&
+            !yearlyEnd.value
+        ) {
+
+            const year =
+                new Date().getFullYear();
+
+
+            yearlyStart.value =
+                `${year}-01-01`;
+
+            yearlyEnd.value =
+                `${year}-02-01`;
+
         }
 
-    });
+    }
 
 });
 </script>
@@ -708,60 +1037,545 @@ document.addEventListener('DOMContentLoaded', function () {
 
 <script>
 
+// document.addEventListener('DOMContentLoaded', function () {
+
+//     const startInput = document.getElementById('monthly_start_date');
+//     const endInput = document.getElementById('monthly_end_date');
+//     const selectedText = document.getElementById('selected-monthly-dates');
+
+//     flatpickr("#monthly-calendar", {
+
+//         inline: true,
+
+//         mode: "range",
+
+//         dateFormat: "Y-m-d",
+
+//         onChange: function(selectedDates, dateStr, instance) {
+
+//             if (selectedDates.length === 1) {
+
+//                 startInput.value =
+//                     instance.formatDate(
+//                         selectedDates[0],
+//                         "Y-m-d"
+//                     );
+
+//                 endInput.value = "";
+
+//                 selectedText.textContent =
+//                     startInput.value;
+
+//             }
+
+//             if (selectedDates.length === 2) {
+
+//                 startInput.value =
+//                     instance.formatDate(
+//                         selectedDates[0],
+//                         "Y-m-d"
+//                     );
+
+//                 endInput.value =
+//                     instance.formatDate(
+//                         selectedDates[1],
+//                         "Y-m-d"
+//                     );
+
+//                 selectedText.textContent =
+//                     startInput.value + " - " + endInput.value;
+//             }
+//         }
+
+//     });
+
+// });
+
 document.addEventListener('DOMContentLoaded', function () {
 
-    const startInput = document.getElementById('monthly_start_date');
-    const endInput = document.getElementById('monthly_end_date');
-    const selectedText = document.getElementById('selected-monthly-dates');
+    const startInput =
+        document.getElementById('monthly_start_date');
 
-    flatpickr("#monthly-calendar", {
+    const endInput =
+        document.getElementById('monthly_end_date');
+
+    const selectedText =
+        document.getElementById('selected-monthly-dates');
+
+    const calendarWrapper =
+        document.getElementById('calendar-wrapper');
+
+    const toggleBtn =
+        document.getElementById('toggle-calendar-btn');
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Confirmed Dates
+    |--------------------------------------------------------------------------
+    */
+
+    let confirmedStart =
+        startInput.value || '';
+
+    let confirmedEnd =
+        endInput.value || '';
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Flatpickr
+    |--------------------------------------------------------------------------
+    */
+
+    const fp = flatpickr('#monthly-calendar', {
 
         inline: true,
 
-        mode: "range",
+        mode: 'range',
 
-        dateFormat: "Y-m-d",
+        dateFormat: 'Y-m-d',
 
-        onChange: function(selectedDates, dateStr, instance) {
+
+        /*
+        |--------------------------------------------------------------------------
+        | Existing Dates - Edit Page
+        |--------------------------------------------------------------------------
+        */
+
+        defaultDate:
+            confirmedStart && confirmedEnd
+                ? [confirmedStart, confirmedEnd]
+                : (
+                    confirmedStart
+                        ? [confirmedStart]
+                        : []
+                ),
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Calendar Open
+        |--------------------------------------------------------------------------
+        */
+
+        onOpen: function () {
+
+            // Save current confirmed values
+            confirmedStart =
+                startInput.value || '';
+
+            confirmedEnd =
+                endInput.value || '';
+
+        },
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Date Selection
+        |--------------------------------------------------------------------------
+        */
+
+        onChange: function (
+            selectedDates,
+            dateStr,
+            instance
+        ) {
+
+            /*
+            |--------------------------------------------------------------
+            | First Date
+            |--------------------------------------------------------------
+            */
 
             if (selectedDates.length === 1) {
 
-                startInput.value =
+                const start =
                     instance.formatDate(
                         selectedDates[0],
-                        "Y-m-d"
+                        'Y-m-d'
                     );
 
-                endInput.value = "";
+                startInput.value =
+                    start;
+
+                endInput.value =
+                    '';
 
                 selectedText.textContent =
-                    startInput.value;
-
+                    start;
             }
+
+
+            /*
+            |--------------------------------------------------------------
+            | Start + End Date
+            |--------------------------------------------------------------
+            */
 
             if (selectedDates.length === 2) {
 
-                startInput.value =
+                const start =
                     instance.formatDate(
                         selectedDates[0],
-                        "Y-m-d"
+                        'Y-m-d'
                     );
 
-                endInput.value =
+                const end =
                     instance.formatDate(
                         selectedDates[1],
-                        "Y-m-d"
+                        'Y-m-d'
                     );
 
+                startInput.value =
+                    start;
+
+                endInput.value =
+                    end;
+
                 selectedText.textContent =
-                    startInput.value + " - " + endInput.value;
+                    start + ' - ' + end;
             }
+
+        },
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Calendar Ready
+        |--------------------------------------------------------------------------
+        */
+
+        onReady: function (
+            selectedDates,
+            dateStr,
+            instance
+        ) {
+
+            /*
+            |--------------------------------------------------------------
+            | Button Container
+            |--------------------------------------------------------------
+            */
+
+            const buttonContainer =
+                document.createElement('div');
+
+            buttonContainer.className =
+                'd-flex gap-2 mt-2';
+
+
+            /*
+            |--------------------------------------------------------------
+            | Cancel Button
+            |--------------------------------------------------------------
+            */
+
+            const cancelBtn =
+                document.createElement('button');
+
+            cancelBtn.type =
+                'button';
+
+            cancelBtn.className =
+                'btn btn-sm w-50';
+
+            cancelBtn.style.backgroundColor =
+                '#6c757d';
+
+            cancelBtn.style.borderColor =
+                '#6c757d';
+
+            cancelBtn.style.color =
+                '#fff';
+
+            cancelBtn.innerHTML =
+                '<i class="ti ti-x"></i> Cancel';
+
+
+            /*
+            |--------------------------------------------------------------
+            | OK Button
+            |--------------------------------------------------------------
+            */
+
+            const okBtn =
+                document.createElement('button');
+
+            okBtn.type =
+                'button';
+
+            okBtn.className =
+                'btn btn-sm w-50';
+
+            okBtn.style.backgroundColor =
+                '#1de9b6';
+
+            okBtn.style.borderColor =
+                '#1de9b6';
+
+            okBtn.style.color =
+                '#fff';
+
+            okBtn.innerHTML =
+                '<i class="ti ti-check"></i> OK';
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | OK Button Click
+            |--------------------------------------------------------------------------
+            */
+
+            okBtn.addEventListener(
+                'click',
+                function () {
+
+                    /*
+                    |----------------------------------------------------------
+                    | Validate Dates
+                    |----------------------------------------------------------
+                    */
+
+                    if (
+                        !startInput.value ||
+                        !endInput.value
+                    ) {
+
+                        alert(
+                            'Please select start date and end date.'
+                        );
+
+                        return;
+                    }
+
+
+                    /*
+                    |----------------------------------------------------------
+                    | Save Confirmed Dates
+                    |----------------------------------------------------------
+                    */
+
+                    confirmedStart =
+                        startInput.value;
+
+                    confirmedEnd =
+                        endInput.value;
+
+
+                    /*
+                    |----------------------------------------------------------
+                    | Hide Calendar
+                    |----------------------------------------------------------
+                    */
+
+                    calendarWrapper.style.display =
+                        'none';
+
+                }
+            );
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Cancel Button Click
+            |--------------------------------------------------------------------------
+            */
+
+            cancelBtn.addEventListener(
+                'click',
+                function () {
+
+                    /*
+                    |----------------------------------------------------------
+                    | Restore Previous Dates
+                    |----------------------------------------------------------
+                    */
+
+                    startInput.value =
+                        confirmedStart;
+
+                    endInput.value =
+                        confirmedEnd;
+
+
+                    /*
+                    |----------------------------------------------------------
+                    | Restore Calendar Selection
+                    |----------------------------------------------------------
+                    */
+
+                    if (
+                        confirmedStart &&
+                        confirmedEnd
+                    ) {
+
+                        selectedText.textContent =
+                            confirmedStart +
+                            ' - ' +
+                            confirmedEnd;
+
+                        fp.setDate(
+                            [
+                                confirmedStart,
+                                confirmedEnd
+                            ],
+                            false
+                        );
+
+                    } else {
+
+                        startInput.value =
+                            '';
+
+                        endInput.value =
+                            '';
+
+                        selectedText.textContent =
+                            'No dates selected';
+
+                        fp.clear();
+                    }
+
+
+                    /*
+                    |----------------------------------------------------------
+                    | Hide Calendar
+                    |----------------------------------------------------------
+                    */
+
+                    calendarWrapper.style.display =
+                        'none';
+
+                }
+            );
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Add Buttons
+            |--------------------------------------------------------------------------
+            */
+
+            buttonContainer.appendChild(
+                cancelBtn
+            );
+
+            buttonContainer.appendChild(
+                okBtn
+            );
+
+            instance.calendarContainer.appendChild(
+                buttonContainer
+            );
+
         }
 
     });
 
-});
 
+    /*
+    |--------------------------------------------------------------------------
+    | Pick Date Range Button
+    |--------------------------------------------------------------------------
+    */
+
+    toggleBtn.addEventListener(
+        'click',
+        function () {
+
+            if (
+                calendarWrapper.style.display ===
+                'none'
+            ) {
+
+                /*
+                |--------------------------------------------------------------
+                | Open Calendar
+                |--------------------------------------------------------------
+                */
+
+                calendarWrapper.style.display =
+                    'block';
+
+
+                /*
+                |--------------------------------------------------------------
+                | Save Current Values
+                |--------------------------------------------------------------
+                */
+
+                confirmedStart =
+                    startInput.value || '';
+
+                confirmedEnd =
+                    endInput.value || '';
+
+
+                /*
+                |--------------------------------------------------------------
+                | Set Existing Selection
+                |--------------------------------------------------------------
+                */
+
+                if (
+                    confirmedStart &&
+                    confirmedEnd
+                ) {
+
+                    fp.setDate(
+                        [
+                            confirmedStart,
+                            confirmedEnd
+                        ],
+                        false
+                    );
+
+                } else if (confirmedStart) {
+
+                    fp.setDate(
+                        [confirmedStart],
+                        false
+                    );
+
+                } else {
+
+                    fp.clear();
+                }
+
+            } else {
+
+                /*
+                |--------------------------------------------------------------
+                | Close Calendar
+                |--------------------------------------------------------------
+                */
+
+                calendarWrapper.style.display =
+                    'none';
+
+            }
+
+        }
+    );
+
+});
+</script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+
+    document.querySelectorAll('input[type="time"]').forEach(function (input) {
+
+        input.addEventListener('click', function () {
+            if (typeof this.showPicker === 'function') {
+                this.showPicker();
+            }
+        });
+
+    });
+
+});
 </script>
 @push('styles')
 <link rel="stylesheet"

@@ -120,6 +120,7 @@
                                 'weekly' => 'task-type weekly',
                                 'monthly' => 'task-type monthly',
                                 'quarterly' => 'task-type quarterly',
+                                'yearly' => 'task-type yearly',
                                 default => 'task-type',
                             };
                         @endphp
@@ -161,16 +162,26 @@
                                 {{ $task->quarter_end_date?->format('d M Y') }}
                             </div>
 
-                        @endif
+                        @elseif($task->task_type === 'yearly')
 
+                            <div class="schedule-sub">
+                                {{ $task->yearly_start_date ? \Carbon\Carbon::parse($task->yearly_start_date)->format('d M Y') : '-' }}
+                                -
+                                {{ $task->yearly_end_date ? \Carbon\Carbon::parse($task->yearly_end_date)->format('d M Y') : '-' }}
+                            </div>
+
+                        @endif
                     </td>
 
                     <td>
                         @php
                             $statusClass = match($task->status) {
                                 'pending' => 'task-status pending',
-                                'in_progress' => 'task-status progress',
+                                'overdue' => 'task-status overdue',
+                                'upcoming' => 'task-status upcoming',
+                                'ongoing' => 'task-status ongoing',
                                 'completed' => 'task-status completed',
+                                'closed' => 'task-status closed',
                                 default => 'task-status',
                             };
                         @endphp
@@ -183,33 +194,109 @@
                     <td>
                         <div class="task-actions">
 
+                            <!-- 1. View Button -->
                             <a href="{{ route('tasks.show', $task) }}"
-                               class="task-action-btn"
-                               title="View">
+                            class="task-action-btn"
+                            title="View">
                                 <i class="ti ti-eye"></i>
                             </a>
+                            {{-- Only Admin / Manager --}}
+                            {{-- Edit & Delete: Admin / Manager only --}}
+                            @if(in_array(auth()->user()->role->value, ['admin', 'manager']))
 
-                            <a href="{{ route('tasks.edit', $task) }}"
-                               class="task-action-btn"
-                               title="Edit">
-                                <i class="ti ti-edit"></i>
-                            </a>
+                                {{-- Edit Button --}}
+                                <a href="{{ route('tasks.edit', $task) }}"
+                                class="task-action-btn"
+                                title="Edit">
 
-                            <form action="{{ route('tasks.destroy', $task) }}"
-                                  method="POST"
-                                  onsubmit="return confirm('Are you sure you want to delete this task?');">
+                                    <i class="ti ti-edit"></i>
 
-                                @csrf
-                                @method('DELETE')
+                                </a>
 
-                                <button type="submit"
-                                        class="task-action-btn delete"
-                                        title="Delete">
-                                    <i class="ti ti-trash"></i>
-                                </button>
 
-                            </form>
+                                {{-- Delete Button --}}
+                                <form action="{{ route('tasks.destroy', $task) }}"
+                                    method="POST"
+                                    class="delete-form"
+                                    onsubmit="return confirm('Are you sure you want to delete this task?');">
 
+                                    @csrf
+                                    @method('DELETE')
+
+                                    <button type="submit"
+                                            class="task-action-btn delete"
+                                            title="Delete">
+
+                                        <i class="ti ti-trash"></i>
+
+                                    </button>
+
+                                </form>
+
+                            @endif
+
+
+                            {{-- Complete Button --}}
+                            @if(
+                                $task->status !== 'completed'
+                                &&
+                                (
+                                    in_array(auth()->user()->role->value, ['admin', 'manager'])
+                                    ||
+                                    $task->assigned_to == auth()->id()
+                                )
+                            )
+
+                            <button type="button"
+                                    class="task-action-btn complete-btn"
+                                    title="Complete Task"
+                                    data-id="{{ $task->id }}"
+                                    data-title="{{ $task->title }}"
+                                    data-remarks="{{ $task->remarks ?? '' }}">
+
+                                <i class="ti ti-circle-check"></i>
+
+                            </button>
+
+                        @endif
+                        </div>
+                        <!-- Modal Overlay (Placed Outside task-actions to avoid flex issues) -->
+                        <!-- Modal Overlay -->
+                        <div class="custom-modal-overlay" id="customModal">
+                            <div class="custom-modal-dialog">
+                                <div class="custom-modal-content">
+                                    
+                                    <!-- Standard Form Submission Route -->
+                                    <form id="completeTaskForm" action="" method="POST">
+                                        @csrf
+                                        @method('PATCH')
+
+                                        <div class="custom-modal-header">
+                                            <h5 class="custom-modal-title">
+                                                <i class="ti ti-circle-check text-success"></i> Complete Task: <span id="modalTaskTitle"></span>
+                                            </h5>
+                                            <button type="button" class="custom-modal-close" id="closeModalX">&times;</button>
+                                        </div>
+
+                                        <div class="custom-modal-body">
+                                            <div class="modal-field">
+                                                <label for="modalRemarks"><strong>Completion Remarks / Notes:</strong></label>
+                                                <!-- Added name="remarks" so value sends with POST request -->
+                                                <textarea id="modalRemarks" name="remarks" class="form-remarks" rows="4" placeholder="Enter any completion notes or remarks..."></textarea>
+                                            </div>
+                                        </div>
+
+                                        <div class="custom-modal-footer">
+                                            <button type="button" class="btn-cancel" id="closeModalBtn">Cancel</button>
+                                            <!-- type="submit" triggers standard form submission -->
+                                            <button type="submit" class="btn-save" id="saveRemarksBtn">
+                                                <i class="ti ti-check"></i> Complete & Save
+                                            </button>
+                                        </div>
+                                    </form>
+
+                                </div>
+                            </div>
                         </div>
                     </td>
 
@@ -510,3 +597,82 @@
 </style>
 
 @endpush
+<!-- <script>
+    document.addEventListener('DOMContentLoaded', () => {
+  const modal = document.getElementById('customModal');
+  const openBtn = document.getElementById('openModalBtn');
+  const closeBtn = document.getElementById('closeModalBtn');
+  const closeX = document.getElementById('closeModalX');
+
+  // Open modal
+  openBtn.addEventListener('click', () => {
+    modal.classList.add('show');
+  });
+
+  // Close modal helper function
+  const closeModal = () => {
+    modal.classList.remove('show');
+  };
+
+  // Close triggers
+  closeBtn.addEventListener('click', closeModal);
+  closeX.addEventListener('click', closeModal);
+
+  // Close on backdrop click
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) {
+      closeModal();
+    }
+  });
+
+  // Close on ESC key
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && modal.classList.contains('show')) {
+      closeModal();
+    }
+  });
+});
+</script> -->
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const modal = document.getElementById('customModal');
+    const completeForm = document.getElementById('completeTaskForm');
+    const modalTitle = document.getElementById('modalTaskTitle');
+    const modalRemarks = document.getElementById('modalRemarks');
+    
+    const closeBtn = document.getElementById('closeModalBtn');
+    const closeX = document.getElementById('closeModalX');
+
+    // Attach click event to all complete buttons in the table
+    document.querySelectorAll('.complete-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const taskId = this.getAttribute('data-id');
+            const taskTitle = this.getAttribute('data-title');
+            const taskRemarks = this.getAttribute('data-remarks');
+
+            // Dynamically point form action to your Laravel route
+            completeForm.action = `/tasks/${taskId}/complete`;
+            
+            modalTitle.textContent = taskTitle;
+            modalRemarks.value = taskRemarks;
+
+            modal.classList.add('show');
+        });
+    });
+
+    // Close logic
+    const closeModal = () => modal.classList.remove('show');
+
+    closeBtn.addEventListener('click', closeModal);
+    closeX.addEventListener('click', closeModal);
+
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeModal();
+    });
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && modal.classList.contains('show')) closeModal();
+    });
+});
+</script>

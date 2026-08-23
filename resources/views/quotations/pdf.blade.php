@@ -306,24 +306,6 @@
             </td>
 
             <td class="branch-cell">
-                <div class="branch-title">Kottayam</div>
-                Kalambukattu Buildings<br />
-                Opp. Kalyan silks<br />
-                T.B Road<br />
-                Kottayam-686001<br />
-                <div class="branch-phone">Ph: +91 9961204700</div>
-            </td>
-
-            <td class="branch-cell">
-                <div class="branch-title">Kanjirappally</div>
-                Loyola building<br />
-                Thampalakkadu Road<br />
-                Kottayam Dist<br />
-                Kerala-686507<br />
-                <div class="branch-phone">Ph: +91 9961216700</div>
-            </td>
-
-            <td class="branch-cell">
                 <div class="branch-title">Vyttila</div>
                 Nimmys camera centre<br />
                 Tharayil annexe<br />

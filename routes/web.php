@@ -150,7 +150,10 @@ Route::middleware(['auth', 'web.access'])->group(function () {
         ->middleware('can:reports.view')
         ->name('reports.index');
     Route::resource('tasks', TaskController::class);
-
+Route::patch(
+    '/tasks/{task}/complete',
+    [TaskController::class, 'complete']
+)->name('tasks.complete');
     /*
      | Account
      */

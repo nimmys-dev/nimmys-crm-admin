@@ -61,46 +61,52 @@
 
     {{-- Task Type --}}
     <div class="task-grid-item">
-        <div class="task-info-card">
-            <div class="card-body">
+    <div class="task-info-card">
+        <div class="card-body">
 
-                <span class="task-label">
-                    Task Type
-                </span>
+            <span class="task-label">
+                Task Type
+            </span>
 
-                <div class="task-value">
+            <div class="task-value">
 
-                    @if($task->task_type === 'daily')
+                @if($task->task_type === 'daily')
 
-                        <span class="badge bg-success task-badge">
-                            Daily
-                        </span>
+                    <span class="badge bg-success task-badge">
+                        Daily
+                    </span>
 
-                    @elseif($task->task_type === 'weekly')
+                @elseif($task->task_type === 'weekly')
 
-                        <span class="badge bg-info task-badge">
-                            Weekly
-                        </span>
+                    <span class="badge bg-info task-badge">
+                        Weekly
+                    </span>
 
-                    @elseif($task->task_type === 'monthly')
+                @elseif($task->task_type === 'monthly')
 
-                        <span class="badge bg-warning text-dark task-badge">
-                            Monthly
-                        </span>
+                    <span class="badge bg-warning text-dark task-badge">
+                        Monthly
+                    </span>
 
-                    @elseif($task->task_type === 'quarterly')
+                @elseif($task->task_type === 'quarterly')
 
-                        <span class="badge bg-primary task-badge">
-                            Quarterly
-                        </span>
+                    <span class="badge bg-primary task-badge">
+                        Quarterly
+                    </span>
 
-                    @else
+                @elseif($task->task_type === 'yearly')
 
-                        <span class="badge bg-secondary task-badge">
-                            -
-                        </span>
+                    <span class="badge bg-dark task-badge">
+                        Yearly
+                    </span>
 
-                    @endif
+                @else
+
+                    <span class="badge bg-secondary task-badge">
+                        -
+                    </span>
+
+                @endif
 
                 </div>
 
