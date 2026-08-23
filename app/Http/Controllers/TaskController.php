@@ -60,7 +60,137 @@ class TaskController extends Controller
     // }
 
 
-    public function index(Request $request): View
+//     public function index(Request $request): View
+// {
+//     $user = auth()->user();
+
+//     /*
+//     |--------------------------------------------------------------------------
+//     | Automatically update task statuses
+//     |--------------------------------------------------------------------------
+//     */
+//     Task::query()
+//         ->whereNotIn('status', [
+//             'completed',
+//             'approved',
+//             'closed',
+//         ])
+//         ->get()
+//         ->each(function ($task) {
+
+//             $task->updateAutomaticStatus();
+
+//         });
+
+
+//     /*
+//     |--------------------------------------------------------------------------
+//     | Get Tasks
+//     |--------------------------------------------------------------------------
+//     */
+//     $tasks = Task::query()
+
+//         // Role-based scoping
+//         ->when(!$user->hasRole('admin'), function ($query) use ($user) {
+
+//             match ($user->role->value) {
+
+//                 'manager' =>
+//                     $query->where(
+//                         'assigned_to',
+//                         $user->assigned_to
+//                     ),
+
+//                 'user' =>
+//                     $query->where(
+//                         'assigned_to',
+//                         $user->id
+//                     ),
+
+//                 default =>
+//                     $query->where(
+//                         'assigned_to',
+//                         $user->id
+//                     ),
+//             };
+//         })
+
+//         // Filter: Title Search
+//         ->when($request->filled('title'), function ($query) use ($request) {
+
+//             $query->where(
+//                 'title',
+//                 'like',
+//                 '%' . $request->title . '%'
+//             );
+
+//         })
+
+//         // Filter: Assigned To
+//         ->when($request->filled('assigned_to'), function ($query) use ($request) {
+
+//             $query->where(
+//                 'assigned_to',
+//                 $request->assigned_to
+//             );
+
+//         })
+
+//         // Filter: Approved By
+//         ->when($request->filled('approved_by'), function ($query) use ($request) {
+
+//             $query->where(
+//                 'approved_by',
+//                 $request->approved_by
+//             );
+
+//         })
+
+//         // Filter: Task Type
+//         ->when($request->filled('task_type'), function ($query) use ($request) {
+
+//             $query->where(
+//                 'task_type',
+//                 $request->task_type
+//             );
+
+//         })
+
+//         ->with([
+//             'assignedUser:id,name',
+//             'approvedBy:id,name',
+//         ])
+
+//         ->latest()
+
+//         ->paginate(10)
+
+//         ->withQueryString();
+
+
+//     /*
+//     |--------------------------------------------------------------------------
+//     | Users for Filters
+//     |--------------------------------------------------------------------------
+//     */
+//     $users = User::select(
+//         'id',
+//         'name'
+//     )
+//     ->orderBy('name')
+//     ->get();
+
+
+//     return view(
+//         'tasks.index',
+//         compact(
+//             'tasks',
+//             'users'
+//         )
+//     );
+// }
+
+public function index(Request $request): View
 {
     $user = auth()->user();
 
@@ -69,6 +199,7 @@ class TaskController extends Controller
     | Automatically update task statuses
     |--------------------------------------------------------------------------
     */
+
     Task::query()
         ->whereNotIn('status', [
             'completed',
@@ -77,9 +208,7 @@ class TaskController extends Controller
         ])
         ->get()
         ->each(function ($task) {
-
             $task->updateAutomaticStatus();
-
         });
 
 
@@ -88,34 +217,27 @@ class TaskController extends Controller
     | Get Tasks
     |--------------------------------------------------------------------------
     */
+
     $tasks = Task::query()
 
-        // Role-based scoping
+        /*
+        |--------------------------------------------------------------------------
+        | Role-based scoping
+        |--------------------------------------------------------------------------
+        */
+
         ->when(!$user->hasRole('admin'), function ($query) use ($user) {
 
-            match ($user->role->value) {
+            $query->where('assigned_to', $user->id);
 
-                'manager' =>
-                    $query->where(
-                        'assigned_to',
-                        $user->assigned_to
-                    ),
-
-                'user' =>
-                    $query->where(
-                        'assigned_to',
-                        $user->id
-                    ),
-
-                default =>
-                    $query->where(
-                        'assigned_to',
-                        $user->id
-                    ),
-            };
         })
 
-        // Filter: Title Search
+        /*
+        |--------------------------------------------------------------------------
+        | Filter: Title
+        |--------------------------------------------------------------------------
+        */
+
         ->when($request->filled('title'), function ($query) use ($request) {
 
             $query->where(
@@ -126,7 +248,12 @@ class TaskController extends Controller
 
         })
 
-        // Filter: Assigned To
+        /*
+        |--------------------------------------------------------------------------
+        | Filter: Assigned To
+        |--------------------------------------------------------------------------
+        */
+
         ->when($request->filled('assigned_to'), function ($query) use ($request) {
 
             $query->where(
@@ -136,7 +263,12 @@ class TaskController extends Controller
 
         })
 
-        // Filter: Approved By
+        /*
+        |--------------------------------------------------------------------------
+        | Filter: Approved By
+        |--------------------------------------------------------------------------
+        */
+
         ->when($request->filled('approved_by'), function ($query) use ($request) {
 
             $query->where(
@@ -146,7 +278,12 @@ class TaskController extends Controller
 
         })
 
-        // Filter: Task Type
+        /*
+        |--------------------------------------------------------------------------
+        | Filter: Task Type
+        |--------------------------------------------------------------------------
+        */
+
         ->when($request->filled('task_type'), function ($query) use ($request) {
 
             $query->where(
@@ -173,6 +310,7 @@ class TaskController extends Controller
     | Users for Filters
     |--------------------------------------------------------------------------
     */
+
     $users = User::select(
         'id',
         'name'
