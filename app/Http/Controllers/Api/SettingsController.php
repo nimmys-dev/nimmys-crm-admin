@@ -30,6 +30,7 @@ class SettingsController extends Controller
             'data' => [
                 'id' => $company->id,
                 'name' => $company->name,
+                'quotation_prefix' => $company->quotation_prefix ?? 'QTN',
                 'address_line' => $company->address_line,
                 'city' => $company->city,
                 'state' => $company->state,
@@ -78,6 +79,7 @@ class SettingsController extends Controller
             'data' => [
                 'id' => $company->id,
                 'name' => $company->name,
+                'quotation_prefix' => $company->quotation_prefix ?? 'QTN',
                 'address_line' => $company->address_line,
                 'city' => $company->city,
                 'state' => $company->state,

@@ -20,6 +20,7 @@ class CompanyProfile extends Model
      */
     protected $fillable = [
         'name',
+        'quotation_prefix',
         'address_line',
         'city',
         'state',
@@ -28,6 +29,13 @@ class CompanyProfile extends Model
         'phone',
         'email',
         'logo_path',
+    ];
+
+    /**
+     * @var array<string, mixed>
+     */
+    protected $attributes = [
+        'quotation_prefix' => 'QTN',
     ];
 
     /**
