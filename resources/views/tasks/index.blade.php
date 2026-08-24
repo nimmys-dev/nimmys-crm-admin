@@ -249,11 +249,11 @@
                             @endif
 
                             {{-- Complete Button --}}
-                            @if(
+                            <!-- @if(
                                 $task->status !== 'completed'
                                 &&
                                 $task->approved_by == auth()->id() || auth()->user()->role->value === 'admin'
-                            )
+                            ) -->
 
                                 <button type="button"
                                         class="task-action-btn complete-btn"
@@ -266,7 +266,7 @@
 
                                 </button>
 
-                            @endif
+                            <!-- @endif -->
                         </div>
                         <!-- Modal Overlay (Placed Outside task-actions to avoid flex issues) -->
                         <!-- Modal Overlay -->
