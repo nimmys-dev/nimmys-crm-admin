@@ -152,25 +152,38 @@
 
                         @elseif($task->task_type === 'quarterly')
 
-                            <strong>
-                                {{ strtoupper($task->quarter) }}
-                            </strong>
+                            @foreach($task->quarters as $quarter)
 
-                            <div class="schedule-sub">
-                                {{ $task->quarter_start_date?->format('d M Y') }}
-                                -
-                                {{ $task->quarter_end_date?->format('d M Y') }}
-                            </div>
+                                <div class="mb-2">
+
+                                    <strong>
+                                        {{ strtoupper($quarter->quarter) }}
+                                    </strong>
+
+                                    <div class="schedule-sub">
+                                        {{ $quarter->start_date?->format('d M Y') }}
+                                        -
+                                        {{ $quarter->end_date?->format('d M Y') }}
+                                    </div>
+
+                                </div>
+
+                            @endforeach
 
                         @elseif($task->task_type === 'yearly')
 
                             <div class="schedule-sub">
-                                {{ $task->yearly_start_date ? \Carbon\Carbon::parse($task->yearly_start_date)->format('d M Y') : '-' }}
+                                {{ $task->yearly_start_date
+                                    ? \Carbon\Carbon::parse($task->yearly_start_date)->format('d M Y')
+                                    : '-' }}
                                 -
-                                {{ $task->yearly_end_date ? \Carbon\Carbon::parse($task->yearly_end_date)->format('d M Y') : '-' }}
+                                {{ $task->yearly_end_date
+                                    ? \Carbon\Carbon::parse($task->yearly_end_date)->format('d M Y')
+                                    : '-' }}
                             </div>
 
                         @endif
+
                     </td>
 
                     <td>
@@ -235,30 +248,25 @@
 
                             @endif
 
-
                             {{-- Complete Button --}}
                             @if(
                                 $task->status !== 'completed'
                                 &&
-                                (
-                                    in_array(auth()->user()->role->value, ['admin', 'manager'])
-                                    ||
-                                    $task->assigned_to == auth()->id()
-                                )
+                                $task->approved_by == auth()->id()
                             )
 
-                            <button type="button"
-                                    class="task-action-btn complete-btn"
-                                    title="Complete Task"
-                                    data-id="{{ $task->id }}"
-                                    data-title="{{ $task->title }}"
-                                    data-remarks="{{ $task->remarks ?? '' }}">
+                                <button type="button"
+                                        class="task-action-btn complete-btn"
+                                        title="Complete Task"
+                                        data-id="{{ $task->id }}"
+                                        data-title="{{ $task->title }}"
+                                        data-remarks="{{ $task->remarks ?? '' }}">
 
-                                <i class="ti ti-circle-check"></i>
+                                    <i class="ti ti-circle-check"></i>
 
-                            </button>
+                                </button>
 
-                        @endif
+                            @endif
                         </div>
                         <!-- Modal Overlay (Placed Outside task-actions to avoid flex issues) -->
                         <!-- Modal Overlay -->

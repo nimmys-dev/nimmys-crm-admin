@@ -48,7 +48,10 @@ class TaskRequest extends FormRequest
                     'yearly',
                 ]),
             ],
-
+            'repeat_mode' => [
+                'nullable',
+                'boolean',
+            ],
 
             /*
             |--------------------------------------------------------------------------
@@ -128,30 +131,33 @@ class TaskRequest extends FormRequest
             | Quarterly
             |--------------------------------------------------------------------------
             */
+'quarters' => [
+    'exclude_unless:task_type,quarterly',
+    'required',
+    'array',
+    'min:1',
+],
 
-            'quarter' => [
-                'nullable',
-                Rule::in([
-                    'q1',
-                    'q2',
-                    'q3',
-                    'q4',
-                ]),
-                'required_if:task_type,quarterly',
-            ],
+'quarters.*.quarter' => [
+    'required',
+    Rule::in([
+        'q1',
+        'q2',
+        'q3',
+        'q4',
+    ]),
+],
 
-            'quarter_start_date' => [
-                'nullable',
-                'date',
-                'required_if:task_type,quarterly',
-            ],
+'quarters.*.start_date' => [
+    'required',
+    'date',
+],
 
-            'quarter_end_date' => [
-                'nullable',
-                'date',
-                'required_if:task_type,quarterly',
-                'after_or_equal:quarter_start_date',
-            ],
+'quarters.*.end_date' => [
+    'required',
+    'date',
+    'after_or_equal:quarters.*.start_date',
+],
 
 
             /*

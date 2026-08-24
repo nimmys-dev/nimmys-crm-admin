@@ -2328,3 +2328,43 @@ body.modal-open {
     border-color: #17cfa0;
     color: #fff;
 }
+
+
+/* Main 2 Column Container */
+.quarterly-grid-wrapper {
+    display: flex;
+    gap: 15px;
+    align-items: flex-end;
+}
+
+/* Left Column (Quarter Select) */
+.quarterly-left-col {
+    flex: 1; /* Half width (50%) */
+}
+
+/* Right Column (Dates + Delete Button Container) */
+.quarterly-right-col {
+    flex: 1; /* Half width (50%) */
+    display: flex;
+    gap: 1px;
+    align-items: flex-end;
+}
+
+/* Date Input Box Fields */
+.quarterly-right-col .date-field {
+    flex: 1;
+}
+
+/* Delete Button Wrapper */
+.quarterly-right-col .action-field {
+    display: flex;
+    align-items: flex-end;
+}
+
+/* Responsive Support for Mobile Screen */
+@media (max-width: 768px) {
+    .quarterly-grid-wrapper {
+        flex-direction: column;
+        align-items: stretch;
+    }
+}

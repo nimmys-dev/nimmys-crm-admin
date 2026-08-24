@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 
 class Task extends Model
@@ -17,6 +18,7 @@ class Task extends Model
         'assigned_to',
         'approved_by',
         'task_type',
+        'repeat_mode',
 
         // Daily
         'start_time',
@@ -49,6 +51,7 @@ class Task extends Model
         'quarter_end_date' => 'date',
         'yearly_start_date' => 'date',
         'yearly_end_date' => 'date',
+        'repeat_mode' => 'boolean',
     ];
 
     public function assignedUser(): BelongsTo
@@ -148,5 +151,10 @@ class Task extends Model
                 'status' => 'overdue',
             ]);
         }
+    }
+
+    public function quarters(): HasMany
+    {
+        return $this->hasMany(TaskQuarter::class);
     }
 }

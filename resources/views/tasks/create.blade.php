@@ -76,7 +76,7 @@
 
                 </div>
 
-
+                
                 {{-- ========================================================= --}}
                 {{-- ROW 2 : APPROVE TO + TASK TYPE --}}
                 {{-- ========================================================= --}}
@@ -408,7 +408,7 @@
                 {{-- QUARTERLY --}}
                 {{-- ========================================================= --}}
 
-                <div id="quarterly_fields" class="task-fields">
+                <!-- <div id="quarterly_fields" class="task-fields">
 
                     <div class="row">
 
@@ -503,6 +503,62 @@
 
                     </div>
 
+                </div> -->
+                <div id="quarterly_fields" class="task-fields">
+
+                    <label class="form-label">
+                        Quarterly Schedule <span class="text-danger">*</span>
+                    </label>
+
+                    <div id="quarterly-container">
+
+                        <div class="quarterly-row border rounded p-3 mb-3">
+                            
+                            <!-- Main Grid Wrapper (2 Columns) -->
+                            <div class="quarterly-grid-wrapper">
+
+                                {{-- Left Side Div --}}
+                                <div class="quarterly-left-col">
+                                    <label class="form-label">Quarter</label>
+                                    <select name="quarters[0][quarter]" class="form-select quarter-select">
+                                        <option value="">Select Quarter</option>
+                                        <option value="q1">Q1 - April, May, June</option>
+                                        <option value="q2">Q2 - July, August, September</option>
+                                        <option value="q3">Q3 - October, November, December</option>
+                                        <option value="q4">Q4 - January, February, March</option>
+                                    </select>
+                                </div>
+
+                                {{-- Right Side Div --}}
+                                <div class="quarterly-right-col">
+                                    <div class="date-field">
+                                        <label class="form-label">Start Date</label>
+                                        <input type="date" name="quarters[0][start_date]" class="form-control quarter-start">
+                                    </div>
+
+                                    <div class="date-field">
+                                        <label class="form-label">End Date</label>
+                                        <input type="date" name="quarters[0][end_date]" class="form-control quarter-end">
+                                    </div>
+
+                                    <div class="action-field">
+                                        <button type="button" class="btn btn-danger remove-quarter">
+                                            <i class="ti ti-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    {{-- Add Quarter --}}
+                    <button type="button" id="add-quarter" class="btn btn-primary">
+                        <i class="ti ti-plus"></i> Add Quarter
+                    </button>
+
                 </div>
 
                 {{-- ========================================================= --}}
@@ -560,6 +616,40 @@
 
                 </div>
 
+{{-- Repeat Mode --}}
+<div class="col-md-6 mb-3">
+    <label class="form-label">
+        Repeat Mode
+    </label>
+
+    <div class="form-check form-switch mt-2">
+        <input
+            type="checkbox"
+            name="repeat_mode"
+            value="1"
+            id="repeat_mode"
+            class="form-check-input"
+            @checked(old('repeat_mode'))
+        >
+
+        <label
+            class="form-check-label"
+            for="repeat_mode"
+        >
+            Enable Repeat Mode
+        </label>
+    </div>
+
+    <small class="text-muted">
+        Automatically create the next task after completion.
+    </small>
+
+    @error('repeat_mode')
+        <div class="text-danger mt-1">
+            {{ $message }}
+        </div>
+    @enderror
+</div>
 
                 {{-- ========================================================= --}}
                 {{-- DESCRIPTION --}}
@@ -1573,6 +1663,139 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         });
 
+    });
+
+});
+</script>
+
+<!-- Quartly multiple selection -->
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+    const container = document.getElementById('quarterly-container');
+    const addButton = document.getElementById('add-quarter');
+
+    let quarterIndex = 1;
+
+    /*
+    |--------------------------------------------------------------------------
+    | Add Quarter
+    |--------------------------------------------------------------------------
+    */
+
+    addButton.addEventListener('click', function () {
+
+        const row = document.createElement('div');
+
+        row.className = 'quarterly-row border rounded p-3 mb-3';
+
+        row.innerHTML = `
+            <div class="quarterly-grid-wrapper">
+
+                {{-- Left Side: Quarter Dropdown --}}
+                <div class="quarterly-left-col">
+                    <label class="form-label">Quarter</label>
+                    <select name="quarters[${quarterIndex}][quarter]" class="form-select quarter-select">
+                        <option value="">Select Quarter</option>
+                        <option value="q1">Q1 - April, May, June</option>
+                        <option value="q2">Q2 - July, August, September</option>
+                        <option value="q3">Q3 - October, November, December</option>
+                        <option value="q4">Q4 - January, February, March</option>
+                    </select>
+                </div>
+
+                {{-- Right Side: Start Date, End Date & Delete Button --}}
+                <div class="quarterly-right-col">
+                    <div class="date-field">
+                        <label class="form-label">Start Date</label>
+                        <input type="date" 
+                               name="quarters[${quarterIndex}][start_date]" 
+                               class="form-control quarter-start">
+                    </div>
+
+                    <div class="date-field">
+                        <label class="form-label">End Date</label>
+                        <input type="date" 
+                               name="quarters[${quarterIndex}][end_date]" 
+                               class="form-control quarter-end">
+                    </div>
+
+                    <div class="action-field">
+                        <button type="button" class="btn btn-danger remove-quarter">
+                            <i class="ti ti-trash"></i>
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+        `;
+
+        container.appendChild(row);
+        quarterIndex++;
+    });
+
+    /*
+    |--------------------------------------------------------------------------
+    | Remove Quarter
+    |--------------------------------------------------------------------------
+    */
+
+    container.addEventListener('click', function (event) {
+        const removeButton = event.target.closest('.remove-quarter');
+
+        if (removeButton) {
+            const rows = container.querySelectorAll('.quarterly-row');
+
+            // Keep at least one row
+            if (rows.length > 1) {
+                removeButton.closest('.quarterly-row').remove();
+            }
+        }
+    });
+
+    /*
+    |--------------------------------------------------------------------------
+    | Auto Set Dates Based On Quarter
+    |--------------------------------------------------------------------------
+    */
+
+    container.addEventListener('change', function (event) {
+        if (!event.target.classList.contains('quarter-select')) {
+            return;
+        }
+
+        const row = event.target.closest('.quarterly-row');
+        const startInput = row.querySelector('.quarter-start');
+        const endInput = row.querySelector('.quarter-end');
+
+        const year = new Date().getFullYear();
+
+        switch (event.target.value) {
+            case 'q1':
+                startInput.value = `${year}-04-01`;
+                endInput.value = `${year}-06-30`;
+                break;
+
+            case 'q2':
+                startInput.value = `${year}-07-01`;
+                endInput.value = `${year}-09-30`;
+                break;
+
+            case 'q3':
+                startInput.value = `${year}-10-01`;
+                endInput.value = `${year}-12-31`;
+                break;
+
+            case 'q4':
+                startInput.value = `${year + 1}-01-01`;
+                endInput.value = `${year + 1}-03-31`;
+                break;
+
+            default:
+                startInput.value = '';
+                endInput.value = '';
+                break;
+        }
     });
 
 });

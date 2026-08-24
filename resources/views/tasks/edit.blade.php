@@ -418,143 +418,143 @@
                     </div>
 
                 </div> -->
-<div id="monthly_fields" class="task-fields">
+                <div id="monthly_fields" class="task-fields">
 
-    <div class="mb-3">
+                    <div class="mb-3">
 
-        <label class="form-label">
-            Monthly Date Range
-            <span class="text-danger">*</span>
-        </label>
+                        <label class="form-label">
+                            Monthly Date Range
+                            <span class="text-danger">*</span>
+                        </label>
 
-        {{-- Selected dates --}}
-        <div class="selected-date-info mb-2">
+                        {{-- Selected dates --}}
+                        <div class="selected-date-info mb-2">
 
-            <div>
-                <strong>Start Date:</strong>
-                <span id="selected-start-date">
-                    {{ old('monthly_start_date', $task->monthly_start_date?->format('Y-m-d')) ?: '-' }}
-                </span>
-            </div>
+                            <div>
+                                <strong>Start Date:</strong>
+                                <span id="selected-start-date">
+                                    {{ old('monthly_start_date', $task->monthly_start_date?->format('Y-m-d')) ?: '-' }}
+                                </span>
+                            </div>
 
-            <div>
-                <strong>End Date:</strong>
-                <span id="selected-end-date">
-                    {{ old('monthly_end_date', $task->monthly_end_date?->format('Y-m-d')) ?: '-' }}
-                </span>
-            </div>
+                            <div>
+                                <strong>End Date:</strong>
+                                <span id="selected-end-date">
+                                    {{ old('monthly_end_date', $task->monthly_end_date?->format('Y-m-d')) ?: '-' }}
+                                </span>
+                            </div>
 
-        </div>
+                        </div>
 
-        {{-- Open calendar button --}}
-        <button type="button"
-                class="btn btn-primary mb-3"
-                id="open-monthly-calendar">
-            <i class="ti ti-calendar"></i>
-            Select / Change Dates
-        </button>
+                        {{-- Open calendar button --}}
+                        <button type="button"
+                                class="btn btn-primary mb-3"
+                                id="open-monthly-calendar">
+                            <i class="ti ti-calendar"></i>
+                            Select / Change Dates
+                        </button>
 
 
-        {{-- Calendar wrapper --}}
-        <div id="monthly-calendar-wrapper" style="display: none;">
+                        {{-- Calendar wrapper --}}
+                        <div id="monthly-calendar-wrapper" style="display: none;">
 
-            <div class="custom-calendar">
+                            <div class="custom-calendar">
 
-                {{-- Calendar Header --}}
-                <div class="calendar-header">
+                                {{-- Calendar Header --}}
+                                <div class="calendar-header">
 
-                    <button type="button"
-                            class="calendar-nav"
-                            id="prev-month">
-                        <i class="ti ti-chevron-left"></i>
-                    </button>
+                                    <button type="button"
+                                            class="calendar-nav"
+                                            id="prev-month">
+                                        <i class="ti ti-chevron-left"></i>
+                                    </button>
 
-                    <div id="calendar-month-year"></div>
+                                    <div id="calendar-month-year"></div>
 
-                    <button type="button"
-                            class="calendar-nav"
-                            id="next-month">
-                        <i class="ti ti-chevron-right"></i>
-                    </button>
+                                    <button type="button"
+                                            class="calendar-nav"
+                                            id="next-month">
+                                        <i class="ti ti-chevron-right"></i>
+                                    </button>
+
+                                </div>
+
+
+                                {{-- Week Days --}}
+                                <div class="calendar-weekdays">
+                                    <div>Sun</div>
+                                    <div>Mon</div>
+                                    <div>Tue</div>
+                                    <div>Wed</div>
+                                    <div>Thu</div>
+                                    <div>Fri</div>
+                                    <div>Sat</div>
+                                </div>
+
+
+                                {{-- Dates --}}
+                                <div id="calendar-days"
+                                    class="calendar-days">
+                                </div>
+
+
+                                {{-- Calendar Footer --}}
+                                <div class="calendar-footer mt-3 text-end">
+
+                                    <button type="button"
+                                            class="btn btn-secondary"
+                                            id="cancel-monthly-calendar">
+                                        Cancel
+                                    </button>
+
+                                    <button type="button"
+                                            class="btn btn-success"
+                                            id="ok-monthly-calendar"
+                                            disabled>
+                                        <i class="ti ti-check"></i>
+                                        OK
+                                    </button>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+
+                        {{-- Hidden inputs --}}
+                        <input type="hidden"
+                            name="monthly_start_date"
+                            id="monthly_start_date"
+                            value="{{ old('monthly_start_date', $task->monthly_start_date?->format('Y-m-d')) }}">
+
+                        <input type="hidden"
+                            name="monthly_end_date"
+                            id="monthly_end_date"
+                            value="{{ old('monthly_end_date', $task->monthly_end_date?->format('Y-m-d')) }}">
+
+
+                        @error('monthly_start_date')
+                            <div class="text-danger mt-1">
+                                {{ $message }}
+                            </div>
+                        @enderror
+
+                        @error('monthly_end_date')
+                            <div class="text-danger mt-1">
+                                {{ $message }}
+                            </div>
+                        @enderror
+
+                    </div>
 
                 </div>
-
-
-                {{-- Week Days --}}
-                <div class="calendar-weekdays">
-                    <div>Sun</div>
-                    <div>Mon</div>
-                    <div>Tue</div>
-                    <div>Wed</div>
-                    <div>Thu</div>
-                    <div>Fri</div>
-                    <div>Sat</div>
-                </div>
-
-
-                {{-- Dates --}}
-                <div id="calendar-days"
-                     class="calendar-days">
-                </div>
-
-
-                {{-- Calendar Footer --}}
-                <div class="calendar-footer mt-3 text-end">
-
-                    <button type="button"
-                            class="btn btn-secondary"
-                            id="cancel-monthly-calendar">
-                        Cancel
-                    </button>
-
-                    <button type="button"
-                            class="btn btn-success"
-                            id="ok-monthly-calendar"
-                            disabled>
-                        <i class="ti ti-check"></i>
-                        OK
-                    </button>
-
-                </div>
-
-            </div>
-
-        </div>
-
-
-        {{-- Hidden inputs --}}
-        <input type="hidden"
-               name="monthly_start_date"
-               id="monthly_start_date"
-               value="{{ old('monthly_start_date', $task->monthly_start_date?->format('Y-m-d')) }}">
-
-        <input type="hidden"
-               name="monthly_end_date"
-               id="monthly_end_date"
-               value="{{ old('monthly_end_date', $task->monthly_end_date?->format('Y-m-d')) }}">
-
-
-        @error('monthly_start_date')
-            <div class="text-danger mt-1">
-                {{ $message }}
-            </div>
-        @enderror
-
-        @error('monthly_end_date')
-            <div class="text-danger mt-1">
-                {{ $message }}
-            </div>
-        @enderror
-
-    </div>
-
-</div>
 
                 {{-- ========================================================= --}}
                 {{-- QUARTERLY --}}
                 {{-- ========================================================= --}}
 
-                <div id="quarterly_fields" class="task-fields">
+                <!-- <div id="quarterly_fields" class="task-fields">
 
                     <div class="row">
 
@@ -647,6 +647,125 @@
 
                     </div>
 
+                </div> -->
+                <div id="quarterly_fields" class="task-fields">
+
+                    <label class="form-label">
+                        Quarterly Schedule <span class="text-danger">*</span>
+                    </label>
+
+                    <div id="quarterly-container">
+                        @foreach($quarters as $index => $quarter)
+
+                            <div class="quarterly-row border rounded p-3 mb-3">
+
+                                <div class="quarterly-grid-wrapper">
+
+                                    {{-- Quarter --}}
+                                    <div class="quarterly-left-col">
+
+                                        <label class="form-label">
+                                            Quarter
+                                        </label>
+
+                                        <select
+                                            name="quarters[{{ $index }}][quarter]"
+                                            class="form-select quarter-select"
+                                        >
+
+                                            <option value="">
+                                                Select Quarter
+                                            </option>
+
+                                            <option value="q1"
+                                                @selected(($quarter['quarter'] ?? '') === 'q1')>
+                                                Q1 - April, May, June
+                                            </option>
+
+                                            <option value="q2"
+                                                @selected(($quarter['quarter'] ?? '') === 'q2')>
+                                                Q2 - July, August, September
+                                            </option>
+
+                                            <option value="q3"
+                                                @selected(($quarter['quarter'] ?? '') === 'q3')>
+                                                Q3 - October, November, December
+                                            </option>
+
+                                            <option value="q4"
+                                                @selected(($quarter['quarter'] ?? '') === 'q4')>
+                                                Q4 - January, February, March
+                                            </option>
+
+                                        </select>
+
+                                    </div>
+
+                                    {{-- Dates --}}
+                                    <div class="quarterly-right-col">
+
+                                        <div class="date-field">
+
+                                            <label class="form-label">
+                                                Start Date
+                                            </label>
+
+                                            <input
+                                                type="date"
+                                                name="quarters[{{ $index }}][start_date]"
+                                                value="{{ !empty($quarter['start_date']) ? \Carbon\Carbon::parse($quarter['start_date'])->format('Y-m-d') : '' }}"
+                                                class="form-control quarter-start"
+                                            >
+
+                                        </div>
+
+                                        <div class="date-field">
+
+                                            <label class="form-label">
+                                                End Date
+                                            </label>
+
+                                            <input
+                                                type="date"
+                                                name="quarters[{{ $index }}][end_date]"
+                                                value="{{ !empty($quarter['end_date']) ? \Carbon\Carbon::parse($quarter['end_date'])->format('Y-m-d') : '' }}"
+                                                class="form-control quarter-end"
+                                            >
+
+                                        </div>
+
+                                        <div class="action-field">
+
+                                            <button
+                                                type="button"
+                                                class="btn btn-danger remove-quarter"
+                                            >
+                                                <i class="ti ti-trash"></i>
+                                            </button>
+
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+                        @endforeach
+
+                    </div>
+
+
+                    {{-- Add Quarter --}}
+                    <button
+                        type="button"
+                        id="add-quarter"
+                        class="btn btn-primary"
+                    >
+                        <i class="ti ti-plus"></i>
+                        Add Quarter
+                    </button>
+
                 </div>
 
                 <!-- yearly -->
@@ -701,7 +820,39 @@
 
                 </div>
 
+                {{-- Repeat Mode --}}
+                <div class="col-md-4 mb-3">
 
+                    <label class="form-label">
+                        Repeat Mode
+                    </label>
+
+                    <div class="form-check form-switch mt-2">
+
+                        <input type="hidden"
+                            name="repeat_mode"
+                            value="0">
+
+                        <input type="checkbox"
+                            name="repeat_mode"
+                            id="repeat_mode"
+                            value="1"
+                            class="form-check-input"
+                            @checked(old('repeat_mode', $task->repeat_mode))>
+
+                        <label class="form-check-label" for="repeat_mode">
+                            Repeat Task
+                        </label>
+
+                    </div>
+
+                    @error('repeat_mode')
+                        <div class="text-danger mt-1">
+                            {{ $message }}
+                        </div>
+                    @enderror
+
+                </div>
                 {{-- ========================================================= --}}
                 {{-- DESCRIPTION --}}
                 {{-- ========================================================= --}}
@@ -874,15 +1025,33 @@ document.addEventListener('DOMContentLoaded', function () {
     const weeklyFields = document.getElementById('weekly_fields');
     const monthlyFields = document.getElementById('monthly_fields');
     const quarterlyFields = document.getElementById('quarterly_fields');
-    const yearlyFields = document.getElementById('yearly_fields'); // Yearly fields ചേർത്തു
+    const yearlyFields = document.getElementById('yearly_fields');
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Show / Hide Task Type Fields
+    |--------------------------------------------------------------------------
+    */
 
     function hideAllFields() {
-        if (dailyFields) dailyFields.style.display = 'none';
-        if (weeklyFields) weeklyFields.style.display = 'none';
-        if (monthlyFields) monthlyFields.style.display = 'none';
-        if (quarterlyFields) quarterlyFields.style.display = 'none';
-        if (yearlyFields) yearlyFields.style.display = 'none'; // ഇവിടെ Hide ചെയ്യുക
+
+        if (dailyFields)
+            dailyFields.style.display = 'none';
+
+        if (weeklyFields)
+            weeklyFields.style.display = 'none';
+
+        if (monthlyFields)
+            monthlyFields.style.display = 'none';
+
+        if (quarterlyFields)
+            quarterlyFields.style.display = 'none';
+
+        if (yearlyFields)
+            yearlyFields.style.display = 'none';
     }
+
 
     function showFields(type) {
 
@@ -905,55 +1074,275 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         if (type === 'yearly' && yearlyFields) {
-            yearlyFields.style.display = 'block'; // Yearly ആകുമ്പോൾ മാത്രം Show ചെയ്യും
+            yearlyFields.style.display = 'block';
         }
     }
 
-    taskType.addEventListener('change', function () {
-        showFields(this.value);
-    });
 
-    // Page load ചെയ്യുമ്പോൾ നിലവിലുള്ള task type അനുസരിച്ച് ഫീൽഡുകൾ കാണിക്കുക
-    showFields(taskType.value);
+    if (taskType) {
+
+        taskType.addEventListener('change', function () {
+            showFields(this.value);
+        });
+
+        // Edit page load
+        showFields(taskType.value);
+    }
 
 
     /*
     |--------------------------------------------------------------------------
-    | Quarterly Date Handling
+    | Quarterly
     |--------------------------------------------------------------------------
     */
-    const quarter = document.getElementById('quarter');
-    const quarterStart = document.getElementById('quarter_start_date');
-    const quarterEnd = document.getElementById('quarter_end_date');
 
-    if (quarter) {
-        quarter.addEventListener('change', function () {
-            let year = new Date().getFullYear();
+    const container =
+        document.getElementById('quarterly-container');
 
-            switch (this.value) {
-                case 'q1':
-                    quarterStart.value = `${year}-04-01`;
-                    quarterEnd.value = `${year}-06-30`;
-                    break;
-                case 'q2':
-                    quarterStart.value = `${year}-07-01`;
-                    quarterEnd.value = `${year}-09-30`;
-                    break;
-                case 'q3':
-                    quarterStart.value = `${year}-10-01`;
-                    quarterEnd.value = `${year}-12-31`;
-                    break;
-                case 'q4':
-                    quarterStart.value = `${year + 1}-01-01`;
-                    quarterEnd.value = `${year + 1}-03-31`;
-                    break;
-                default:
-                    quarterStart.value = '';
-                    quarterEnd.value = '';
-                    break;
-            }
-        });
+    const addButton =
+        document.getElementById('add-quarter');
+
+
+    if (!container || !addButton) {
+        return;
     }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Get next index
+    |--------------------------------------------------------------------------
+    */
+
+    let quarterIndex =
+        container.querySelectorAll('.quarterly-row').length;
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Add Quarter
+    |--------------------------------------------------------------------------
+    */
+
+    addButton.addEventListener('click', function () {
+
+        const row =
+            document.createElement('div');
+
+        row.className =
+            'quarterly-row border rounded p-3 mb-3';
+
+
+        row.innerHTML = `
+
+            <div class="quarterly-grid-wrapper">
+
+                <div class="quarterly-left-col">
+
+                    <label class="form-label">
+                        Quarter
+                    </label>
+
+                    <select
+                        name="quarters[${quarterIndex}][quarter]"
+                        class="form-select quarter-select"
+                    >
+
+                        <option value="">
+                            Select Quarter
+                        </option>
+
+                        <option value="q1">
+                            Q1 - April, May, June
+                        </option>
+
+                        <option value="q2">
+                            Q2 - July, August, September
+                        </option>
+
+                        <option value="q3">
+                            Q3 - October, November, December
+                        </option>
+
+                        <option value="q4">
+                            Q4 - January, February, March
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <div class="quarterly-right-col">
+
+                    <div class="date-field">
+
+                        <label class="form-label">
+                            Start Date
+                        </label>
+
+                        <input
+                            type="date"
+                            name="quarters[${quarterIndex}][start_date]"
+                            class="form-control quarter-start"
+                        >
+
+                    </div>
+
+
+                    <div class="date-field">
+
+                        <label class="form-label">
+                            End Date
+                        </label>
+
+                        <input
+                            type="date"
+                            name="quarters[${quarterIndex}][end_date]"
+                            class="form-control quarter-end"
+                        >
+
+                    </div>
+
+
+                    <div class="action-field">
+
+                        <button
+                            type="button"
+                            class="btn btn-danger remove-quarter"
+                        >
+
+                            <i class="ti ti-trash"></i>
+
+                        </button>
+
+                    </div>
+
+                </div>
+
+            </div>
+        `;
+
+
+        container.appendChild(row);
+
+        quarterIndex++;
+
+    });
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Remove Quarter
+    |--------------------------------------------------------------------------
+    */
+
+    container.addEventListener('click', function (event) {
+
+        const removeButton =
+            event.target.closest('.remove-quarter');
+
+        if (!removeButton) {
+            return;
+        }
+
+        const rows =
+            container.querySelectorAll('.quarterly-row');
+
+        if (rows.length > 1) {
+
+            removeButton
+                .closest('.quarterly-row')
+                .remove();
+
+        }
+
+    });
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Auto Set Quarter Dates
+    |--------------------------------------------------------------------------
+    */
+
+    container.addEventListener('change', function (event) {
+
+        if (!event.target.classList.contains('quarter-select')) {
+            return;
+        }
+
+
+        const row =
+            event.target.closest('.quarterly-row');
+
+        const startInput =
+            row.querySelector('.quarter-start');
+
+        const endInput =
+            row.querySelector('.quarter-end');
+
+
+        const year =
+            new Date().getFullYear();
+
+
+        switch (event.target.value) {
+
+            case 'q1':
+
+                startInput.value =
+                    `${year}-04-01`;
+
+                endInput.value =
+                    `${year}-06-30`;
+
+                break;
+
+
+            case 'q2':
+
+                startInput.value =
+                    `${year}-07-01`;
+
+                endInput.value =
+                    `${year}-09-30`;
+
+                break;
+
+
+            case 'q3':
+
+                startInput.value =
+                    `${year}-10-01`;
+
+                endInput.value =
+                    `${year}-12-31`;
+
+                break;
+
+
+            case 'q4':
+
+                startInput.value =
+                    `${year + 1}-01-01`;
+
+                endInput.value =
+                    `${year + 1}-03-31`;
+
+                break;
+
+
+            default:
+
+                startInput.value = '';
+                endInput.value = '';
+
+                break;
+        }
+
+    });
+
 });
 </script>
 <script>
@@ -1830,6 +2219,22 @@ document.addEventListener('DOMContentLoaded', function () {
     */
 
     renderCalendar();
+
+});
+</script>
+<script>
+    // timer input box
+    document.addEventListener('DOMContentLoaded', function () {
+
+    document.querySelectorAll('input[type="time"]').forEach(function (input) {
+
+        input.addEventListener('click', function () {
+            if (typeof this.showPicker === 'function') {
+                this.showPicker();
+            }
+        });
+
+    });
 
 });
 </script>
