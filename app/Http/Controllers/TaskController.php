@@ -5,9 +5,10 @@ namespace App\Http\Controllers;
 use App\Http\Requests\Task\TaskRequest;
 use App\Models\Task;
 use App\Models\User;
+use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
-use Illuminate\Http\Request;
 use App\Models\TaskQuarter;
 use Illuminate\Support\Facades\DB;
 
@@ -355,194 +356,194 @@ class TaskController extends Controller
      */
 
     public function store(TaskRequest $request): RedirectResponse
-{
-    $data = $request->validated();
+    {
+        $data = $request->validated();
 
-    // Repeat mode
-    $data['repeat_mode'] = $request->boolean('repeat_mode');
+        // Repeat mode
+        $data['repeat_mode'] = $request->boolean('repeat_mode');
 
-    // Get quarterly data before removing it from Task data
-    $quarters = $data['quarters'] ?? [];
+        // Get quarterly data before removing it from Task data
+        $quarters = $data['quarters'] ?? [];
 
-    // quarters belongs to task_quarters table, not tasks table
-    unset($data['quarters']);
+        // quarters belongs to task_quarters table, not tasks table
+        unset($data['quarters']);
 
-    switch ($data['task_type']) {
+        switch ($data['task_type']) {
 
-        /*
-        |--------------------------------------------------------------------------
-        | DAILY
-        |--------------------------------------------------------------------------
-        */
-        case 'daily':
+            /*
+            |--------------------------------------------------------------------------
+            | DAILY
+            |--------------------------------------------------------------------------
+            */
+            case 'daily':
 
-            // Weekly fields
-            $data['week_start_day'] = null;
-            $data['week_end_day'] = null;
+                // Weekly fields
+                $data['week_start_day'] = null;
+                $data['week_end_day'] = null;
 
-            // Monthly fields
-            $data['monthly_start_date'] = null;
-            $data['monthly_end_date'] = null;
+                // Monthly fields
+                $data['monthly_start_date'] = null;
+                $data['monthly_end_date'] = null;
 
-            // Quarterly old fields
-            $data['quarter'] = null;
-            $data['quarter_start_date'] = null;
-            $data['quarter_end_date'] = null;
+                // Quarterly old fields
+                $data['quarter'] = null;
+                $data['quarter_start_date'] = null;
+                $data['quarter_end_date'] = null;
 
-            // Yearly fields
-            $data['yearly_start_date'] = null;
-            $data['yearly_end_date'] = null;
+                // Yearly fields
+                $data['yearly_start_date'] = null;
+                $data['yearly_end_date'] = null;
 
-            break;
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | WEEKLY
-        |--------------------------------------------------------------------------
-        */
-        case 'weekly':
-
-            // Daily fields
-            $data['start_time'] = null;
-            $data['end_time'] = null;
-
-            // Monthly fields
-            $data['monthly_start_date'] = null;
-            $data['monthly_end_date'] = null;
-
-            // Quarterly old fields
-            $data['quarter'] = null;
-            $data['quarter_start_date'] = null;
-            $data['quarter_end_date'] = null;
-
-            // Yearly fields
-            $data['yearly_start_date'] = null;
-            $data['yearly_end_date'] = null;
-
-            break;
+                break;
 
 
-        /*
-        |--------------------------------------------------------------------------
-        | MONTHLY
-        |--------------------------------------------------------------------------
-        */
-        case 'monthly':
+            /*
+            |--------------------------------------------------------------------------
+            | WEEKLY
+            |--------------------------------------------------------------------------
+            */
+            case 'weekly':
 
-            // Daily fields
-            $data['start_time'] = null;
-            $data['end_time'] = null;
+                // Daily fields
+                $data['start_time'] = null;
+                $data['end_time'] = null;
 
-            // Weekly fields
-            $data['week_start_day'] = null;
-            $data['week_end_day'] = null;
+                // Monthly fields
+                $data['monthly_start_date'] = null;
+                $data['monthly_end_date'] = null;
 
-            // Quarterly old fields
-            $data['quarter'] = null;
-            $data['quarter_start_date'] = null;
-            $data['quarter_end_date'] = null;
+                // Quarterly old fields
+                $data['quarter'] = null;
+                $data['quarter_start_date'] = null;
+                $data['quarter_end_date'] = null;
 
-            // Yearly fields
-            $data['yearly_start_date'] = null;
-            $data['yearly_end_date'] = null;
+                // Yearly fields
+                $data['yearly_start_date'] = null;
+                $data['yearly_end_date'] = null;
 
-            break;
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | QUARTERLY
-        |--------------------------------------------------------------------------
-        */
-        case 'quarterly':
-
-            // Daily fields
-            $data['start_time'] = null;
-            $data['end_time'] = null;
-
-            // Weekly fields
-            $data['week_start_day'] = null;
-            $data['week_end_day'] = null;
-
-            // Monthly fields
-            $data['monthly_start_date'] = null;
-            $data['monthly_end_date'] = null;
-
-            // Yearly fields
-            $data['yearly_start_date'] = null;
-            $data['yearly_end_date'] = null;
-
-            // Old single-quarter fields
-            $data['quarter'] = null;
-            $data['quarter_start_date'] = null;
-            $data['quarter_end_date'] = null;
-
-            break;
+                break;
 
 
-        /*
-        |--------------------------------------------------------------------------
-        | YEARLY
-        |--------------------------------------------------------------------------
-        */
-        case 'yearly':
+            /*
+            |--------------------------------------------------------------------------
+            | MONTHLY
+            |--------------------------------------------------------------------------
+            */
+            case 'monthly':
 
-            // Daily fields
-            $data['start_time'] = null;
-            $data['end_time'] = null;
+                // Daily fields
+                $data['start_time'] = null;
+                $data['end_time'] = null;
 
-            // Weekly fields
-            $data['week_start_day'] = null;
-            $data['week_end_day'] = null;
+                // Weekly fields
+                $data['week_start_day'] = null;
+                $data['week_end_day'] = null;
 
-            // Monthly fields
-            $data['monthly_start_date'] = null;
-            $data['monthly_end_date'] = null;
+                // Quarterly old fields
+                $data['quarter'] = null;
+                $data['quarter_start_date'] = null;
+                $data['quarter_end_date'] = null;
 
-            // Quarterly old fields
-            $data['quarter'] = null;
-            $data['quarter_start_date'] = null;
-            $data['quarter_end_date'] = null;
+                // Yearly fields
+                $data['yearly_start_date'] = null;
+                $data['yearly_end_date'] = null;
 
-            break;
-    }
-
-
-    DB::transaction(function () use ($data, $quarters) {
-
-        /*
-        |--------------------------------------------------------------------------
-        | Create Main Task
-        |--------------------------------------------------------------------------
-        */
-        $task = Task::create($data);
+                break;
 
 
-        /*
-        |--------------------------------------------------------------------------
-        | Create Quarterly Records
-        |--------------------------------------------------------------------------
-        */
-        if ($task->task_type === 'quarterly') {
+            /*
+            |--------------------------------------------------------------------------
+            | QUARTERLY
+            |--------------------------------------------------------------------------
+            */
+            case 'quarterly':
 
-            foreach ($quarters as $quarter) {
+                // Daily fields
+                $data['start_time'] = null;
+                $data['end_time'] = null;
 
-                TaskQuarter::create([
-                    'task_id'    => $task->id,
-                    'quarter'    => $quarter['quarter'],
-                    'start_date' => $quarter['start_date'],
-                    'end_date'   => $quarter['end_date'],
-                ]);
-            }
+                // Weekly fields
+                $data['week_start_day'] = null;
+                $data['week_end_day'] = null;
+
+                // Monthly fields
+                $data['monthly_start_date'] = null;
+                $data['monthly_end_date'] = null;
+
+                // Yearly fields
+                $data['yearly_start_date'] = null;
+                $data['yearly_end_date'] = null;
+
+                // Old single-quarter fields
+                $data['quarter'] = null;
+                $data['quarter_start_date'] = null;
+                $data['quarter_end_date'] = null;
+
+                break;
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | YEARLY
+            |--------------------------------------------------------------------------
+            */
+            case 'yearly':
+
+                // Daily fields
+                $data['start_time'] = null;
+                $data['end_time'] = null;
+
+                // Weekly fields
+                $data['week_start_day'] = null;
+                $data['week_end_day'] = null;
+
+                // Monthly fields
+                $data['monthly_start_date'] = null;
+                $data['monthly_end_date'] = null;
+
+                // Quarterly old fields
+                $data['quarter'] = null;
+                $data['quarter_start_date'] = null;
+                $data['quarter_end_date'] = null;
+
+                break;
         }
-    });
 
 
-    return redirect()
-        ->route('tasks.index')
-        ->with('success', 'Task created successfully.');
-}
+        DB::transaction(function () use ($data, $quarters) {
+
+            /*
+            |--------------------------------------------------------------------------
+            | Create Main Task
+            |--------------------------------------------------------------------------
+            */
+            $task = Task::create($data);
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Create Quarterly Records
+            |--------------------------------------------------------------------------
+            */
+            if ($task->task_type === 'quarterly') {
+
+                foreach ($quarters as $quarter) {
+
+                    TaskQuarter::create([
+                        'task_id'    => $task->id,
+                        'quarter'    => $quarter['quarter'],
+                        'start_date' => $quarter['start_date'],
+                        'end_date'   => $quarter['end_date'],
+                    ]);
+                }
+            }
+        });
+
+
+        return redirect()
+            ->route('tasks.index')
+            ->with('success', 'Task created successfully.');
+    }
 
 
     /**
@@ -916,4 +917,161 @@ public function update(
 
         return $nextTask;
     }
+
+    public function myTasks(): View
+    {
+        $user = auth()->user();
+
+        $query = Task::with([
+            'assignedUser:id,name',
+            'approvedBy:id,name',
+        ]);
+
+        if ($user->role !== 'admin') {
+            $query->where('assigned_to', $user->id);
+        }
+
+        $tasks = $query
+            ->latest()
+            ->paginate(10);
+
+        $users = User::whereIn('role', ['manager', 'employee'])
+            ->orderBy('name')
+            ->get(['id', 'name', 'role']);
+
+        return view('tasks.my-tasks', compact('tasks', 'users'));
+    }
+    public function reassign(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'task_ids' => [
+                'required',
+                'array',
+                'min:1',
+            ],
+
+            'task_ids.*' => [
+                'required',
+                'integer',
+                'exists:tasks,id',
+            ],
+
+            'assigned_to' => [
+                'required',
+                'integer',
+                'exists:users,id',
+            ],
+        ]);
+
+
+        $currentUser = auth()->user();
+
+        /*
+        |--------------------------------------------------------------------------
+        | New assigned user
+        |--------------------------------------------------------------------------
+        */
+
+        $newUser = User::find($validated['assigned_to']);
+
+        if (!$newUser) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Selected user not found.',
+            ], 422);
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Prevent assigning to same user
+        |--------------------------------------------------------------------------
+        */
+
+        if ((int) $newUser->id === (int) $currentUser->id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'You cannot reassign tasks to yourself.',
+            ], 422);
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Get selected tasks
+        |--------------------------------------------------------------------------
+        */
+
+        $query = Task::whereIn(
+            'id',
+            $validated['task_ids']
+        );
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Admin
+        |--------------------------------------------------------------------------
+        |
+        | Admin can reassign any selected task.
+        |
+        */
+
+        if ($currentUser->role !== 'admin') {
+
+            /*
+            | Non-admin can reassign only tasks assigned to themselves.
+            */
+
+            $query->where(
+                'assigned_to',
+                $currentUser->id
+            );
+        }
+
+
+        $tasks = $query->get();
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Check whether tasks are available
+        |--------------------------------------------------------------------------
+        */
+
+        if ($tasks->isEmpty()) {
+
+            return response()->json([
+                'success' => false,
+                'message' => 'No eligible tasks found for reassignment.',
+            ], 403);
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Reassign
+        |--------------------------------------------------------------------------
+        */
+
+        DB::transaction(function () use ($tasks, $newUser) {
+
+            foreach ($tasks as $task) {
+
+                $task->update([
+                    'assigned_to' => $newUser->id,
+                ]);
+            }
+        });
+
+
+        return response()->json([
+            'success' => true,
+            'message' => $tasks->count()
+                . ' task(s) reassigned successfully to '
+                . $newUser->name
+                . '.',
+        ]);
+    }
+
 }

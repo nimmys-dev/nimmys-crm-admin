@@ -252,7 +252,7 @@
                             @if(
                                 $task->status !== 'completed'
                                 &&
-                                $task->approved_by == auth()->id()
+                                $task->approved_by == auth()->id() || auth()->user()->role->value === 'admin'
                             )
 
                                 <button type="button"

@@ -150,10 +150,9 @@ Route::middleware(['auth', 'web.access'])->group(function () {
         ->middleware('can:reports.view')
         ->name('reports.index');
     Route::resource('tasks', TaskController::class);
-Route::patch(
-    '/tasks/{task}/complete',
-    [TaskController::class, 'complete']
-)->name('tasks.complete');
+    Route::patch('/tasks/{task}/complete',[TaskController::class, 'complete'])->name('tasks.complete');
+    Route::get('/my-tasks', [TaskController::class, 'myTasks'])->name('my-tasks.index');
+    Route::post('/my-tasks/reassign', [TaskController::class, 'reassign'])->name('my-tasks.reassign');
     /*
      | Account
      */

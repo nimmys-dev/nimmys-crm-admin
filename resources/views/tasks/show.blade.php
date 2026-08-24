@@ -292,80 +292,85 @@
 
     @if($task->task_type === 'quarterly')
 
-        <div class="task-grid-item">
-            <div class="task-info-card">
-                <div class="card-body">
+        @foreach($task->quarters as $quarter)
 
-                    <span class="task-label">
-                        Quarter
-                    </span>
+            <div class="task-grid-item">
+                <div class="task-info-card">
+                    <div class="card-body">
 
-                    <div class="task-value">
+                        <span class="task-label">
+                            Quarter
+                        </span>
 
-                        @switch($task->quarter)
+                        <div class="task-value">
 
-                            @case('q1')
-                                Q1 - Apr, May, Jun
-                                @break
+                            @switch($quarter->quarter)
 
-                            @case('q2')
-                                Q2 - Jul, Aug, Sep
-                                @break
+                                @case('q1')
+                                    Q1 - Apr, May, Jun
+                                    @break
 
-                            @case('q3')
-                                Q3 - Oct, Nov, Dec
-                                @break
+                                @case('q2')
+                                    Q2 - Jul, Aug, Sep
+                                    @break
 
-                            @case('q4')
-                                Q4 - Jan, Feb, Mar
-                                @break
+                                @case('q3')
+                                    Q3 - Oct, Nov, Dec
+                                    @break
 
-                            @default
-                                —
+                                @case('q4')
+                                    Q4 - Jan, Feb, Mar
+                                    @break
 
-                        @endswitch
+                                @default
+                                    —
+                            @endswitch
+
+                        </div>
 
                     </div>
-
                 </div>
             </div>
-        </div>
 
-        <div class="task-grid-item">
-            <div class="task-info-card">
-                <div class="card-body">
 
-                    <span class="task-label">
-                        Quarter Start Date
-                    </span>
+            <div class="task-grid-item">
+                <div class="task-info-card">
+                    <div class="card-body">
 
-                    <div class="task-value">
-                        {{ $task->quarter_start_date
-                            ? \Carbon\Carbon::parse($task->quarter_start_date)->format('d M Y')
-                            : '—' }}
+                        <span class="task-label">
+                            Quarter Start Date
+                        </span>
+
+                        <div class="task-value">
+                            {{ $quarter->start_date
+                                ? \Carbon\Carbon::parse($quarter->start_date)->format('d M Y')
+                                : '—' }}
+                        </div>
+
                     </div>
-
                 </div>
             </div>
-        </div>
 
-        <div class="task-grid-item">
-            <div class="task-info-card">
-                <div class="card-body">
 
-                    <span class="task-label">
-                        Quarter End Date
-                    </span>
+            <div class="task-grid-item">
+                <div class="task-info-card">
+                    <div class="card-body">
 
-                    <div class="task-value">
-                        {{ $task->quarter_end_date
-                            ? \Carbon\Carbon::parse($task->quarter_end_date)->format('d M Y')
-                            : '—' }}
+                        <span class="task-label">
+                            Quarter End Date
+                        </span>
+
+                        <div class="task-value">
+                            {{ $quarter->end_date
+                                ? \Carbon\Carbon::parse($quarter->end_date)->format('d M Y')
+                                : '—' }}
+                        </div>
+
                     </div>
-
                 </div>
             </div>
-        </div>
+
+        @endforeach
 
     @endif
 

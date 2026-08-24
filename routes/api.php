@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\StaffController;
 use App\Http\Controllers\Api\LeadController;
 use App\Http\Controllers\Api\SettingsController;
+use App\Http\Controllers\Api\TaskController;
 
 
 Route::post('/login', [AuthController::class, 'login']);
@@ -35,6 +36,13 @@ Route::middleware('auth:sanctum')->group(function () {
      Route::get('/leads/{lead}/calls/{call}',[LeadController::class, 'getCallDetails']);
      Route::put('/leads/{lead}/close',[LeadController::class, 'closeLead']);
      Route::get('/lead-call-history/{lead}/calls',[LeadController::class, 'callHistory']);
+
+    //task
+    Route::post('/tasks',[TaskController::class, 'store'])->name('api.tasks.store');
+    Route::get('/tasks', [TaskController::class, 'index']);
+    Route::get('/tasks/{task}', [TaskController::class, 'viewTask']);
+    Route::put('/update-task/{task}', [TaskController::class, 'updateTask']);
+    Route::get('/task-types', [TaskController::class, 'taskType']);
 
     //settings
     Route::get('/company-profile',[SettingsController::class, 'companyProfile']);

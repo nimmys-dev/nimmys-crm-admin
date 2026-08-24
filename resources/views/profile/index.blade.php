@@ -44,6 +44,13 @@
                     <div class="flex justify-end gap-3">
                         <x-button variant="outline-secondary" :href="route('settings.index')">Settings</x-button>
                         <x-button disabled>Edit profile</x-button>
+
+                     <x-button
+    variant="primary"
+    :href="route('my-tasks.index')">
+    <i class="ti ti-list-check"></i>
+    Tasks
+</x-button>
                     </div>
                 </x-slot:footer>
 
