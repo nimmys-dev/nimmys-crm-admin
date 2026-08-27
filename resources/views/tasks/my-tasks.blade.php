@@ -6,18 +6,33 @@
 
     <div class="card shadow-sm border-0">
 
-        <div class="card-header">
-            <h4 class="mb-0">My Tasks</h4>
+        <div class="card-header my-task-header">
+            <h4 class="mb-0"> My Tasks</h4>
+            {{-- Search --}}
+            <form method="GET" action="{{ route('my-tasks.index') }}" class="my-task-search">
+                <input type="text" name="name" class="form-control" placeholder="Search by name..."value="{{ request('name') }}">
+                <button type="submit" class="btn btn-primary">
+                    <i class="ti ti-search"></i>
+                </button>
+
+                @if(request('name'))
+                    <a href="{{ route('my-tasks.index') }}" class="btn btn-secondary">
+                        <i class="ti ti-x"></i>
+                    </a>
+                @endif
+            </form>
+
         </div>
 
         <div class="card-body">
 
             {{-- Reassign Bar --}}
-            <div class="d-flex justify-content-between align-items-center mb-4">
+            <div class="task-toolbar mb-4">
 
                 {{-- Select All --}}
-                <div>
-                    <label class="d-flex align-items-center gap-2 mb-0">
+                <div class="select-all-wrapper">
+
+                    <label class="select-all-label">
 
                         <input
                             type="checkbox"
@@ -25,32 +40,27 @@
                             class="form-check-input"
                         >
 
-                        <span>
-                            Select All
-                        </span>
+                        <span>Select All</span>
 
                     </label>
+
                 </div>
 
 
                 {{-- Reassign --}}
-                <div class="d-flex gap-2">
+                <div class="reassign-wrapper">
 
                     <select
                         id="reassign_user"
                         class="form-select"
-                        style="width: 250px;"
                     >
-
                         <option value="">
                             Select Role / User
                         </option>
 
                         @foreach($users->groupBy('role') as $role => $roleUsers)
 
-                            <optgroup
-                                label="{{ ucfirst($role) }}"
-                            >
+                            <optgroup label="{{ ucfirst($role) }}">
 
                                 @foreach($roleUsers as $user)
 
@@ -154,9 +164,10 @@
                                     {{ $task->assignedUser?->name ?? '-' }}
                                 </td>
 
-
                                 <td>
-                                    {{ ucfirst($task->assignedUser?->role ?? '-') }}
+                                    {{ $task->assignedUser?->role?->value
+                                        ? ucfirst($task->assignedUser->role->value)
+                                        : '-' }}
                                 </td>
 
 
@@ -363,6 +374,63 @@ document.addEventListener('DOMContentLoaded', function () {
 
         });
 
+    });
+
+});
+
+
+$('#reassign-tasks').on('click', function () {
+
+    let taskIds = [];
+
+    $('.task-checkbox:checked').each(function () {
+        taskIds.push($(this).val());
+    });
+
+    let assignedTo = $('#reassign_user').val();
+
+    if (taskIds.length === 0) {
+        alert('Please select at least one task.');
+        return;
+    }
+
+    if (!assignedTo) {
+        alert('Please select a user.');
+        return;
+    }
+
+    $.ajax({
+        url: "{{ route('my-tasks.reassign') }}",
+        type: "POST",
+
+        data: {
+            _token: "{{ csrf_token() }}",
+            task_ids: taskIds,
+            assigned_to: assignedTo
+        },
+
+        success: function (response) {
+
+            if (response.status === true) {
+
+                // Success message
+                alert(response.message);
+
+                // Reload page
+                window.location.reload();
+            }
+        },
+
+        error: function (xhr) {
+
+            let message = 'Something went wrong.';
+
+            if (xhr.responseJSON?.message) {
+                message = xhr.responseJSON.message;
+            }
+
+            alert(message);
+        }
     });
 
 });

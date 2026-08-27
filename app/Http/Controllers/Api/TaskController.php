@@ -10,6 +10,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 use Throwable;
 use Illuminate\Http\Request;
+use App\Models\User;
 
 class TaskController extends Controller
 {
@@ -832,5 +833,307 @@ class TaskController extends Controller
                 'error' => $e->getMessage(),
             ], 500);
         }
+    }
+
+    public function deleteTask(Task $task): JsonResponse
+    {
+        $user = auth()->user();
+
+        // Only Admin can delete
+        if ($user->role->value !== 'admin') {
+            return response()->json([
+                'status' => false,
+                'status_code' => 403,
+                'message' => 'Only admin can delete tasks.',
+            ], 403);
+        }
+
+        $task->delete();
+
+        return response()->json([
+            'status' => true,
+            'status_code' => 200,
+            'message' => 'Task deleted successfully.',
+        ], 200);
+    }
+
+    public function completeTask(Request $request, Task $task): JsonResponse
+    {
+        $validated = $request->validate([
+            'remarks' => [
+                'required',
+                'string',
+                'max:1000',
+            ],
+        ]);
+
+        $user = auth()->user();
+
+        // Only assigned user can complete the task
+        if (
+            $user->role->value !== 'admin' &&
+            (int) $task->assigned_to !== (int) $user->id
+        ) {
+            return response()->json([
+                'status' => false,
+                'status_code' => 403,
+                'message' => 'You are not authorized to complete this task.',
+            ], 403);
+        }
+
+        // Prevent completing already completed/approved task
+        if (in_array($task->status, [
+            'completed',
+            'approval_pending',
+            'approved',
+            'closed',
+        ])) {
+            return response()->json([
+                'status' => false,
+                'status_code' => 422,
+                'message' => 'This task has already been completed.',
+            ], 422);
+        }
+
+        $task->update([
+            'status' => 'completed',
+            'remarks' => $validated['remarks'],
+        ]);
+
+        // Create next repeated task
+        if ($task->repeat_mode) {
+            $this->createNextRepeatedTask($task);
+        }
+
+        return response()->json([
+            'status' => true,
+            'status_code' => 200,
+            'message' => 'Task completed successfully.',
+            'data' => [
+                'task_id' => $task->id,
+                'status' => $task->status,
+                'remarks' => $task->remarks,
+            ],
+        ], 200);
+    }
+
+    public function myTasks(Request $request): JsonResponse
+    {
+        $user = auth()->user();
+
+        $query = Task::with([
+            'assignedUser:id,name,role',
+            'approvedBy:id,name',
+        ]);
+
+        // Admin → all tasks
+        // Manager / Employee → assigned tasks
+        if ($user->role->value !== 'admin') {
+            $query->where('assigned_to', $user->id);
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Search
+        | Search by task title or assigned user name
+        |--------------------------------------------------------------------------
+        */
+        if ($request->filled('search')) {
+            $search = $request->search;
+
+            $query->where(function ($query) use ($search) {
+
+                $query->where('title', 'like', "%{$search}%")
+
+                    ->orWhereHas('assignedUser', function ($query) use ($search) {
+                        $query->where(
+                            'name',
+                            'like',
+                            "%{$search}%"
+                        );
+                    });
+            });
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Name Filter
+        |--------------------------------------------------------------------------
+        */
+        if ($request->filled('name')) {
+            $query->whereHas('assignedUser', function ($query) use ($request) {
+                $query->where(
+                    'name',
+                    'like',
+                    '%' . $request->name . '%'
+                );
+            });
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Role Filter
+        |--------------------------------------------------------------------------
+        */
+        if ($request->filled('role')) {
+            $query->whereHas('assignedUser', function ($query) use ($request) {
+                $query->where(
+                    'role',
+                    $request->role
+                );
+            });
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Pagination
+        |--------------------------------------------------------------------------
+        */
+
+        $perPage = $request->input('per_page', 10);
+
+        $tasks = $query
+            ->latest()
+            ->paginate($perPage);
+
+        return response()->json([
+            'status' => true,
+            'status_code' => 200,
+            'message' => 'Tasks retrieved successfully.',
+
+            'data' => $tasks->items(),
+
+            'pagination' => [
+                'current_page' => $tasks->currentPage(),
+                'last_page' => $tasks->lastPage(),
+                'per_page' => $tasks->perPage(),
+                'total' => $tasks->total(),
+                'from' => $tasks->firstItem(),
+                'to' => $tasks->lastItem(),
+            ],
+        ], 200);
+    }
+
+    public function reassign(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'task_ids' => [
+                'required',
+                'array',
+                'min:1',
+            ],
+
+            'task_ids.*' => [
+                'required',
+                'integer',
+                'exists:tasks,id',
+            ],
+
+            'assigned_to' => [
+                'required',
+                'integer',
+                'exists:users,id',
+            ],
+        ]);
+
+        $currentUser = auth()->user();
+
+        /*
+        |--------------------------------------------------------------------------
+        | Get new assigned user
+        |--------------------------------------------------------------------------
+        */
+
+        $newUser = User::find($validated['assigned_to']);
+
+        if (!$newUser) {
+            return response()->json([
+                'status' => false,
+                'status_code' => 422,
+                'message' => 'Selected user not found.',
+            ], 422);
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Prevent assigning to yourself
+        |--------------------------------------------------------------------------
+        */
+
+        if ((int) $newUser->id === (int) $currentUser->id) {
+            return response()->json([
+                'status' => false,
+                'status_code' => 422,
+                'message' => 'You cannot reassign tasks to yourself.',
+            ], 422);
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Selected tasks
+        |--------------------------------------------------------------------------
+        */
+
+        $query = Task::whereIn(
+            'id',
+            $validated['task_ids']
+        );
+
+        /*
+        |--------------------------------------------------------------------------
+        | Admin → can reassign any task
+        | Others → only their assigned tasks
+        |--------------------------------------------------------------------------
+        */
+
+        if ($currentUser->role->value !== 'admin') {
+            $query->where(
+                'assigned_to',
+                $currentUser->id
+            );
+        }
+
+        $tasks = $query->get();
+
+        if ($tasks->isEmpty()) {
+            return response()->json([
+                'status' => false,
+                'status_code' => 403,
+                'message' => 'No eligible tasks found for reassignment.',
+            ], 403);
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Reassign tasks
+        |--------------------------------------------------------------------------
+        */
+
+        DB::transaction(function () use ($tasks, $newUser) {
+
+            foreach ($tasks as $task) {
+
+                $task->update([
+                    'assigned_to' => $newUser->id,
+                ]);
+            }
+        });
+
+        return response()->json([
+            'status' => true,
+            'status_code' => 200,
+            'message' => $tasks->count()
+                . ' task(s) reassigned successfully to '
+                . $newUser->name
+                . '.',
+            'data' => [
+                'task_ids' => $tasks->pluck('id'),
+                'assigned_to' => [
+                    'id' => $newUser->id,
+                    'name' => $newUser->name,
+                    'role' => $newUser->role->value,
+                ],
+            ],
+        ], 200);
     }
 }

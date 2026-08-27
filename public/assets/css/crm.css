@@ -2368,3 +2368,64 @@ body.modal-open {
         align-items: stretch;
     }
 }
+.my-task-header {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    width: 100%;
+}
+
+.my-task-header h4 {
+    margin: 0 !important;
+}
+
+.my-task-search {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px;
+    margin: 0 !important;
+}
+
+.my-task-search .form-control {
+    width: 250px;
+    height: 42px;
+}
+
+.my-task-search .btn {
+    height: 42px;
+    min-width: 45px;
+}
+
+.task-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}
+
+.select-all-wrapper {
+    display: flex;
+    align-items: center;
+}
+
+.select-all-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+    cursor: pointer;
+}
+
+.reassign-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.reassign-wrapper select {
+    width: 250px;
+}
+
+.reassign-wrapper button {
+    white-space: nowrap;
+}

@@ -7,6 +7,9 @@ use App\Services\DashboardService;
 use App\Services\StaffPhotoService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\Request;
+use Carbon\Carbon;
+use App\Models\Task;
+
 
 /**
  * Role-based dashboard.
@@ -45,6 +48,7 @@ class DashboardController extends Controller
     {
         $leadStats = $user->canAccessLeadModule() ? $this->dashboard->getLeadStatistics($user) : null;
         $dueFollowUps = $user->canAccessLeadModule() ? $this->dashboard->getDueFollowUps($user) : collect();
+         $taskCounts = $this->getTaskDashboardCounts($user);
 
         return view('dashboard.employee', [
             'pageTitle' => 'Dashboard',
@@ -53,11 +57,19 @@ class DashboardController extends Controller
             'shop' => $user->shop,
             'leadStats' => $leadStats,
             'dueFollowUps' => $dueFollowUps,
+            'todayDuty' => $taskCounts['todayDuty'],
+            'overdueDuty' => $taskCounts['overdueDuty'],
+            'upcomingDuty' => $taskCounts['upcomingDuty'],
+            'approvalPending' => $taskCounts['approvalPending'],
         ]);
     }
 
     private function adminDashboard(User $user): View
     {
+       
+        
+        $taskCounts = $this->getTaskDashboardCounts($user);
+
         return view('dashboard.admin', [
             'pageTitle' => 'Dashboard',
             'breadcrumbs' => [['label' => 'Dashboard']],
@@ -69,13 +81,48 @@ class DashboardController extends Controller
             'leadStats' => $this->dashboard->getLeadStatistics($user),
             'dueFollowUps' => $this->dashboard->getDueFollowUps($user),
             'leadStats' => $this->dashboard->getDashboardLeadStatistics($user),
+            'todayDuty' => $taskCounts['todayDuty'],
+            'overdueDuty' => $taskCounts['overdueDuty'],
+            'upcomingDuty' => $taskCounts['upcomingDuty'],
+            'approvalPending' => $taskCounts['approvalPending'],
         ]);
     }
+    private function getTaskDashboardCounts(User $user): array
+    {
+        $query = Task::query();
 
+        // Admin → all tasks
+        // Manager / Employee → assigned/approved tasks
+        if ($user->role->value !== 'admin') {
+            $query->where(function ($query) use ($user) {
+                $query->where('assigned_to', $user->id)
+                    ->orWhere('approved_by', $user->id);
+            });
+        }
+
+        return [
+            'todayDuty' => (clone $query)
+                ->where('status', 'ongoing')
+                ->count(),
+
+            'overdueDuty' => (clone $query)
+                ->where('status', 'overdue')
+                ->count(),
+
+            'upcomingDuty' => (clone $query)
+                ->where('status', 'upcoming')
+                ->count(),
+
+            'approvalPending' => (clone $query)
+                ->where('status', 'pending')
+                ->count(),
+        ];
+    }
     private function managerDashboard(User $user): View
     {
         $stats = $this->dashboard->getManagerStatistics($user);
         $shopId = $stats['shop']?->id;
+        $taskCounts = $this->getTaskDashboardCounts($user);
 
         return view('dashboard.manager', [
             'pageTitle' => 'Dashboard',
@@ -97,6 +144,11 @@ class DashboardController extends Controller
             'leadStats' => $this->dashboard->getLeadStatistics($user),
             'dueFollowUps' => $this->dashboard->getDueFollowUps($user),
             'leadStats' => $this->dashboard->getDashboardLeadStatistics($user),
+            // Task dashboard counts
+        'todayDuty' => $taskCounts['todayDuty'],
+        'overdueDuty' => $taskCounts['overdueDuty'],
+        'upcomingDuty' => $taskCounts['upcomingDuty'],
+        'approvalPending' => $taskCounts['approvalPending'],
         ]);
     }
 }

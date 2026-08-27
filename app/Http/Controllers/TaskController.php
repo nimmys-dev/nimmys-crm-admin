@@ -193,6 +193,152 @@ class TaskController extends Controller
 //     );
 // }
 
+    // public function index(Request $request): View
+    // {
+    //     $user = auth()->user();
+
+    //     /*
+    //     |--------------------------------------------------------------------------
+    //     | Automatically update task statuses
+    //     |--------------------------------------------------------------------------
+    //     */
+
+    //     Task::query()
+    //         ->whereNotIn('status', [
+    //             'completed',
+    //             'approved',
+    //             'closed',
+    //         ])
+    //         ->get()
+    //         ->each(function ($task) {
+    //             $task->updateAutomaticStatus();
+    //         });
+
+
+    //     /*
+    //     |--------------------------------------------------------------------------
+    //     | Get Tasks
+    //     |--------------------------------------------------------------------------
+    //     */
+
+    //     $tasks = Task::query()
+
+    //         /*
+    //         |--------------------------------------------------------------------------
+    //         | Role-based scoping
+    //         |--------------------------------------------------------------------------
+    //         */
+
+    //         // ->when(!$user->hasRole('admin'), function ($query) use ($user) {
+
+    //         //     $query->where('assigned_to', $user->id);
+
+    //         // })
+
+    //         ->when(!$user->hasRole('admin'), function ($query) use ($user) {
+    //             $query->where(function ($query) use ($user) {
+    //                 $query->where('assigned_to', $user->id)
+    //                     ->orWhere('approved_by', $user->id);
+    //             });
+    //         })
+
+    //         /*
+    //         |--------------------------------------------------------------------------
+    //         | Filter: Title
+    //         |--------------------------------------------------------------------------
+    //         */
+
+    //         ->when($request->filled('title'), function ($query) use ($request) {
+
+    //             $query->where(
+    //                 'title',
+    //                 'like',
+    //                 '%' . $request->title . '%'
+    //             );
+
+    //         })
+
+    //         /*
+    //         |--------------------------------------------------------------------------
+    //         | Filter: Assigned To
+    //         |--------------------------------------------------------------------------
+    //         */
+
+    //         ->when($request->filled('assigned_to'), function ($query) use ($request) {
+
+    //             $query->where(
+    //                 'assigned_to',
+    //                 $request->assigned_to
+    //             );
+
+    //         })
+
+    //         /*
+    //         |--------------------------------------------------------------------------
+    //         | Filter: Approved By
+    //         |--------------------------------------------------------------------------
+    //         */
+
+    //         ->when($request->filled('approved_by'), function ($query) use ($request) {
+
+    //             $query->where(
+    //                 'approved_by',
+    //                 $request->approved_by
+    //             );
+
+    //         })
+
+    //         /*
+    //         |--------------------------------------------------------------------------
+    //         | Filter: Task Type
+    //         |--------------------------------------------------------------------------
+    //         */
+
+    //         ->when($request->filled('task_type'), function ($query) use ($request) {
+
+    //             $query->where(
+    //                 'task_type',
+    //                 $request->task_type
+    //             );
+
+    //         })
+
+    //         ->with([
+    //             'assignedUser:id,name',
+    //             'approvedBy:id,name',
+    //             'quarters',
+    //         ])
+
+    //         ->latest()
+
+    //         ->paginate(10)
+
+    //         ->withQueryString();
+
+
+    //     /*
+    //     |--------------------------------------------------------------------------
+    //     | Users for Filters
+    //     |--------------------------------------------------------------------------
+    //     */
+
+    //     $users = User::select(
+    //         'id',
+    //         'name'
+    //     )
+    //     ->orderBy('name')
+    //     ->get();
+
+
+    //     return view(
+    //         'tasks.index',
+    //         compact(
+    //             'tasks',
+    //             'users'
+    //         )
+    //     );
+    // }
+
     public function index(Request $request): View
     {
         $user = auth()->user();
@@ -204,15 +350,15 @@ class TaskController extends Controller
         */
 
         Task::query()
-            ->whereNotIn('status', [
-                'completed',
-                'approved',
-                'closed',
-            ])
-            ->get()
-            ->each(function ($task) {
-                $task->updateAutomaticStatus();
-            });
+        ->whereNotIn('status', [
+            'completed',
+            'approved',
+            'closed',
+        ])
+        ->get()
+        ->each(function ($task) {
+            $task->updateAutomaticStatus();
+        });
 
 
         /*
@@ -229,18 +375,30 @@ class TaskController extends Controller
             |--------------------------------------------------------------------------
             */
 
-            // ->when(!$user->hasRole('admin'), function ($query) use ($user) {
-
-            //     $query->where('assigned_to', $user->id);
-
-            // })
-
             ->when(!$user->hasRole('admin'), function ($query) use ($user) {
+
                 $query->where(function ($query) use ($user) {
+
                     $query->where('assigned_to', $user->id)
                         ->orWhere('approved_by', $user->id);
+
                 });
+
             })
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Dashboard Filter
+            |--------------------------------------------------------------------------
+            */
+
+            ->when($request->filled('filter'), function ($query) use ($request) {
+
+                $query->where('status', $request->filter);
+
+            })
+
 
             /*
             |--------------------------------------------------------------------------
@@ -258,6 +416,7 @@ class TaskController extends Controller
 
             })
 
+
             /*
             |--------------------------------------------------------------------------
             | Filter: Assigned To
@@ -272,6 +431,7 @@ class TaskController extends Controller
                 );
 
             })
+
 
             /*
             |--------------------------------------------------------------------------
@@ -288,6 +448,7 @@ class TaskController extends Controller
 
             })
 
+
             /*
             |--------------------------------------------------------------------------
             | Filter: Task Type
@@ -302,6 +463,13 @@ class TaskController extends Controller
                 );
 
             })
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Relationships
+            |--------------------------------------------------------------------------
+            */
 
             ->with([
                 'assignedUser:id,name',
@@ -918,28 +1086,59 @@ public function update(
         return $nextTask;
     }
 
-    public function myTasks(): View
+    public function myTasks(Request $request): View
     {
         $user = auth()->user();
 
         $query = Task::with([
-            'assignedUser:id,name',
+            'assignedUser:id,name,role',
             'approvedBy:id,name',
-        ]);
+        ])
+        ->whereNull('deleted_at');
 
-        if ($user->role !== 'admin') {
+        // Admin → all active tasks
+        // Manager / Employee → only assigned active tasks
+        if ($user->role->value !== 'admin') {
             $query->where('assigned_to', $user->id);
+        }
+
+        // Name filter
+        if ($request->filled('name')) {
+            $query->whereHas('assignedUser', function ($query) use ($request) {
+                $query->where(
+                    'name',
+                    'like',
+                    '%' . $request->name . '%'
+                );
+            });
+        }
+
+        // Role filter
+        if ($request->filled('role')) {
+            $query->whereHas('assignedUser', function ($query) use ($request) {
+                $query->where('role', $request->role);
+            });
         }
 
         $tasks = $query
             ->latest()
             ->paginate(10);
 
-        $users = User::whereIn('role', ['manager', 'employee'])
-            ->orderBy('name')
-            ->get(['id', 'name', 'role']);
+        $users = User::whereIn('role', [
+            'manager',
+            'employee'
+        ])
+        ->orderBy('name')
+        ->get([
+            'id',
+            'name',
+            'role'
+        ]);
 
-        return view('tasks.my-tasks', compact('tasks', 'users'));
+        return view(
+            'tasks.my-tasks',
+            compact('tasks', 'users')
+        );
     }
     public function reassign(Request $request): JsonResponse
     {
@@ -1017,16 +1216,8 @@ public function update(
         |
         */
 
-        if ($currentUser->role !== 'admin') {
-
-            /*
-            | Non-admin can reassign only tasks assigned to themselves.
-            */
-
-            $query->where(
-                'assigned_to',
-                $currentUser->id
-            );
+        if ($currentUser->role->value !== 'admin') {
+            $query->where('assigned_to', $currentUser->id);
         }
 
 

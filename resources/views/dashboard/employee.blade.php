@@ -1,103 +1,168 @@
-@extends('layouts.app')
+@extends('layouts.app') 
 
-@section('title', 'Dashboard')
+@section('title', 'Dashboard') 
 
-@section('content')
+@section('content') 
 
-    <div class="grid grid-cols-12 gap-x-6">
+    {{-- Dashboard Duty Summary --}}
+    <div class="dashboard-stats">
 
-        @if ($shop)
-            <div class="col-span-12 md:col-span-6 xl:col-span-3">
-                <x-stat-card
-                    label="My shop"
-                    :value="$shop->name"
-                    :meta="$shop->code"
-                    icon="ti ti-building-store"
-                    class="stat-card-text"
-                />
-            </div>
-        @else
-            <div class="col-span-12 md:col-span-6 xl:col-span-3">
-                <x-stat-card
-                    label="Employee Code"
-                    :value="$user->employee_code ?? '—'"
-                    icon="ti ti-id-badge-2"
-                />
-            </div>
-        @endif
-
-        @if ($leadStats)
-            <div class="col-span-12 md:col-span-6 xl:col-span-3">
-                <x-stat-card
-                    label="My leads"
-                    :value="$leadStats['total']"
-                    :meta="$leadStats['open'] . ' open'"
-                    icon="ti ti-target"
-                />
+        {{-- Today's Duty --}}
+        <a href="{{ route('tasks.index', ['filter' => 'ongoing']) }}"
+        class="stat-card">
+            <div class="stat-content">
+                <p>Today's Duty</p>
+                <h3>{{ $todayDuty }}</h3>
             </div>
 
-            <div class="col-span-12 md:col-span-6 xl:col-span-3">
-                <x-stat-card
-                    label="Won leads"
-                    :value="$leadStats['won']"
-                    icon="ti ti-trophy"
-                    tone="success"
-                />
+            <div class="stat-icon today-icon">
+                <i class="ti ti-calendar-event"></i>
+            </div>
+        </a>
+
+        {{-- Overdue Duty --}}
+        <a href="{{ route('tasks.index', ['filter' => 'overdue']) }}"
+        class="stat-card">
+            <div class="stat-content">
+                <p>Overdue Duty</p>
+                <h3>{{ $overdueDuty }}</h3>
             </div>
 
-            <div class="col-span-12 md:col-span-6 xl:col-span-3">
-                <x-stat-card
-                    label="Conversion rate"
-                    :value="$leadStats['conversion_rate'] !== null ? $leadStats['conversion_rate'].'%' : '—'"
-                    icon="ti ti-percentage"
-                    :tone="$leadStats['conversion_rate'] > 0 ? 'success' : 'default'"
-                />
+            <div class="stat-icon overdue-icon">
+                <i class="ti ti-alert-circle"></i>
             </div>
-        @else
-            <div class="col-span-12 md:col-span-6 xl:col-span-3">
-                <x-stat-card
-                    label="Role"
-                    :value="$user->role->label()"
-                    icon="ti ti-user-check"
-                />
+        </a>
+
+        {{-- Upcoming Duty --}}
+        <a href="{{ route('tasks.index', ['filter' => 'upcoming']) }}"
+        class="stat-card">
+            <div class="stat-content">
+                <p>Upcoming Duty</p>
+                <h3>{{ $upcomingDuty }}</h3>
             </div>
 
-            <div class="col-span-12 md:col-span-6 xl:col-span-3">
-                <x-stat-card
-                    label="Status"
-                    :value="$user->status->label()"
-                    icon="ti ti-circle-check"
-                    tone="success"
-                />
+            <div class="stat-icon upcoming-icon">
+                <i class="ti ti-calendar-time"></i>
             </div>
+        </a>
 
-            <div class="col-span-12 md:col-span-6 xl:col-span-3">
-                <x-stat-card
-                    label="Lead module"
-                    value="Disabled"
-                    meta="Contact Admin to enable"
-                    icon="ti ti-lock"
-                    tone="default"
-                />
+        {{-- Approval Pending --}}
+        <a href="{{ route('tasks.index', ['filter' => 'pending']) }}" class="stat-card">
+            <div class="stat-content">
+                <p>Approval Pending</p>
+                <h3>{{ $approvalPending }}</h3>
             </div>
-        @endif
+            <div class="stat-icon pending-icon">
+                <i class="ti ti-clock-hour-4"></i>
+            </div>
+        </a>
 
     </div>
 
-    @if ($leadStats)
-        @include('dashboard.widgets.leads')
-    @else
-        <div class="mt-4">
-            <x-card>
-                <div class="p-4 text-center">
-                    <i class="ti ti-user-circle text-4xl text-muted mb-2"></i>
-                    <h5>Welcome, {{ $user->name }}</h5>
-                    <p class="text-muted mb-0">
-                        You are logged in as an Employee. Lead management and tasks assigned to you will appear here when enabled.
-                    </p>
-                </div>
-            </x-card>
-        </div>
-    @endif
 
+    {{-- Leads Card --}}
+    <div class="mt-6 bg-white rounded-xl border border-gray-200 shadow-sm p-5">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-semibold text-gray-800">
+               MY Leads
+            </h3>
+            <a href="{{ route('leads.index') }}"
+            class="text-sm text-primary">
+                View All
+            </a>
+        </div>
+
+        <div class="leads-inner-grid">
+            {{-- Unattended Leads --}}
+            <a href="{{ route('leads.index', ['filter' => 'unattended']) }}"
+            class="lead-stat-box">
+                <div>
+                    <p>Unattended Leads</p>
+                    <h4>{{ $leadStats['unattended'] ?? 0 }}</h4>
+                </div>
+                <div class="lead-stat-icon unattended-icon">
+                    <i class="ti ti-user-question"></i>
+                </div>
+            </a>
+
+            {{-- Today's Follow Up --}}
+            <a href="{{ route('leads.index', ['filter' => 'today_followup']) }}"class="lead-stat-box">
+                <div>
+                    <p>Today's Follow Up</p>
+                    <h4>{{ $leadStats['today_followup'] ?? 0 }}</h4>
+                </div>
+                <div class="lead-stat-icon today-followup-icon">
+                    <i class="ti ti-calendar-event"></i>
+                </div>
+            </a>
+
+            {{-- Overdue Follow Up --}}
+            <a href="{{ route('leads.index', ['filter' => 'overdue_followup']) }}"
+            class="lead-stat-box">
+                <div>
+                    <p>Overdue Follow Up</p>
+                    <h4>{{ $leadStats['overdue_followup'] ?? 0 }}</h4>
+                </div>
+                <div class="lead-stat-icon overdue-followup-icon">
+                    <i class="ti ti-alert-circle"></i>
+                </div>
+            </a>
+
+            {{-- Upcoming Follow Up --}}
+            <a href="{{ route('leads.index', ['filter' => 'upcoming_followup']) }}"
+            class="lead-stat-box">
+                <div>
+                    <p>Upcoming Follow Up</p>
+                    <h4>{{ $leadStats['upcoming_followup'] ?? 0 }}</h4>
+                </div>
+                <div class="lead-stat-icon upcoming-followup-icon">
+                    <i class="ti ti-calendar-time"></i>
+                </div>
+            </a>
+        </div>
+    </div>
+
+    {{-- Your Leads & Total Leads --}}
+    <div class="leads-total-row">
+        {{-- Your Leads --}}
+        <a href="{{ route('leads.index', ['filter' => 'my_leads']) }}" class="lead-total-box your-leads-box">
+            <div>
+                <p>Your Leads</p>
+                <h4>{{ $leadStats['your_leads'] ?? 0 }}</h4>
+            </div>
+            <div class="lead-total-icon your-leads-icon">
+                <i class="ti ti-user"></i>
+            </div>
+        </a>
+
+        {{-- Total Leads --}}
+        <a href="{{ route('leads.index') }}"class="lead-total-box total-leads-box">
+            <div>
+                <p>Total Leads</p>
+                <h4>{{ $leadStats['total_leads'] ?? 0 }}</h4>
+            </div>
+            <div class="lead-total-icon total-leads-icon">
+                <i class="ti ti-users"></i>
+            </div>
+        </a>
+    </div>
+    {{-- Reports Card --}}
+    <div class="mt-6 bg-white rounded-xl border border-gray-200 shadow-sm p-5">
+        {{-- Performance Action --}}
+        <a href="{{ route('reports.index') }}" class="performance-action">
+            <div class="performance-action-icon">
+                <i class="ti ti-chart-bar"></i>
+            </div>
+            <div class="performance-action-content">
+                <h4>Track Your Performance</h4>
+                <p>
+                    Treak your leads and performance
+                </p>
+            </div>
+            <div class="performance-arrow">
+                <i class="ti ti-arrow-right"></i>
+            </div>
+        </a>
+
+    </div>
 @endsection

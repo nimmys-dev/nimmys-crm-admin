@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\StaffController;
 use App\Http\Controllers\Api\LeadController;
 use App\Http\Controllers\Api\SettingsController;
 use App\Http\Controllers\Api\TaskController;
+use App\Http\Controllers\Api\DashboardController;
 
 
 Route::post('/login', [AuthController::class, 'login']);
@@ -43,10 +44,17 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/tasks/{task}', [TaskController::class, 'viewTask']);
     Route::put('/update-task/{task}', [TaskController::class, 'updateTask']);
     Route::get('/task-types', [TaskController::class, 'taskType']);
+    Route::delete('/delete-task/{task}',[TaskController::class, 'deleteTask']);
+    Route::post('/approval-task/{task}',[TaskController::class, 'completeTask']);
+    Route::get('/my-tasks',[TaskController::class, 'myTasks']);
+    Route::post('/reassign-task',[TaskController::class, 'reassign']);
 
     //settings
     Route::get('/company-profile',[SettingsController::class, 'companyProfile']);
     Route::post('/company-profile/update',[SettingsController::class, 'updateCompanyProfile']);
+
+    Route::get('/dashboard/task-counts',[DashboardController::class, 'dashboardCounts']);
+
 
    
 });

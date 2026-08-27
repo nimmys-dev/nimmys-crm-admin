@@ -8,52 +8,54 @@
     <div class="dashboard-stats">
 
         {{-- Today's Duty --}}
-        <div class="stat-card">
-                <div class="stat-content">
-                    <p>Today's Duty</p>
-                    <h3>0</h3>
-                </div>
+        <a href="{{ route('tasks.index', ['filter' => 'ongoing']) }}"
+        class="stat-card">
+            <div class="stat-content">
+                <p>Today's Duty</p>
+                <h3>{{ $todayDuty }}</h3>
+            </div>
 
-                <div class="stat-icon today-icon">
-                    <i class="ti ti-calendar-event"></i>
-                </div>
-        </div>
+            <div class="stat-icon today-icon">
+                <i class="ti ti-calendar-event"></i>
+            </div>
+        </a>
 
         {{-- Overdue Duty --}}
-        <div class="stat-card">
+        <a href="{{ route('tasks.index', ['filter' => 'overdue']) }}"
+        class="stat-card">
             <div class="stat-content">
                 <p>Overdue Duty</p>
-                <h3>0</h3>
+                <h3>{{ $overdueDuty }}</h3>
             </div>
 
             <div class="stat-icon overdue-icon">
                 <i class="ti ti-alert-circle"></i>
             </div>
-        </div>
+        </a>
 
         {{-- Upcoming Duty --}}
-        <div class="stat-card">
+        <a href="{{ route('tasks.index', ['filter' => 'upcoming']) }}"
+        class="stat-card">
             <div class="stat-content">
                 <p>Upcoming Duty</p>
-                <h3>0</h3>
+                <h3>{{ $upcomingDuty }}</h3>
             </div>
 
             <div class="stat-icon upcoming-icon">
                 <i class="ti ti-calendar-time"></i>
             </div>
-        </div>
+        </a>
 
         {{-- Approval Pending --}}
-        <div class="stat-card">
+        <a href="{{ route('tasks.index', ['filter' => 'pending']) }}" class="stat-card">
             <div class="stat-content">
                 <p>Approval Pending</p>
-                <h3>0</h3>
+                <h3>{{ $approvalPending }}</h3>
             </div>
-
             <div class="stat-icon pending-icon">
                 <i class="ti ti-clock-hour-4"></i>
             </div>
-        </div>
+        </a>
 
     </div>
 
