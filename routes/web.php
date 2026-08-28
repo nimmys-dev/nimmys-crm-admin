@@ -153,6 +153,9 @@ Route::middleware(['auth', 'web.access'])->group(function () {
     Route::patch('/tasks/{task}/complete',[TaskController::class, 'complete'])->name('tasks.complete');
     Route::get('/my-tasks', [TaskController::class, 'myTasks'])->name('my-tasks.index');
     Route::post('/my-tasks/reassign', [TaskController::class, 'reassign'])->name('my-tasks.reassign');
+    Route::get('approval-task', [TaskController::class, 'approvalIndex'])->name('tasks.approval.index');
+    Route::post('/tasks/{task}/approve', [TaskController::class, 'approve'])
+    ->name('tasks.approve');
     /*
      | Account
      */

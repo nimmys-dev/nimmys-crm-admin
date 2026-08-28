@@ -56,7 +56,7 @@
 
 
         {{-- Approval Pending --}}
-        <a href="{{ route('tasks.index', ['filter' => 'pending']) }}"
+        <a href="{{ route('tasks.approval.index', ['filter' => 'pending']) }}"
         class="stat-card">
 
             <div class="stat-content">

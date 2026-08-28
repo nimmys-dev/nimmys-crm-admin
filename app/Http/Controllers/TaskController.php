@@ -11,57 +11,10 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 use App\Models\TaskQuarter;
 use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 
 class TaskController extends Controller
 {
-    /**
-     * Task list
-     */
-
-
-    // public function index(Request $request): View
-    // {
-    //     $user = auth()->user();
-
-    //     $tasks = Task::query()
-    //         // Role-based scoping
-    //         ->when(!$user->hasRole('admin'), function ($query) use ($user) {
-    //             match ($user->role) {
-    //                 'manager' => $query->where('department_id', $user->department_id),
-    //                 'user'    => $query->where('assigned_to', $user->id),
-    //                 default   => $query->where('assigned_to', $user->id),
-    //             };
-    //         })
-    //         // Filter: Title Search
-    //         ->when($request->filled('title'), function ($query) use ($request) {
-    //             $query->where('title', 'like', '%' . $request->title . '%');
-    //         })
-    //         // Filter: Assigned To
-    //         ->when($request->filled('assigned_to'), function ($query) use ($request) {
-    //             $query->where('assigned_to', $request->assigned_to);
-    //         })
-    //         // Filter: Approved By
-    //         ->when($request->filled('approved_by'), function ($query) use ($request) {
-    //             $query->where('approved_by', $request->approved_by);
-    //         })
-    //         // Filter: Task Type
-    //         ->when($request->filled('task_type'), function ($query) use ($request) {
-    //             $query->where('task_type', $request->task_type);
-    //         })
-    //         ->with([
-    //             'assignedUser:id,name',
-    //             'approvedBy:id,name',
-    //         ])
-    //         ->latest()
-    //         ->paginate(10)
-    //         ->withQueryString(); // Preserves filter params during pagination
-
-    //     // Fetch users for the filter dropdowns
-    //     $users = User::select('id', 'name')->orderBy('name')->get();
-
-    //     return view('tasks.index', compact('tasks', 'users'));
-    // }
-
 
 //     public function index(Request $request): View
 // {
@@ -379,8 +332,7 @@ class TaskController extends Controller
 
                 $query->where(function ($query) use ($user) {
 
-                    $query->where('assigned_to', $user->id)
-                        ->orWhere('approved_by', $user->id);
+                    $query->where('assigned_to', $user->id);
 
                 });
 
@@ -477,9 +429,9 @@ class TaskController extends Controller
                 'quarters',
             ])
 
-            ->latest()
+           ->orderBy('id', 'desc')
 
-            ->paginate(10)
+            ->paginate(5)
 
             ->withQueryString();
 
@@ -984,99 +936,220 @@ public function update(
             );
     }
 
+    // private function createNextRepeatedTask(Task $task): Task
+    // {
+    //     $nextTask = $task->replicate();
+
+    //     // New task status
+    //     $nextTask->status = 'upcoming';
+
+    //     // Keep same assigned user
+    //     $nextTask->assigned_to = $task->assigned_to;
+
+    //     // Keep same approver
+    //     $nextTask->approved_by = $task->approved_by;
+
+    //     /*
+    //     |--------------------------------------------------------------------------
+    //     | Daily
+    //     |--------------------------------------------------------------------------
+    //     */
+    //     if ($task->task_type === 'daily') {
+
+    //         $nextTask->save();
+
+    //     }
+
+    //     /*
+    //     |--------------------------------------------------------------------------
+    //     | Weekly
+    //     |--------------------------------------------------------------------------
+    //     */
+    //     elseif ($task->task_type === 'weekly') {
+
+    //         $nextTask->save();
+
+    //     }
+
+    //     /*
+    //     |--------------------------------------------------------------------------
+    //     | Monthly
+    //     |--------------------------------------------------------------------------
+    //     */
+    //     elseif ($task->task_type === 'monthly') {
+
+    //         $nextTask->monthly_start_date = \Carbon\Carbon::parse(
+    //             $task->monthly_start_date
+    //         )->addMonth();
+
+    //         $nextTask->monthly_end_date = \Carbon\Carbon::parse(
+    //             $task->monthly_end_date
+    //         )->addMonth();
+
+    //         $nextTask->save();
+
+    //     }
+
+    //     /*
+    //     |--------------------------------------------------------------------------
+    //     | Quarterly
+    //     |--------------------------------------------------------------------------
+    //     */
+    //     elseif ($task->task_type === 'quarterly') {
+
+    //         $nextTask->save();
+
+    //         foreach ($task->quarters as $quarter) {
+
+    //             $nextStartDate = \Carbon\Carbon::parse(
+    //                 $quarter->start_date
+    //             )->addYear();
+
+    //             $nextEndDate = \Carbon\Carbon::parse(
+    //                 $quarter->end_date
+    //             )->addYear();
+
+    //             $nextTask->quarters()->create([
+    //                 'quarter'    => $quarter->quarter,
+    //                 'start_date' => $nextStartDate,
+    //                 'end_date'   => $nextEndDate,
+    //             ]);
+    //         }
+    //     }
+
+    //     /*
+    //     |--------------------------------------------------------------------------
+    //     | Yearly
+    //     |--------------------------------------------------------------------------
+    //     */
+    //     elseif ($task->task_type === 'yearly') {
+
+    //         $nextTask->yearly_start_date = \Carbon\Carbon::parse(
+    //             $task->yearly_start_date
+    //         )->addYear();
+
+    //         $nextTask->yearly_end_date = \Carbon\Carbon::parse(
+    //             $task->yearly_end_date
+    //         )->addYear();
+
+    //         $nextTask->save();
+    //     }
+
+    //     return $nextTask;
+    // }
+
     private function createNextRepeatedTask(Task $task): Task
     {
+        // Only create next task when repeat mode is ON
+        if (!$task->repeat_mode) {
+            return $task;
+        }
+
         $nextTask = $task->replicate();
 
-        // New task status
+        // New repeated task always starts as upcoming
         $nextTask->status = 'upcoming';
 
-        // Keep same assigned user
+        // Keep assigned user
         $nextTask->assigned_to = $task->assigned_to;
 
-        // Keep same approver
+        // Keep approver
         $nextTask->approved_by = $task->approved_by;
 
         /*
         |--------------------------------------------------------------------------
-        | Daily
+        | DAILY
         |--------------------------------------------------------------------------
         */
         if ($task->task_type === 'daily') {
 
-            $nextTask->save();
+            // Use created_at as the task occurrence date
+            $nextTask->created_at = Carbon::parse($task->created_at)
+                ->addDay();
 
+            $nextTask->updated_at = now();
+
+            $nextTask->save();
         }
 
         /*
         |--------------------------------------------------------------------------
-        | Weekly
+        | WEEKLY
         |--------------------------------------------------------------------------
         */
         elseif ($task->task_type === 'weekly') {
 
-            $nextTask->save();
+            $nextTask->created_at = Carbon::parse($task->created_at)
+                ->addWeek();
 
+            $nextTask->updated_at = now();
+
+            $nextTask->save();
         }
 
         /*
         |--------------------------------------------------------------------------
-        | Monthly
+        | MONTHLY
         |--------------------------------------------------------------------------
         */
         elseif ($task->task_type === 'monthly') {
 
-            $nextTask->monthly_start_date = \Carbon\Carbon::parse(
+            $nextTask->monthly_start_date = Carbon::parse(
                 $task->monthly_start_date
             )->addMonth();
 
-            $nextTask->monthly_end_date = \Carbon\Carbon::parse(
+            $nextTask->monthly_end_date = Carbon::parse(
                 $task->monthly_end_date
             )->addMonth();
 
             $nextTask->save();
-
         }
 
         /*
         |--------------------------------------------------------------------------
-        | Quarterly
+        | QUARTERLY
         |--------------------------------------------------------------------------
         */
         elseif ($task->task_type === 'quarterly') {
+
+            $nextTask->quarter_start_date = Carbon::parse(
+                $task->quarter_start_date
+            )->addQuarter();
+
+            $nextTask->quarter_end_date = Carbon::parse(
+                $task->quarter_end_date
+            )->addQuarter();
 
             $nextTask->save();
 
             foreach ($task->quarters as $quarter) {
 
-                $nextStartDate = \Carbon\Carbon::parse(
-                    $quarter->start_date
-                )->addYear();
-
-                $nextEndDate = \Carbon\Carbon::parse(
-                    $quarter->end_date
-                )->addYear();
-
                 $nextTask->quarters()->create([
-                    'quarter'    => $quarter->quarter,
-                    'start_date' => $nextStartDate,
-                    'end_date'   => $nextEndDate,
+                    'quarter' => $quarter->quarter,
+
+                    'start_date' => Carbon::parse(
+                        $quarter->start_date
+                    )->addYear(),
+
+                    'end_date' => Carbon::parse(
+                        $quarter->end_date
+                    )->addYear(),
                 ]);
             }
         }
 
         /*
         |--------------------------------------------------------------------------
-        | Yearly
+        | YEARLY
         |--------------------------------------------------------------------------
         */
         elseif ($task->task_type === 'yearly') {
 
-            $nextTask->yearly_start_date = \Carbon\Carbon::parse(
+            $nextTask->yearly_start_date = Carbon::parse(
                 $task->yearly_start_date
             )->addYear();
 
-            $nextTask->yearly_end_date = \Carbon\Carbon::parse(
+            $nextTask->yearly_end_date = Carbon::parse(
                 $task->yearly_end_date
             )->addYear();
 
@@ -1264,5 +1337,54 @@ public function update(
                 . '.',
         ]);
     }
+
+  
+    public function approvalIndex(): View
+    {
+        $user = auth()->user();
+
+        $query = Task::with([
+            'assignedUser:id,name',
+            'approvedBy:id,name',
+        ])
+        ->where('status', 'completed');
+
+        // Admin → all completed tasks pending for approval
+        if ($user->role->value !== 'admin') {
+            // Manager / Employee → only tasks assigned to them for approval
+            $query->where('approved_by', $user->id);
+        }
+
+        $tasks = $query
+            ->latest()
+            ->paginate(10);
+
+        return view('tasks.approval', compact('tasks'));
+    }
+
+
+
+    public function approve(Task $task): RedirectResponse
+    {
+        $user = auth()->user();
+
+        // Only the assigned approver can approve
+        if ($task->approved_by !== $user->id) {
+            abort(403, 'You are not authorized to approve this task.');
+        }
+
+        // Only completed tasks can be approved
+        if ($task->status !== 'completed') {
+            return back()->with('error', 'Only completed tasks can be approved.');
+        }
+
+        $task->update([
+            'status' => 'approved',
+            'approved_at' => now(),
+        ]);
+
+        return back()->with('success', 'Task approved successfully.');
+    }
+
 
 }

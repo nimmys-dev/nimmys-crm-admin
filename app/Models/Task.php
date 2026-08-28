@@ -443,10 +443,133 @@ class Task extends Model
     //     }
     // }
 
-    public function updateAutomaticStatus(): void
-    {
+    // public function updateAutomaticStatus(): void
+    // {
         
 
+    //     if (in_array($this->status, [
+    //         'completed',
+    //         'approval_pending',
+    //         'approved',
+    //         'closed',
+    //     ])) {
+    //         return;
+    //     }
+
+    //     $now = now();
+
+    //     $start = null;
+    //     $end = null;
+
+    //     switch ($this->task_type) {
+
+    //         case 'daily':
+
+    //             if (!$this->start_time || !$this->end_time) {
+    //                 return;
+    //             }
+
+    //             $start = Carbon::today()
+    //                 ->setTimeFromTimeString($this->start_time);
+
+    //             $end = Carbon::today()
+    //                 ->setTimeFromTimeString($this->end_time);
+
+    //             break;
+
+    //         case 'monthly':
+
+    //             if (!$this->monthly_start_date || !$this->monthly_end_date) {
+    //                 return;
+    //             }
+
+    //             $start = Carbon::parse($this->monthly_start_date)
+    //                 ->startOfDay();
+
+    //             $end = Carbon::parse($this->monthly_end_date)
+    //                 ->endOfDay();
+
+    //             break;
+
+    //         case 'quarterly':
+
+    //             if (!$this->quarter_start_date || !$this->quarter_end_date) {
+    //                 return;
+    //             }
+
+    //             $start = Carbon::parse($this->quarter_start_date)
+    //                 ->startOfDay();
+
+    //             $end = Carbon::parse($this->quarter_end_date)
+    //                 ->endOfDay();
+
+    //             break;
+
+    //         case 'yearly':
+
+    //             if (!$this->yearly_start_date || !$this->yearly_end_date) {
+    //                 return;
+    //             }
+
+    //             $start = Carbon::parse($this->yearly_start_date)
+    //                 ->startOfDay();
+
+    //             $end = Carbon::parse($this->yearly_end_date)
+    //                 ->endOfDay();
+
+    //             break;
+
+    //         default:
+    //             return;
+    //     }
+
+    //     if (!$start || !$end) {
+    //         return;
+    //     }
+
+    //     $today = Carbon::today();
+
+    //     if ($now->lt($start)) {
+
+    //         // Future date
+    //         if ($start->isAfter($today->copy()->endOfDay())) {
+
+    //             $newStatus = 'upcoming';
+
+    //         } else {
+
+    //             // Today but start time not reached
+    //             $newStatus = 'pending';
+    //         }
+
+    //     } elseif ($now->between($start, $end)) {
+
+    //         // Task is currently running
+    //         $newStatus = 'ongoing';
+
+    //     } else {
+
+    //         // Task end date/time has passed
+    //         $newStatus = 'overdue';
+    //     }
+
+
+    //     if ($this->status !== $newStatus) {
+
+    //         $this->updateQuietly([
+    //             'status' => $newStatus,
+    //         ]);
+    //     }
+    // }
+    
+
+    public function updateAutomaticStatus(): void
+    {
+        /*
+        |--------------------------------------------------------------------------
+        | Don't automatically change final statuses
+        |--------------------------------------------------------------------------
+        */
         if (in_array($this->status, [
             'completed',
             'approval_pending',
@@ -456,6 +579,19 @@ class Task extends Model
             return;
         }
 
+        /*
+        |--------------------------------------------------------------------------
+        | Repeated next task
+        |--------------------------------------------------------------------------
+        |
+        | A newly created repeated task should stay upcoming until its
+        | scheduled period starts.
+        |
+        */
+        if ($this->repeat_mode && $this->status === 'upcoming') {
+            // Continue below so status changes only when its schedule starts
+        }
+
         $now = now();
 
         $start = null;
@@ -463,23 +599,88 @@ class Task extends Model
 
         switch ($this->task_type) {
 
+            /*
+            |--------------------------------------------------------------------------
+            | Daily
+            |--------------------------------------------------------------------------
+            */
             case 'daily':
 
                 if (!$this->start_time || !$this->end_time) {
                     return;
                 }
 
-                $start = Carbon::today()
+                $taskDate = Carbon::parse($this->created_at)->startOfDay();
+
+                $start = $taskDate->copy()
                     ->setTimeFromTimeString($this->start_time);
 
-                $end = Carbon::today()
+                $end = $taskDate->copy()
                     ->setTimeFromTimeString($this->end_time);
+
+                // End time crosses midnight
+                if ($end->lt($start)) {
+                    $end->addDay();
+                }
 
                 break;
 
+
+            /*
+            |--------------------------------------------------------------------------
+            | Weekly
+            |--------------------------------------------------------------------------
+            */
+            case 'weekly':
+
+                if (
+                    !$this->week_start_day ||
+                    !$this->week_end_day
+                ) {
+                    return;
+                }
+
+                $createdDate = Carbon::parse($this->created_at)->startOfDay();
+
+                // Find next selected weekly start day
+                $start = $createdDate->copy()
+                    ->next($this->week_start_day)
+                    ->startOfDay();
+
+                // If created on same weekday
+                if (
+                    strtolower($createdDate->format('l')) ===
+                    strtolower($this->week_start_day)
+                ) {
+                    $start = $createdDate->copy()->startOfDay();
+                }
+
+                $end = $start->copy()
+                    ->next($this->week_end_day)
+                    ->endOfDay();
+
+                // Same start and end day
+                if (
+                    strtolower($this->week_start_day) ===
+                    strtolower($this->week_end_day)
+                ) {
+                    $end = $start->copy()->endOfDay();
+                }
+
+                break;
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Monthly
+            |--------------------------------------------------------------------------
+            */
             case 'monthly':
 
-                if (!$this->monthly_start_date || !$this->monthly_end_date) {
+                if (
+                    !$this->monthly_start_date ||
+                    !$this->monthly_end_date
+                ) {
                     return;
                 }
 
@@ -491,23 +692,74 @@ class Task extends Model
 
                 break;
 
+
+            /*
+            |--------------------------------------------------------------------------
+            | Quarterly
+            |--------------------------------------------------------------------------
+            */
             case 'quarterly':
 
-                if (!$this->quarter_start_date || !$this->quarter_end_date) {
-                    return;
+                /*
+                * If you are using task_quarters table,
+                * check the active quarter instead of only
+                * quarter_start_date / quarter_end_date.
+                */
+                $quarter = $this->quarters()
+                    ->whereDate('start_date', '<=', $now)
+                    ->whereDate('end_date', '>=', $now)
+                    ->first();
+
+                if ($quarter) {
+                    $start = Carbon::parse($quarter->start_date)
+                        ->startOfDay();
+
+                    $end = Carbon::parse($quarter->end_date)
+                        ->endOfDay();
+                } else {
+
+                    $nextQuarter = $this->quarters()
+                        ->whereDate('start_date', '>', $now)
+                        ->orderBy('start_date')
+                        ->first();
+
+                    $previousQuarter = $this->quarters()
+                        ->whereDate('end_date', '<', $now)
+                        ->orderByDesc('end_date')
+                        ->first();
+
+                    if ($nextQuarter) {
+
+                        $start = Carbon::parse($nextQuarter->start_date)
+                            ->startOfDay();
+
+                        $end = Carbon::parse($nextQuarter->end_date)
+                            ->endOfDay();
+
+                    } elseif ($previousQuarter) {
+
+                        $start = Carbon::parse($previousQuarter->start_date)
+                            ->startOfDay();
+
+                        $end = Carbon::parse($previousQuarter->end_date)
+                            ->endOfDay();
+                    }
                 }
-
-                $start = Carbon::parse($this->quarter_start_date)
-                    ->startOfDay();
-
-                $end = Carbon::parse($this->quarter_end_date)
-                    ->endOfDay();
 
                 break;
 
+
+            /*
+            |--------------------------------------------------------------------------
+            | Yearly
+            |--------------------------------------------------------------------------
+            */
             case 'yearly':
 
-                if (!$this->yearly_start_date || !$this->yearly_end_date) {
+                if (
+                    !$this->yearly_start_date ||
+                    !$this->yearly_end_date
+                ) {
                     return;
                 }
 
@@ -519,6 +771,7 @@ class Task extends Model
 
                 break;
 
+
             default:
                 return;
         }
@@ -527,32 +780,32 @@ class Task extends Model
             return;
         }
 
-        $today = Carbon::today();
+
+        /*
+        |--------------------------------------------------------------------------
+        | Automatic Status
+        |--------------------------------------------------------------------------
+        */
 
         if ($now->lt($start)) {
 
-            // Future date
-            if ($start->isAfter($today->copy()->endOfDay())) {
+            $newStatus = 'upcoming';
 
-                $newStatus = 'upcoming';
+        } elseif ($now->betweenIncluded($start, $end)) {
 
-            } else {
-
-                // Today but start time not reached
-                $newStatus = 'pending';
-            }
-
-        } elseif ($now->between($start, $end)) {
-
-            // Task is currently running
             $newStatus = 'ongoing';
 
         } else {
 
-            // Task end date/time has passed
             $newStatus = 'overdue';
         }
 
+
+        /*
+        |--------------------------------------------------------------------------
+        | Update only when changed
+        |--------------------------------------------------------------------------
+        */
 
         if ($this->status !== $newStatus) {
 

@@ -1,7 +1,38 @@
 @extends('layouts.app')
 
 @section('content')
+<style>
+/* Table Columns Width Control */
+.task-datatable th:nth-child(1), .task-datatable td:nth-child(1) { width: 25%; } /* Title */
+.task-datatable th:nth-child(2), .task-datatable td:nth-child(2) { width: 15%; } /* Assigned To */
+.task-datatable th:nth-child(3), .task-datatable td:nth-child(3) { width: 15%; } /* Approved By */
+.task-datatable th:nth-child(4), .task-datatable td:nth-child(4) { width: 10%; } /* Type */
+.task-datatable th:nth-child(5), .task-datatable td:nth-child(5) { width: 18%; } /* Schedule */
+.task-datatable th:nth-child(6), .task-datatable td:nth-child(6) { width: 10%; } /* Status */
+.task-datatable th:nth-child(7), .task-datatable td:nth-child(7) { width: 12%; } /* Actions */
 
+.task-actions {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    gap: 8px !important;
+    white-space: nowrap !important;
+}
+
+.task-actions > * {
+    flex: 0 0 auto !important;
+}
+.task-datatable-wrapper {
+    overflow-x: hidden !important; /* Horizontal scrollbar പൂർണ്ണമായി ഒഴിവാക്കും */
+}
+
+.task-datatable {
+    width: 100% !important;
+    table-layout: fixed !important; /* ടേബിൾ വിഡ്ത് സ്ക്രീനിന് ഉള്ളിൽ ഒതുക്കും */
+}
+</style>
 <div class="grid grid-cols-12 gap-x-6">
 
     <div class="col-span-12">
@@ -82,6 +113,7 @@
 
         <x-datatable
             class="task-datatable"
+            style="width: 100%; table-layout: fixed;"
             :headers="[
                 'Title',
                 'Assigned To',
@@ -98,18 +130,17 @@
             @forelse($tasks as $task)
 
                 <tr>
-
-                    <td class="task-title">
+                    <td class="task-title" style="word-break: break-all; overflow-wrap: anywhere; white-space: normal;">
                         <span class="task-name">
                             {{ $task->title }}
                         </span>
                     </td>
 
-                    <td>
+                    <td style="word-break: break-all;">
                         {{ $task->assignedUser?->name ?? '-' }}
                     </td>
 
-                    <td>
+                    <td style="word-break: break-all;">
                         {{ $task->approvedBy?->name ?? '-' }}
                     </td>
 
@@ -155,7 +186,6 @@
                             @foreach($task->quarters as $quarter)
 
                                 <div class="mb-2">
-
                                     <strong>
                                         {{ strtoupper($quarter->quarter) }}
                                     </strong>
@@ -165,7 +195,6 @@
                                         -
                                         {{ $quarter->end_date?->format('d M Y') }}
                                     </div>
-
                                 </div>
 
                             @endforeach
@@ -207,102 +236,51 @@
                     <td>
                         <div class="task-actions">
 
-                            <!-- 1. View Button -->
+                            <!-- View Button -->
                             <a href="{{ route('tasks.show', $task) }}"
                             class="task-action-btn"
                             title="View">
                                 <i class="ti ti-eye"></i>
                             </a>
-                            {{-- Only Admin / Manager --}}
-                            {{-- Edit & Delete: Admin / Manager only --}}
+
                             @if(in_array(auth()->user()->role->value, ['admin', 'manager']))
 
-                                {{-- Edit Button --}}
+                                <!-- Edit Button -->
                                 <a href="{{ route('tasks.edit', $task) }}"
                                 class="task-action-btn"
                                 title="Edit">
-
                                     <i class="ti ti-edit"></i>
-
                                 </a>
 
-
-                                {{-- Delete Button --}}
+                                <!-- Delete Button -->
                                 <form action="{{ route('tasks.destroy', $task) }}"
                                     method="POST"
                                     class="delete-form"
                                     onsubmit="return confirm('Are you sure you want to delete this task?');">
-
                                     @csrf
                                     @method('DELETE')
 
                                     <button type="submit"
                                             class="task-action-btn delete"
                                             title="Delete">
-
                                         <i class="ti ti-trash"></i>
-
                                     </button>
-
                                 </form>
 
                             @endif
 
-                            {{-- Complete Button --}}
-                            @if(
-                                $task->status !== 'completed'
-                            )
-
+                            <!-- Complete Button -->
+                            @if($task->status !== 'completed')
                                 <button type="button"
                                         class="task-action-btn complete-btn"
                                         title="Complete Task"
                                         data-id="{{ $task->id }}"
                                         data-title="{{ $task->title }}"
                                         data-remarks="{{ $task->remarks ?? '' }}">
-
                                     <i class="ti ti-circle-check"></i>
-
                                 </button>
-
                             @endif
-                        </div>
-                        <!-- Modal Overlay (Placed Outside task-actions to avoid flex issues) -->
-                        <!-- Modal Overlay -->
-                        <div class="custom-modal-overlay" id="customModal">
-                            <div class="custom-modal-dialog">
-                                <div class="custom-modal-content">
-                                    
-                                    <!-- Standard Form Submission Route -->
-                                    <form id="completeTaskForm" action="" method="POST">
-                                        @csrf
-                                        @method('PATCH')
 
-                                        <div class="custom-modal-header">
-                                            <h5 class="custom-modal-title">
-                                                <i class="ti ti-circle-check text-success"></i> Complete Task: <span id="modalTaskTitle"></span>
-                                            </h5>
-                                            <button type="button" class="custom-modal-close" id="closeModalX">&times;</button>
-                                        </div>
-
-                                        <div class="custom-modal-body">
-                                            <div class="modal-field">
-                                                <label for="modalRemarks"><strong>Completion Remarks / Notes:</strong></label>
-                                                <!-- Added name="remarks" so value sends with POST request -->
-                                                <textarea id="modalRemarks" name="remarks" class="form-remarks" rows="4" placeholder="Enter any completion notes or remarks..."></textarea>
-                                            </div>
-                                        </div>
-
-                                        <div class="custom-modal-footer">
-                                            <button type="button" class="btn-cancel" id="closeModalBtn">Cancel</button>
-                                            <!-- type="submit" triggers standard form submission -->
-                                            <button type="submit" class="btn-save" id="saveRemarksBtn">
-                                                <i class="ti ti-check"></i> Complete & Save
-                                            </button>
-                                        </div>
-                                    </form>
-
-                                </div>
-                            </div>
                         </div>
                     </td>
 
@@ -320,6 +298,41 @@
 
         </x-datatable>
 
+    </div>
+
+    <!-- Modal Overlay (Moved OUTSIDE the loop for clean layout & better performance) -->
+    <div class="custom-modal-overlay" id="customModal">
+        <div class="custom-modal-dialog">
+            <div class="custom-modal-content">
+                
+                <form id="completeTaskForm" action="" method="POST">
+                    @csrf
+                    @method('PATCH')
+
+                    <div class="custom-modal-header">
+                        <h5 class="custom-modal-title">
+                            <i class="ti ti-circle-check text-success"></i> Complete Task: <span id="modalTaskTitle"></span>
+                        </h5>
+                        <button type="button" class="custom-modal-close" id="closeModalX">&times;</button>
+                    </div>
+
+                    <div class="custom-modal-body">
+                        <div class="modal-field">
+                            <label for="modalRemarks"><strong>Completion Remarks / Notes:</strong></label>
+                            <textarea id="modalRemarks" name="remarks" class="form-remarks" rows="4" placeholder="Enter any completion notes or remarks..."></textarea>
+                        </div>
+                    </div>
+
+                    <div class="custom-modal-footer">
+                        <button type="button" class="btn-cancel" id="closeModalBtn">Cancel</button>
+                        <button type="submit" class="btn-save" id="saveRemarksBtn">
+                            <i class="ti ti-check"></i> Complete & Save
+                        </button>
+                    </div>
+                </form>
+
+            </div>
+        </div>
     </div>
 
     {{-- Pagination --}}
