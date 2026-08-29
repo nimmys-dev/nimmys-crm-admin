@@ -157,17 +157,17 @@ class StoreCallDetailRequest extends FormRequest
             | Required when Answered + Interested + Item Sold
             |--------------------------------------------------------------------------
             */
-            'invoice_file' => [
-                'nullable',
-                'file',
-                'mimes:jpg,jpeg,png,pdf,webp',
-                'max:10240',
-                Rule::requiredIf(
-                    $isAnswered
-                    && $isInterested
-                    && $isItemSold
-                ),
-            ],
+            // 'invoice_file' => [
+            //     'nullable',
+            //     'file',
+            //     'mimes:jpg,jpeg,png,pdf,webp',
+            //     'max:10240',
+            //     Rule::requiredIf(
+            //         $isAnswered
+            //         && $isInterested
+            //         && $isItemSold
+            //     ),
+            // ],
         ];
     }
 
@@ -282,8 +282,8 @@ class StoreCallDetailRequest extends FormRequest
             'next_followup_date.after_or_equal' =>
                 'The follow-up date must be on or after the call date.',
 
-            'invoice_file.required' =>
-                'Invoice file is required when the item is sold.',
+            // 'invoice_file.required' =>
+            //     'Invoice file is required when the item is sold.',
         ];
     }
 

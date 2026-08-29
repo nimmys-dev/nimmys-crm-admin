@@ -7,132 +7,83 @@
              $callStatusOptions, $callerOptions, $canAttributeCall
 --}}
 
-<x-card title="Call history">
-    <x-slot:actions>
-        <div class="flex items-center gap-3">
-            <span class="text-muted text-xs font-semibold">{{ $callHistory->total() }} calls logged</span>
+<div class="card p-4 shadow-sm border-0 rounded-3 bg-white">
+    <!-- Header Section -->
+    <div class="d-flex align-items-center gap-3 mb-3">
+        <h4 class="mb-0 fw-bold text-dark fs-5">Telecalling Details</h4>
+        
+        @can('create', [App\Models\CallDetail::class, $lead])
+            <button
+                type="button"
+                class="btn text-white font-medium px-3 py-1.5 rounded-3 shadow-sm border-0"
+                style="background-color: #14b8a6; white-space: nowrap; font-size: 0.875rem;"
+                onclick="openModal('logCallModal')"
+            >
+                Add call
+            </button>
+        @endcan
+    </div>
 
-            @can('create', [App\Models\CallDetail::class, $lead])
-                <button
-                    type="button"
-                    class="btn btn-primary btn-sm flex items-center gap-1.5 shadow-sm"
-                    onclick="openModal('logCallModal')"
-                    style="white-space: nowrap;"
-                >
-                    <i class="ti ti-phone-plus"></i>
-                    <span>Log Call</span>
-                </button>
-            @endcan
-        </div>
-    </x-slot:actions>
+    <!-- Table Section -->
+    <div class="table-responsive">
+        <table class="table table-bordered align-middle mb-0" style="border-color: #edf2f7;">
+            <thead>
+                <tr style="background-color: #ffffff;">
+                    <th class="fw-bold text-dark py-3 px-3" style="width: 18%;">Call Details</th>
+                    <th class="fw-bold text-dark py-3 px-3" style="width: 15%;">Interest</th>
+                    <th class="fw-bold text-dark py-3 px-3" style="width: 37%;">Remarks</th>
+                    <th class="fw-bold text-dark py-3 px-3" style="width: 15%;">Called By</th>
+                    <th class="fw-bold text-dark py-3 px-3" style="width: 15%;">Called Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                @forelse ($callHistory as $call)
+                    <tr>
+                        <!-- 1. Call Details (Status) -->
+                        <td class="text-secondary py-3 px-3">
+                            {{ ucfirst(str_replace('_', ' ', $call->call_status->value ?? $call->call_status)) }}
+                        </td>
 
-    <x-dashboard-table
-        :rows="$callHistory"
-        :headers="['Date', 'Time', 'Call Status', 'Interest', 'Sold / Invoice', 'Next follow-up', 'Called by', 'Remarks', ['label' => '', 'class' => 'w-px text-right']]"
-        :empty-message="$callHasActiveFilters
-            ? 'No calls match this search.'
-            : 'No calls logged for this lead yet.'"
-        empty-icon="ti ti-phone-off"
-    >
-        @foreach ($callHistory as $call)
-            <tr>
-                <td>{{ $call->called_date->format('d-M-Y') }}</td>
-
-                <td class="tabular">{{ $call->calledAt()->format('g:i A') }}</td>
-
-                <td><x-call-status-badge :status="$call->call_status" /></td>
-
-                <td>
-                    @if ($call->isNotAnswered())
-                        <span class="text-muted text-xs">—</span>
-                    @elseif ($call->interest === true)
-                        <span class="badge badge-lead-active">Interested</span>
-                    @elseif ($call->interest === false)
-                        <div>
-                            <span class="badge badge-lead-lost">Not Interested</span>
-                            @if ($call->reason)
-                                <div class="text-xs text-muted mt-1" title="{{ $call->reason }}">
-                                    {{ Str::limit($call->reason, 25) }}
-                                </div>
+                        <!-- 2. Interest -->
+                        <td class="text-secondary py-3 px-3">
+                            @if ($call->isNotAnswered())
+                                —
+                            @elseif ($call->interest === true)
+                                Yes
+                            @elseif ($call->interest === false)
+                                No
+                            @else
+                                —
                             @endif
-                        </div>
-                    @else
-                        <span class="text-muted text-xs">—</span>
-                    @endif
-                </td>
+                        </td>
 
-                <td>
-                    @if ($call->is_item_sold === true)
-                        <div>
-                            <span class="badge badge-lead-won">Sold</span>
-                            @if ($call->invoice_number)
-                                <div class="text-xs font-mono text-muted mt-1 font-semibold">{{ $call->invoice_number }}</div>
-                            @endif
-                            <!-- @if ($call->invoice_file_path)
-                                <a href="{{ $call->invoiceUrl() }}" target="_blank" class="inline-flex items-center gap-1 text-xs text-primary mt-1 hover:underline font-medium">
-                                    <i class="ti ti-paperclip"></i> Invoice
-                                </a>
-                            @endif -->
-                            @if ($call->invoice_file_path)
-                                <a href="{{ Storage::url($call->invoice_file_path) }}"
-                                target="_blank"
-                                class="inline-flex items-center gap-1 text-xs text-primary mt-1 hover:underline font-medium">
-                                    <i class="ti ti-paperclip"></i> Invoice
-                                </a>
-                            @endif
-                        </div>
-                    @elseif ($call->is_item_sold === false)
-                        <span class="badge badge-off">Not Sold</span>
-                    @else
-                        <span class="text-muted text-xs">—</span>
-                    @endif
-                </td>
+                        <!-- 3. Remarks -->
+                        <td class="text-secondary py-3 px-3">
+                            {{ filled($call->remarks) ? strip_tags($call->remarks) : '—' }}
+                        </td>
 
-                <td><x-followup-badge :date="$call->next_followup_date" /></td>
+                        <!-- 4. Called By -->
+                        <td class="text-secondary py-3 px-3">
+                            {{ $call->caller?->name ?? '—' }}
+                        </td>
 
-                <td>{{ $call->caller?->name ?? '—' }}</td>
-
-                <td>
-                    @if (filled($call->remarks))
-                        <span title="{{ strip_tags($call->remarks) }}">
-                            {{ Str::limit(strip_tags($call->remarks), 40) }}
-                        </span>
-                    @else
-                        —
-                    @endif
-                </td>
-
-                <td class="text-right">
-                    <div class="table-actions flex items-center justify-end gap-1">
-                        <x-button
-                            variant="light" size="sm"
-                            :href="route('leads.calls.show', [$lead, $call])"
-                            icon="ti ti-eye" aria-label="View call"
-                        />
-
-                        @can('update', $call)
-                            <x-button
-                                variant="light" size="sm"
-                                :href="route('leads.calls.edit', [$lead, $call])"
-                                icon="ti ti-pencil" aria-label="Edit call"
-                            />
-                        @endcan
-
-                        <!-- @can('delete', $call)
-                            <x-button
-                                variant="light" size="sm"
-                                icon="ti ti-trash"
-                                data-pc-toggle="modal"
-                                data-pc-target="#delete-call-{{ $call->id }}"
-                                aria-label="Delete call"
-                            />
-                        @endcan -->
-                    </div>
-                </td>
-            </tr>
-        @endforeach
-    </x-dashboard-table>
-</x-card>
+                        <!-- 5. Called Date & Time -->
+                        <td class="text-secondary py-3 px-3">
+                            <div>{{ $call->called_date->format('d-m-Y') }}</div>
+                            <div class="text-muted small mt-1">{{ $call->calledAt()->format('g:i a') }}</div>
+                        </td>
+                    </tr>
+                @empty
+                    <tr>
+                        <td colspan="5" class="text-center py-4 text-muted">
+                            {{ $callHasActiveFilters ? 'No calls match this search.' : 'No calls logged for this lead yet.' }}
+                        </td>
+                    </tr>
+                @endforelse
+            </tbody>
+        </table>
+    </div>
+</div>
 
 {{-- ========================================================================= --}}
 {{-- LOG CALL MODAL DIALOG                                                     --}}
@@ -142,70 +93,190 @@
         <div class="custom-modal-overlay" onclick="closeModal('logCallModal')"></div>
 
         <div class="custom-modal-dialog custom-modal-dialog-lg">
-            <div class="custom-modal-header">
+            <!-- Modal Header -->
+            <div class="custom-modal-header flex items-center justify-between p-4 border-b">
                 <div class="flex items-center gap-2.5">
                     <div class="w-9 h-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center font-bold text-lg">
                         <i class="ti ti-phone-outgoing"></i>
                     </div>
                     <div>
-                        <h5 class="mb-0 text-base font-bold">Log Call Activity</h5>
+                        <h5 class="mb-0 text-base font-bold">Add Telecall Details</h5>
                         <p class="text-xs text-muted mb-0">Record call outcome for <span class="font-semibold text-body">{{ $lead->name }}</span> ({{ $lead->reference }})</p>
                     </div>
                 </div>
 
-                <button
-                    type="button"
-                    class="btn-close"
-                    onclick="closeModal('logCallModal')"
-                ></button>
+                <button type="button" class="btn-close" onclick="closeModal('logCallModal')"></button>
             </div>
 
-            <form
-                method="POST"
-                action="{{ route('leads.calls.store', $lead) }}"
-                enctype="multipart/form-data"
-                id="logCallForm"
-            >
+            <!-- Modal Form -->
+            <form method="POST" action="{{ route('leads.calls.store', $lead) }}" id="logCallForm">
                 @csrf
 
-                <div class="custom-modal-body">
-                    @include('leads.partials.call-form', [
-                        'call' => new App\Models\CallDetail,
-                    ])
+                <div class="custom-modal-body p-6 space-y-4">
+                    
+                    <!-- 1. Call Details -->
+                    <div class="grid grid-cols-3 items-center gap-4">
+                        <label for="call_status" class="text-sm font-medium text-gray-700">
+                            Call Details<span class="text-red-500">*</span>
+                        </label>
+                        <select id="call_status" name="call_status" onchange="toggleTelecallFields()" class="col-span-2 form-select w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
+                            <option value="">--Select--</option>
+                            @foreach(App\Enums\CallStatus::cases() as $status)
+                                <option value="{{ $status->value }}" {{ old('call_status') == $status->value ? 'selected' : '' }}>
+                                    {{ $status->label() }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <!-- 2. Interest (Only if Answered) -->
+                    <div id="interest_field_wrapper" class="grid grid-cols-3 items-center gap-4" style="display: none;">
+                        <label for="interest" class="text-sm font-medium text-gray-700">
+                            Interest<span class="text-red-500">*</span>
+                        </label>
+                        <select id="interest" name="interest" onchange="toggleTelecallFields()" class="col-span-2 form-select w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
+                            <option value="">--Select--</option>
+                            <option value="Yes" {{ old('interest') == 'Yes' ? 'selected' : '' }}>Yes</option>
+                            <option value="No" {{ old('interest') == 'No' ? 'selected' : '' }}>No</option>
+                        </select>
+                    </div>
+
+                    <!-- 3. Is item sold? (If Answered & Interest = Yes) -->
+                    <div id="is_sold_field_wrapper" class="grid grid-cols-3 items-center gap-4" style="display: none;">
+                        <label for="is_item_sold" class="text-sm font-medium text-gray-700">
+                            Is item sold?<span class="text-red-500">*</span>
+                        </label>
+                        <select id="is_item_sold" name="is_item_sold" onchange="toggleTelecallFields()" class="col-span-2 form-select w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
+                            <option value="0" {{ old('is_item_sold', '0') == '0' ? 'selected' : '' }}>No</option>
+                            <option value="1" {{ old('is_item_sold') == '1' ? 'selected' : '' }}>Yes</option>
+                        </select>
+                    </div>
+
+                    <!-- 4. Invoice Number Field -->
+                    <div id="invoice_field_wrapper" class="grid grid-cols-3 items-center gap-4" style="display: none;">
+                        <label for="invoice_number" class="text-sm font-medium text-gray-700">
+                            Invoice Number<span class="text-red-500">*</span>
+                        </label>
+                        <input
+                            type="text"
+                            id="invoice_number"
+                            name="invoice_number"
+                            value="{{ old('invoice_number') }}"
+                            placeholder="Enter Invoice Number"
+                            class="col-span-2 form-input w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm p-2"
+                        />
+                    </div>
+
+                    <!-- 5. Reason (If Answered & Interest = No) -->
+                    <div id="reason_field_wrapper" class="grid grid-cols-3 items-center gap-4" style="display: none;">
+                        <label for="reason" class="text-sm font-medium text-gray-700">
+                            Reason<span class="text-red-500">*</span>
+                        </label>
+                        <select id="reason" name="reason" class="col-span-2 form-select w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
+                            <option value="">--Select--</option>
+                            <option value="Not eligible for finance" {{ old('reason') == 'Not eligible for finance' ? 'selected' : '' }}>Not eligible for finance</option>
+                            <option value="Not planning now" {{ old('reason') == 'Not planning now' ? 'selected' : '' }}>Not planning now</option>
+                            <option value="Price is higher" {{ old('reason') == 'Price is higher' ? 'selected' : '' }}>Price is higher</option>
+                            <option value="Purchased from another store" {{ old('reason') == 'Purchased from another store' ? 'selected' : '' }}>Purchased from another store</option>
+                        </select>
+                    </div>
+
+                    <!-- 6. Next FollowUp Date -->
+                    <div id="followup_field_wrapper" class="grid grid-cols-3 items-center gap-4" style="display: none;">
+                        <label for="next_followup_date" class="text-sm font-medium text-gray-700">
+                            Next FollowUp Date <span class="text-red-500">*</span>
+                        </label>
+                        <div class="col-span-2 flex items-center rounded-md border border-gray-300 shadow-sm focus-within:border-indigo-500 focus-within:ring-1 focus-within:ring-indigo-500 overflow-hidden">
+                            <span class="inline-flex items-center px-3 bg-gray-100 text-gray-500 border-r border-gray-300">
+                                <i class="ti ti-calendar text-lg"></i>
+                            </span>
+                            <input
+                                type="date"
+                                id="next_followup_date"
+                                name="next_followup_date"
+                                value="{{ old('next_followup_date', date('Y-m-d')) }}"
+                                class="w-full border-0 focus:ring-0 text-sm p-2 text-gray-700"
+                            />
+                        </div>
+                    </div>
+
+                    <!-- 7. Remarks -->
+                    <div class="grid grid-cols-3 items-start gap-4">
+                        <label for="remarks" class="text-sm font-medium text-gray-700 pt-2">
+                            Remarks<span class="text-red-500">*</span>
+                        </label>
+                        <textarea
+                            id="remarks"
+                            name="remarks"
+                            rows="3"
+                            placeholder="Remarks"
+                            class="col-span-2 form-textarea w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm p-2"
+                        >{{ old('remarks') }}</textarea>
+                    </div>
+
                 </div>
 
-                <div class="custom-modal-footer bg-light/30">
-                    <button
-                        type="button"
-                        class="btn btn-secondary"
-                        onclick="closeModal('logCallModal')"
-                    >
-                        Cancel
+                <div class="custom-modal-footer bg-light/30 p-4 border-t flex justify-start gap-2">
+                    <button type="submit" class="btn btn-primary px-4 py-2 text-sm font-medium rounded-md shadow-sm">
+                        Submit
                     </button>
-
-                    <button
-                        type="submit"
-                        class="btn btn-primary flex items-center gap-1.5 shadow-sm"
-                    >
-                        <i class="ti ti-check"></i>
-                        <span>Save Call Record</span>
+                    <button type="button" class="btn btn-secondary px-4 py-2 text-sm font-medium rounded-md" onclick="closeModal('logCallModal')">
+                        Cancel
                     </button>
                 </div>
             </form>
         </div>
     </div>
 
-    @if ($errors->any() && old('call_status'))
-        <script>
-            document.addEventListener('DOMContentLoaded', function() {
+    <script>
+        function toggleTelecallFields() {
+            const callStatus = document.getElementById('call_status').value;
+            const interest = document.getElementById('interest').value;
+            const isSold = document.getElementById('is_item_sold').value;
+
+            const interestWrapper = document.getElementById('interest_field_wrapper');
+            const isSoldWrapper = document.getElementById('is_sold_field_wrapper');
+            const invoiceWrapper = document.getElementById('invoice_field_wrapper');
+            const reasonWrapper = document.getElementById('reason_field_wrapper');
+            const followupWrapper = document.getElementById('followup_field_wrapper');
+
+            // Reset display
+            interestWrapper.style.display = 'none';
+            isSoldWrapper.style.display = 'none';
+            invoiceWrapper.style.display = 'none';
+            reasonWrapper.style.display = 'none';
+            followupWrapper.style.display = 'none';
+
+            if (callStatus === '{{ App\Enums\CallStatus::Answered->value }}') {
+                interestWrapper.style.display = 'grid';
+
+                if (interest === 'Yes') {
+                    isSoldWrapper.style.display = 'grid';
+
+                    if (isSold === '1') {
+                        invoiceWrapper.style.display = 'grid';
+                    } else {
+                        followupWrapper.style.display = 'grid';
+                    }
+                } else if (interest === 'No') {
+                    reasonWrapper.style.display = 'grid';
+                }
+            } else if (callStatus === '{{ App\Enums\CallStatus::NotAnswered->value }}') {
+                followupWrapper.style.display = 'grid';
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            toggleTelecallFields();
+
+            @if ($errors->any() && old('call_status'))
                 if (typeof openModal === 'function') {
                     openModal('logCallModal');
                 }
-            });
-        </script>
-    @endif
+            @endif
+        });
+    </script>
 @endcan
-
 @foreach ($callHistory as $call)
     @can('delete', $call)
         <x-delete-modal

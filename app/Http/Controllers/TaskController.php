@@ -1364,12 +1364,32 @@ public function update(
             // Admin → My Tasks only 
             $query->where('assigned_to', $user->id);
         }
+        if ($request->filled('title')) {
+            $query->where('title', 'like', '%' . $request->title . '%');
+        }
 
+        // Assigned To filter
+        if ($request->filled('assigned_to')) {
+            $query->where('assigned_to', $request->assigned_to);
+        }
+
+        // Approved By filter
+        if ($request->filled('approved_by')) {
+            $query->where('approved_by', $request->approved_by);
+        }
+
+        // Task Type filter
+        if ($request->filled('task_type')) {
+            $query->where('task_type', $request->task_type);
+        }
         $tasks = $query
             ->latest()
             ->paginate(10);
 
-        return view('tasks.approval', compact('tasks'));
+         return view('tasks.approval', [
+        'tasks' => $tasks,
+        'users' => User::select('id', 'name')->get(),
+        ]);
     }
 
 

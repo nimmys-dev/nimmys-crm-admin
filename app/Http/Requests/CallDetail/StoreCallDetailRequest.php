@@ -80,13 +80,13 @@ class StoreCallDetailRequest extends FormRequest
                 'max:100',
             ],
 
-            'invoice_file' => [
-                'nullable',
-                Rule::requiredIf($this->isInvoiceFileRequired()),
-                'file',
-                'mimes:pdf,jpg,jpeg,png,webp',
-                'max:10240',
-            ],
+            // 'invoice_file' => [
+            //     'nullable',
+            //     Rule::requiredIf($this->isInvoiceFileRequired()),
+            //     'file',
+            //     'mimes:pdf,jpg,jpeg,png,webp',
+            //     'max:10240',
+            // ],
         ];
     }
 
@@ -135,7 +135,7 @@ class StoreCallDetailRequest extends FormRequest
             'reason.required' => 'Please provide a reason for not interested.',
             'is_item_sold.required' => 'Please specify whether the item was sold.',
             'invoice_number.required' => 'Invoice number is required when an item is sold.',
-            'invoice_file.required' => 'Invoice file upload is required when an item is sold.',
+            // 'invoice_file.required' => 'Invoice file upload is required when an item is sold.',
             'remarks.required' => 'Remarks are mandatory.',
         ];
     }

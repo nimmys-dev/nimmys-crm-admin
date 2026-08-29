@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\DB;
 use Throwable;
 use Illuminate\Http\Request;
 use App\Models\User;
+use Carbon\Carbon;
 
 class TaskController extends Controller
 {
@@ -859,6 +860,21 @@ class TaskController extends Controller
 
     public function completeTask(Request $request, Task $task): JsonResponse
     {
+            // Already approved
+        if ($task->status === 'approved') {
+            return response()->json([
+                'status' => false,
+                'message' => 'Task is already approved. You cannot complete it again.',
+            ], 422);
+        }
+
+        // Already completed
+        if ($task->status === 'completed') {
+            return response()->json([
+                'status' => false,
+                'message' => 'Task is already completed.',
+            ], 422);
+        }
         $request->validate([
             'remarks' => [
                 'required',
@@ -885,6 +901,130 @@ class TaskController extends Controller
                 'approvedBy:id,name',
             ]),
         ], 200);
+    }
+
+    private function createNextRepeatedTask(Task $task): Task
+    {
+        // Only create next task when repeat mode is ON
+        if (!$task->repeat_mode) {
+            return $task;
+        }
+
+        $nextTask = $task->replicate();
+
+        // New repeated task always starts as upcoming
+        $nextTask->status = 'upcoming';
+
+        // Old completion remarks should NOT be copied
+        $nextTask->remarks = null;
+
+        // Keep assigned user
+        $nextTask->assigned_to = $task->assigned_to;
+
+        // Keep approver
+        $nextTask->approved_by = $task->approved_by;
+
+        /*
+        |--------------------------------------------------------------------------
+        | DAILY
+        |--------------------------------------------------------------------------
+        */
+        if ($task->task_type === 'daily') {
+
+            // Use created_at as the task occurrence date
+            $nextTask->created_at = Carbon::parse($task->created_at)
+                ->addDay();
+
+            $nextTask->updated_at = now();
+
+            $nextTask->save();
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | WEEKLY
+        |--------------------------------------------------------------------------
+        */
+        elseif ($task->task_type === 'weekly') {
+
+            $nextTask->created_at = Carbon::parse($task->created_at)
+                ->addWeek();
+
+            $nextTask->updated_at = now();
+
+            $nextTask->save();
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | MONTHLY
+        |--------------------------------------------------------------------------
+        */
+        elseif ($task->task_type === 'monthly') {
+
+            $nextTask->monthly_start_date = Carbon::parse(
+                $task->monthly_start_date
+            )->addMonth();
+
+            $nextTask->monthly_end_date = Carbon::parse(
+                $task->monthly_end_date
+            )->addMonth();
+
+            $nextTask->save();
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | QUARTERLY
+        |--------------------------------------------------------------------------
+        */
+        elseif ($task->task_type === 'quarterly') {
+
+            $nextTask->quarter_start_date = Carbon::parse(
+                $task->quarter_start_date
+            )->addQuarter();
+
+            $nextTask->quarter_end_date = Carbon::parse(
+                $task->quarter_end_date
+            )->addQuarter();
+
+            $nextTask->save();
+
+            foreach ($task->quarters as $quarter) {
+
+                $nextTask->quarters()->create([
+                    'quarter' => $quarter->quarter,
+
+                    'start_date' => Carbon::parse(
+                        $quarter->start_date
+                    )->addYear(),
+
+                    'end_date' => Carbon::parse(
+                        $quarter->end_date
+                    )->addYear(),
+                ]);
+            }
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | YEARLY
+        |--------------------------------------------------------------------------
+        */
+        elseif ($task->task_type === 'yearly') {
+
+            $nextTask->yearly_start_date = Carbon::parse(
+                $task->yearly_start_date
+            )->addYear();
+
+            $nextTask->yearly_end_date = Carbon::parse(
+                $task->yearly_end_date
+            )->addYear();
+
+            $nextTask->save();
+        }
+
+        return $nextTask;
     }
 
     public function myTasks(Request $request): JsonResponse
@@ -1107,7 +1247,7 @@ class TaskController extends Controller
         ], 200);
     }
 
-    public function approvalIndex(): JsonResponse
+    public function approvalIndex(Request $request): JsonResponse
     {
         $user = auth()->user();
 
@@ -1122,11 +1262,27 @@ class TaskController extends Controller
         if ($user->role->value !== 'admin') {
             $query->where('approved_by', $user->id);
         }
+        // Search
+            $query->when($request->filled('search'), function ($query) use ($request) {
+                $search = $request->search;
 
+                $query->where(function ($q) use ($search) {
+                    $q->where('title', 'like', "%{$search}%")
+                    ->orWhere('remarks', 'like', "%{$search}%")
+                    ->orWhereHas('assignedUser', function ($q) use ($search) {
+                        $q->where('name', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('approvedBy', function ($q) use ($search) {
+                        $q->where('name', 'like', "%{$search}%");
+                    });
+                });
+            });
+
+        // Pagination
         $tasks = $query
             ->latest()
-            ->paginate(request('per_page', 10));
-
+            ->paginate($request->get('per_page', 10));
+       
         return response()->json([
             'status' => true,
             'message' => 'Approval tasks retrieved successfully.',
@@ -1135,40 +1291,40 @@ class TaskController extends Controller
     }
 
     public function approve(Task $task): JsonResponse
-{
-    $user = auth()->user();
+    {
+        $user = auth()->user();
 
-    // Only assigned approver can approve
-    if (
-        $user->role->value !== 'admin' &&
-        $task->approved_by !== $user->id
-    ) {
+        // Only assigned approver can approve
+        if (
+            $user->role->value !== 'admin' &&
+            $task->approved_by !== $user->id
+        ) {
+            return response()->json([
+                'status' => false,
+                'message' => 'You are not authorized to approve this task.',
+            ], 403);
+        }
+
+        // Only completed tasks can be approved
+        if ($task->status !== 'completed') {
+            return response()->json([
+                'status' => false,
+                'message' => 'Only completed tasks can be approved.',
+            ], 422);
+        }
+
+        $task->update([
+            'status' => 'approved',
+            'approved_at' => now(),
+        ]);
+
         return response()->json([
-            'status' => false,
-            'message' => 'You are not authorized to approve this task.',
-        ], 403);
+            'status' => true,
+            'message' => 'Task approved successfully.',
+            'data' => $task->fresh([
+                'assignedUser:id,name',
+                'approvedBy:id,name',
+            ]),
+        ], 200);
     }
-
-    // Only completed tasks can be approved
-    if ($task->status !== 'completed') {
-        return response()->json([
-            'status' => false,
-            'message' => 'Only completed tasks can be approved.',
-        ], 422);
-    }
-
-    $task->update([
-        'status' => 'approved',
-        'approved_at' => now(),
-    ]);
-
-    return response()->json([
-        'status' => true,
-        'message' => 'Task approved successfully.',
-        'data' => $task->fresh([
-            'assignedUser:id,name',
-            'approvedBy:id,name',
-        ]),
-    ], 200);
-}
 }
