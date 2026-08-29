@@ -19,9 +19,16 @@ class DashboardController extends Controller
         // Manager / Employee → assigned or approved tasks
         if ($user->role->value !== 'admin') {
             $query->where(function ($query) use ($user) {
-                $query->where('assigned_to', $user->id)
-                    ->orWhere('approved_by', $user->id);
+                $query->where('assigned_to', $user->id);
             });
+        }
+
+        $approvalPendingQuery = Task::query()
+            ->where('status', 'completed');
+
+        // Non-admin → only tasks assigned for approval to logged-in user
+        if ($user->role->value !== 'admin') {
+            $approvalPendingQuery->where('approved_by', $user->id);
         }
 
         $counts = [
@@ -37,9 +44,8 @@ class DashboardController extends Controller
                 ->where('status', 'upcoming')
                 ->count(),
 
-            'approval_pending' => (clone $query)
-                ->where('status', 'pending')
-                ->count(),
+            
+            'approvalPending' => $approvalPendingQuery->count(),
         ];
 
         return response()->json([

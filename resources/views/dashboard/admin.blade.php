@@ -5,6 +5,61 @@
 @section('content') 
 
     {{-- Dashboard Duty Summary --}}
+    <h4 class="mb-3">My Tasks</h4>
+    <div class="dashboard-stats">
+
+        {{-- Today's Duty --}}
+        <a href="{{ route('tasks.index', ['filter' => 'ongoing','my_tasks' => 1]) }}"
+        class="stat-card">
+            <div class="stat-content">
+                <p>Today's Duty</p>
+                <h3>{{ $adminOngoingTaskCount }}</h3>
+            </div>
+
+            <div class="stat-icon today-icon">
+                <i class="ti ti-calendar-event"></i>
+            </div>
+        </a>
+
+        {{-- Overdue Duty --}}
+        <a href="{{ route('tasks.index', ['filter' => 'overdue','my_tasks' => 1]) }}"
+        class="stat-card">
+            <div class="stat-content">
+                <p>Overdue Duty</p>
+                <h3>{{ $adminOverdueTaskCount }}</h3>
+            </div>
+
+            <div class="stat-icon overdue-icon">
+                <i class="ti ti-alert-circle"></i>
+            </div>
+        </a>
+
+        {{-- Upcoming Duty --}}
+        <a href="{{ route('tasks.index', ['filter' => 'upcoming','my_tasks' => 1]) }}"
+        class="stat-card">
+            <div class="stat-content">
+                <p>Upcoming Duty</p>
+                <h3>{{ $adminUpcomingTaskCount }}</h3>
+            </div>
+
+            <div class="stat-icon upcoming-icon">
+                <i class="ti ti-calendar-time"></i>
+            </div>
+        </a>
+
+        {{-- Approval Pending --}}
+        <a href="{{ route('tasks.approval.index', ['filter' => 'pending','my_tasks' => 1]) }}" class="stat-card">
+            <div class="stat-content">
+                <p>Approval Pending</p>
+                <h3>{{ $adminApprovalPendingTaskCount }}</h3>
+            </div>
+            <div class="stat-icon pending-icon">
+                <i class="ti ti-clock-hour-4"></i>
+            </div>
+        </a>
+
+    </div>
+    <h4 class="mb-3">All Tasks</h4>
     <div class="dashboard-stats">
 
         {{-- Today's Duty --}}

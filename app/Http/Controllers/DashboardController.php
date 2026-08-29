@@ -69,6 +69,8 @@ class DashboardController extends Controller
        
         
         $taskCounts = $this->getTaskDashboardCounts($user);
+        // Admin assigned/created task counts
+        $adminTaskCounts = $this->getAdminAssignedTaskCounts($user);
 
         return view('dashboard.admin', [
             'pageTitle' => 'Dashboard',
@@ -85,6 +87,14 @@ class DashboardController extends Controller
             'overdueDuty' => $taskCounts['overdueDuty'],
             'upcomingDuty' => $taskCounts['upcomingDuty'],
             'approvalPending' => $taskCounts['approvalPending'],
+
+             // Admin assigned task counts
+            'adminAssignedTaskCount' => $adminTaskCounts['total'],
+            'adminOngoingTaskCount' => $adminTaskCounts['ongoing'],
+            'adminOverdueTaskCount' => $adminTaskCounts['overdue'],
+            'adminUpcomingTaskCount' => $adminTaskCounts['upcoming'],
+            'adminApprovalPendingTaskCount' => $adminTaskCounts['approval_pending'],
+            
         ]);
     }
 
@@ -126,7 +136,31 @@ class DashboardController extends Controller
         ];
     }
 
+    private function getAdminAssignedTaskCounts(User $user): array
+    {
+        $query = Task::query()
+            ->where('assigned_to', $user->id);
 
+        return [
+            'total' => (clone $query)->count(),
+
+            'ongoing' => (clone $query)
+                ->where('status', 'ongoing')
+                ->count(),
+
+            'overdue' => (clone $query)
+                ->where('status', 'overdue')
+                ->count(),
+
+            'upcoming' => (clone $query)
+                ->where('status', 'upcoming')
+                ->count(),
+
+            'approval_pending' => (clone $query)
+                ->where('status', 'completed')
+                ->count(),
+        ];
+    }
     private function managerDashboard(User $user): View
     {
         $stats = $this->dashboard->getManagerStatistics($user);

@@ -21,6 +21,7 @@
                             <th>#</th>
                             <th>Title</th>
                             <th>Assigned To</th>
+                            <th>Approved By</th>
                             <th>Task Type</th>
                             <th>Remarks</th>
                             <th>Status</th>
@@ -45,7 +46,9 @@
                                 <td>
                                     {{ $task->assignedUser?->name ?? '-' }}
                                 </td>
-
+                                <td>
+                                    {{ $task->approvedBy?->name ?? '-' }}
+                                </td>
                                 <td>
                                     <span class="badge bg-info">
                                         {{ ucfirst($task->task_type) }}

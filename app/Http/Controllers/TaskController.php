@@ -351,6 +351,10 @@ class TaskController extends Controller
 
             })
 
+            ->when($request->boolean('my_tasks'), function ($query) use ($user) {
+                $query->where('assigned_to', $user->id);
+            })
+
 
             /*
             |--------------------------------------------------------------------------
@@ -1050,6 +1054,9 @@ public function update(
         // New repeated task always starts as upcoming
         $nextTask->status = 'upcoming';
 
+        // Old completion remarks should NOT be copied
+        $nextTask->remarks = null;
+
         // Keep assigned user
         $nextTask->assigned_to = $task->assigned_to;
 
@@ -1339,7 +1346,7 @@ public function update(
     }
 
   
-    public function approvalIndex(): View
+    public function approvalIndex(Request $request): View
     {
         $user = auth()->user();
 
@@ -1353,6 +1360,9 @@ public function update(
         if ($user->role->value !== 'admin') {
             // Manager / Employee → only tasks assigned to them for approval
             $query->where('approved_by', $user->id);
+        }elseif ($request->boolean('my_tasks')) { 
+            // Admin → My Tasks only 
+            $query->where('assigned_to', $user->id);
         }
 
         $tasks = $query
@@ -1369,7 +1379,14 @@ public function update(
         $user = auth()->user();
 
         // Only the assigned approver can approve
-        if ($task->approved_by !== $user->id) {
+        // if ($task->approved_by !== $user->id) {
+        //     abort(403, 'You are not authorized to approve this task.');
+        // }
+
+        if (
+            $user->role->value !== 'admin' &&
+            (int) $task->approved_by !== (int) $user->id
+        ) {
             abort(403, 'You are not authorized to approve this task.');
         }
 

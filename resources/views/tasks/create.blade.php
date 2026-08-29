@@ -12,7 +12,7 @@
 
         <div class="card-body">
 
-            <form action="{{ route('tasks.store') }}" method="POST">
+            <form action="{{ route('tasks.store') }}" method="POST" id="createTaskForm">
                 @csrf
 
                 {{-- ========================================================= --}}
@@ -687,7 +687,7 @@
                     </a>
 
                     <button type="submit"
-                            class="btn btn-danger">
+                            class="btn btn-danger" id="createTaskBtn">
 
                         <i class="ti ti-check"></i>
                         Create Task
@@ -1800,6 +1800,33 @@ document.addEventListener('DOMContentLoaded', function () {
 
 });
 </script>
+
+<script>
+
+document.getElementById('createTaskForm').addEventListener('submit', function (e) {
+
+    const button = document.getElementById('createTaskBtn');
+
+    // Already submitted - prevent duplicate submission
+    if (this.dataset.submitted === 'true') {
+        e.preventDefault();
+        return false;
+    }
+
+    // Mark form as submitted immediately
+    this.dataset.submitted = 'true';
+
+    // Disable button
+    button.disabled = true;
+
+    // Hide button immediately
+    button.style.display = 'none';
+
+});
+
+
+</script>
+
 @push('styles')
 <link rel="stylesheet"
       href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">

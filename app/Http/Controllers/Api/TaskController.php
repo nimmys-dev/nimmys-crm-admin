@@ -859,7 +859,7 @@ class TaskController extends Controller
 
     public function completeTask(Request $request, Task $task): JsonResponse
     {
-        $validated = $request->validate([
+        $request->validate([
             'remarks' => [
                 'required',
                 'string',
@@ -869,51 +869,21 @@ class TaskController extends Controller
 
         $user = auth()->user();
 
-        // Only assigned user can complete the task
-        if (
-            $user->role->value !== 'admin' &&
-            (int) $task->assigned_to !== (int) $user->id
-        ) {
-            return response()->json([
-                'status' => false,
-                'status_code' => 403,
-                'message' => 'You are not authorized to complete this task.',
-            ], 403);
-        }
-
-        // Prevent completing already completed/approved task
-        if (in_array($task->status, [
-            'completed',
-            'approval_pending',
-            'approved',
-            'closed',
-        ])) {
-            return response()->json([
-                'status' => false,
-                'status_code' => 422,
-                'message' => 'This task has already been completed.',
-            ], 422);
-        }
-
         $task->update([
-            'status' => 'completed',
-            'remarks' => $validated['remarks'],
-        ]);
-
-        // Create next repeated task
-        if ($task->repeat_mode) {
-            $this->createNextRepeatedTask($task);
-        }
+                    'status'  => 'completed',
+                    'remarks' => $request->remarks,
+                ]);
+                if ($task->repeat_mode) {
+                    $this->createNextRepeatedTask($task);
+                }
 
         return response()->json([
             'status' => true,
-            'status_code' => 200,
             'message' => 'Task completed successfully.',
-            'data' => [
-                'task_id' => $task->id,
-                'status' => $task->status,
-                'remarks' => $task->remarks,
-            ],
+            'data' => $task->fresh([
+                'assignedUser:id,name',
+                'approvedBy:id,name',
+            ]),
         ], 200);
     }
 
@@ -1136,4 +1106,69 @@ class TaskController extends Controller
             ],
         ], 200);
     }
+
+    public function approvalIndex(): JsonResponse
+    {
+        $user = auth()->user();
+
+        $query = Task::with([
+            'assignedUser:id,name',
+            'approvedBy:id,name',
+        ])
+            ->where('status', 'completed');
+
+        // Admin → all completed tasks
+        // Manager / Employee → only tasks assigned to them for approval
+        if ($user->role->value !== 'admin') {
+            $query->where('approved_by', $user->id);
+        }
+
+        $tasks = $query
+            ->latest()
+            ->paginate(request('per_page', 10));
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Approval tasks retrieved successfully.',
+            'data' => $tasks,
+        ], 200);
+    }
+
+    public function approve(Task $task): JsonResponse
+{
+    $user = auth()->user();
+
+    // Only assigned approver can approve
+    if (
+        $user->role->value !== 'admin' &&
+        $task->approved_by !== $user->id
+    ) {
+        return response()->json([
+            'status' => false,
+            'message' => 'You are not authorized to approve this task.',
+        ], 403);
+    }
+
+    // Only completed tasks can be approved
+    if ($task->status !== 'completed') {
+        return response()->json([
+            'status' => false,
+            'message' => 'Only completed tasks can be approved.',
+        ], 422);
+    }
+
+    $task->update([
+        'status' => 'approved',
+        'approved_at' => now(),
+    ]);
+
+    return response()->json([
+        'status' => true,
+        'message' => 'Task approved successfully.',
+        'data' => $task->fresh([
+            'assignedUser:id,name',
+            'approvedBy:id,name',
+        ]),
+    ], 200);
+}
 }

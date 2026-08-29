@@ -45,9 +45,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/update-task/{task}', [TaskController::class, 'updateTask']);
     Route::get('/task-types', [TaskController::class, 'taskType']);
     Route::delete('/delete-task/{task}',[TaskController::class, 'deleteTask']);
-    Route::post('/approval-task/{task}',[TaskController::class, 'completeTask']);
+    Route::post('/complete-task/{task}',[TaskController::class, 'completeTask']);
     Route::get('/my-tasks',[TaskController::class, 'myTasks']);
     Route::post('/reassign-task',[TaskController::class, 'reassign']);
+    Route::get('/approval-task',[TaskController::class, 'approvalIndex']);
+    Route::post('/tasks/{task}/approve',[TaskController::class, 'approve']);
 
     //settings
     Route::get('/company-profile',[SettingsController::class, 'companyProfile']);

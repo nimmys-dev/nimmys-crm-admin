@@ -7,9 +7,10 @@
 .task-datatable th:nth-child(2), .task-datatable td:nth-child(2) { width: 15%; } /* Assigned To */
 .task-datatable th:nth-child(3), .task-datatable td:nth-child(3) { width: 15%; } /* Approved By */
 .task-datatable th:nth-child(4), .task-datatable td:nth-child(4) { width: 10%; } /* Type */
-.task-datatable th:nth-child(5), .task-datatable td:nth-child(5) { width: 18%; } /* Schedule */
-.task-datatable th:nth-child(6), .task-datatable td:nth-child(6) { width: 10%; } /* Status */
-.task-datatable th:nth-child(7), .task-datatable td:nth-child(7) { width: 12%; } /* Actions */
+.task-datatable th:nth-child(5), .task-datatable td:nth-child(5) { width: 20%; } /* Schedule */
+.task-datatable th:nth-child(6), .task-datatable td:nth-child(6) { width: 15%; } /* Status */
+.task-datatable th:nth-child(7), .task-datatable td:nth-child(7) { width: 18%; } /* Status */
+.task-datatable th:nth-child(8), .task-datatable td:nth-child(8) { width: 12%; } /* Actions */
 
 .task-actions {
     display: flex !important;
@@ -121,6 +122,7 @@
                 'Type',
                 'Schedule',
                 'Status',
+                'Created At',
                 'Actions'
             ]"
             empty-message="No tasks found."
@@ -232,6 +234,9 @@
                             {{ ucwords(str_replace('_', ' ', $task->status)) }}
                         </span>
                     </td>
+                    <td style="word-break: break-all;">
+                        {{ $task->created_at?->format('d-m-Y h:i A') ?? '-' }}
+                    </td>
 
                     <td>
                         <div class="task-actions">
@@ -270,7 +275,7 @@
                             @endif
 
                             <!-- Complete Button -->
-                            @if($task->status !== 'completed')
+                            @if($task->status !== 'completed' && $task->status !== 'approved')
                                 <button type="button"
                                         class="task-action-btn complete-btn"
                                         title="Complete Task"
