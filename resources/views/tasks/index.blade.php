@@ -3,35 +3,47 @@
 @section('content')
 <style>
 /* Table Columns Width Control */
-.task-datatable th:nth-child(1), .task-datatable td:nth-child(1) { width: 25%; } /* Title */
-.task-datatable th:nth-child(2), .task-datatable td:nth-child(2) { width: 15%; } /* Assigned To */
-.task-datatable th:nth-child(3), .task-datatable td:nth-child(3) { width: 15%; } /* Approved By */
-.task-datatable th:nth-child(4), .task-datatable td:nth-child(4) { width: 10%; } /* Type */
-.task-datatable th:nth-child(5), .task-datatable td:nth-child(5) { width: 20%; } /* Schedule */
-.task-datatable th:nth-child(6), .task-datatable td:nth-child(6) { width: 15%; } /* Status */
-.task-datatable th:nth-child(7), .task-datatable td:nth-child(7) { width: 18%; } /* Status */
-.task-datatable th:nth-child(8), .task-datatable td:nth-child(8) { width: 12%; } /* Actions */
 
-.task-actions {
-    display: flex !important;
-    flex-direction: row !important;
-    flex-wrap: nowrap !important;
-    align-items: center !important;
-    justify-content: flex-start !important;
-    gap: 8px !important;
-    white-space: nowrap !important;
-}
-
-.task-actions > * {
-    flex: 0 0 auto !important;
-}
 .task-datatable-wrapper {
-    overflow-x: hidden !important; /* Horizontal scrollbar പൂർണ്ണമായി ഒഴിവാക്കും */
+    width: 100%;
+    overflow-x: auto;
 }
 
 .task-datatable {
-    width: 100% !important;
-    table-layout: fixed !important; /* ടേബിൾ വിഡ്ത് സ്ക്രീനിന് ഉള്ളിൽ ഒതുക്കും */
+    width: 100%;
+    min-width: 1100px;
+    white-space: nowrap;
+}
+
+.task-datatable th,
+.task-datatable td {
+    vertical-align: middle;
+}
+
+.task-title {
+    white-space: normal;
+    min-width: 200px;
+}
+
+.task-actions {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: nowrap;
+}
+
+.task-actions form {
+    margin: 0;
+}
+
+.task-action-btn {
+    width: 38px;
+    height: 38px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
 }
 </style>
 <div class="grid grid-cols-12 gap-x-6">
@@ -112,40 +124,42 @@
     {{-- Task Table --}}
     <div class="task-datatable-wrapper">
 
-        <x-datatable
-            class="task-datatable"
-            style="width: 100%; table-layout: fixed;"
-            :headers="[
-                'Title',
-                'Assigned To',
-                'Approved By',
-                'Type',
-                'Schedule',
-                'Status',
-                'Created At',
-                'Actions'
-            ]"
-            empty-message="No tasks found."
-            empty-icon="ti ti-checklist"
-        >
+    <table class="table table-bordered table-hover task-datatable">
+
+        <thead>
+            <tr>
+                <th>Title</th>
+                <th>Assigned To</th>
+                <th>Approved By</th>
+                <th>Type</th>
+                <th>Schedule</th>
+                <th>Status</th>
+                <th>Created At</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+
+        <tbody>
 
             @forelse($tasks as $task)
 
                 <tr>
-                    <td class="task-title" style="word-break: break-all; overflow-wrap: anywhere; white-space: normal;">
+
+                    <td class="task-title">
                         <span class="task-name">
                             {{ $task->title }}
                         </span>
                     </td>
 
-                    <td style="word-break: break-all;">
+                    <td>
                         {{ $task->assignedUser?->name ?? '-' }}
                     </td>
 
-                    <td style="word-break: break-all;">
+                    <td>
                         {{ $task->approvedBy?->name ?? '-' }}
                     </td>
 
+                    {{-- Type --}}
                     <td>
                         @php
                             $typeClass = match($task->task_type) {
@@ -163,6 +177,7 @@
                         </span>
                     </td>
 
+                    {{-- Schedule --}}
                     <td class="task-schedule">
 
                         @if($task->task_type === 'daily')
@@ -203,21 +218,23 @@
 
                         @elseif($task->task_type === 'yearly')
 
-                            <div class="schedule-sub">
-                                {{ $task->yearly_start_date
-                                    ? \Carbon\Carbon::parse($task->yearly_start_date)->format('d M Y')
-                                    : '-' }}
-                                -
-                                {{ $task->yearly_end_date
-                                    ? \Carbon\Carbon::parse($task->yearly_end_date)->format('d M Y')
-                                    : '-' }}
-                            </div>
+                            {{ $task->yearly_start_date
+                                ? \Carbon\Carbon::parse($task->yearly_start_date)->format('d M Y')
+                                : '-' }}
+
+                            -
+
+                            {{ $task->yearly_end_date
+                                ? \Carbon\Carbon::parse($task->yearly_end_date)->format('d M Y')
+                                : '-' }}
 
                         @endif
 
                     </td>
 
+                    {{-- Status --}}
                     <td>
+
                         @php
                             $statusClass = match($task->status) {
                                 'pending' => 'task-status pending',
@@ -225,6 +242,7 @@
                                 'upcoming' => 'task-status upcoming',
                                 'ongoing' => 'task-status ongoing',
                                 'completed' => 'task-status completed',
+                                'approved' => 'task-status approved',
                                 'closed' => 'task-status closed',
                                 default => 'task-status',
                             };
@@ -233,35 +251,40 @@
                         <span class="{{ $statusClass }}">
                             {{ ucwords(str_replace('_', ' ', $task->status)) }}
                         </span>
+
                     </td>
-                    <td style="word-break: break-all;">
+
+                    {{-- Created At --}}
+                    <td>
                         {{ $task->created_at?->format('d-m-Y h:i A') ?? '-' }}
                     </td>
 
+                    {{-- Actions --}}
                     <td>
+
                         <div class="task-actions">
 
-                            <!-- View Button -->
+                            {{-- View --}}
                             <a href="{{ route('tasks.show', $task) }}"
-                            class="task-action-btn"
-                            title="View">
+                               class="task-action-btn"
+                               title="View">
                                 <i class="ti ti-eye"></i>
                             </a>
 
+                            {{-- Edit/Delete --}}
                             @if(in_array(auth()->user()->role->value, ['admin', 'manager']))
 
-                                <!-- Edit Button -->
                                 <a href="{{ route('tasks.edit', $task) }}"
-                                class="task-action-btn"
-                                title="Edit">
+                                   class="task-action-btn"
+                                   title="Edit">
                                     <i class="ti ti-edit"></i>
                                 </a>
 
-                                <!-- Delete Button -->
                                 <form action="{{ route('tasks.destroy', $task) }}"
-                                    method="POST"
-                                    class="delete-form"
-                                    onsubmit="return confirm('Are you sure you want to delete this task?');">
+                                      method="POST"
+                                      class="delete-form"
+                                      onsubmit="return confirm('Are you sure you want to delete this task?');">
+
                                     @csrf
                                     @method('DELETE')
 
@@ -270,23 +293,29 @@
                                             title="Delete">
                                         <i class="ti ti-trash"></i>
                                     </button>
+
                                 </form>
 
                             @endif
 
-                            <!-- Complete Button -->
+                            {{-- Complete --}}
                             @if($task->status !== 'completed' && $task->status !== 'approved')
+
                                 <button type="button"
                                         class="task-action-btn complete-btn"
                                         title="Complete Task"
                                         data-id="{{ $task->id }}"
                                         data-title="{{ $task->title }}"
                                         data-remarks="{{ $task->remarks ?? '' }}">
+
                                     <i class="ti ti-circle-check"></i>
+
                                 </button>
+
                             @endif
 
                         </div>
+
                     </td>
 
                 </tr>
@@ -294,16 +323,18 @@
             @empty
 
                 <tr>
-                    <td colspan="7" class="text-center py-5 text-muted">
+                    <td colspan="8" class="text-center py-5 text-muted">
                         No tasks found.
                     </td>
                 </tr>
 
             @endforelse
 
-        </x-datatable>
+        </tbody>
 
-    </div>
+    </table>
+
+</div>
 
     <!-- Modal Overlay (Moved OUTSIDE the loop for clean layout & better performance) -->
     <div class="custom-modal-overlay" id="customModal">
