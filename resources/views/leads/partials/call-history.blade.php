@@ -122,21 +122,21 @@
                         <select id="call_status" name="call_status" onchange="toggleTelecallFields()" class="col-span-2 form-select w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
                             <option value="">--Select--</option>
                             @foreach(App\Enums\CallStatus::cases() as $status)
-                                <option value="{{ $status->value }}" {{ old('call_status') == $status->value ? 'selected' : '' }}>
+                                <option value="{{ $status->value }}" {{ old('call_status', App\Enums\CallStatus::Answered->value) == $status->value ? 'selected' : '' }}>
                                     {{ $status->label() }}
                                 </option>
                             @endforeach
                         </select>
                     </div>
 
-                    <!-- 2. Interest (Only if Answered) -->
-                    <div id="interest_field_wrapper" class="grid grid-cols-3 items-center gap-4" style="display: none;">
+                    <!-- 2. Interest -->
+                    <div id="interest_field_wrapper" class="grid grid-cols-3 items-center gap-4">
                         <label for="interest" class="text-sm font-medium text-gray-700">
                             Interest<span class="text-red-500">*</span>
                         </label>
                         <select id="interest" name="interest" onchange="toggleTelecallFields()" class="col-span-2 form-select w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
                             <option value="">--Select--</option>
-                            <option value="Yes" {{ old('interest') == 'Yes' ? 'selected' : '' }}>Yes</option>
+                            <option value="Yes" {{ old('interest', 'Yes') == 'Yes' ? 'selected' : '' }}>Yes</option>
                             <option value="No" {{ old('interest') == 'No' ? 'selected' : '' }}>No</option>
                         </select>
                     </div>
@@ -182,7 +182,7 @@
                     </div>
 
                     <!-- 6. Next FollowUp Date -->
-                    <div id="followup_field_wrapper" class="grid grid-cols-3 items-center gap-4" style="display: none;">
+                    <div id="followup_field_wrapper" class="grid grid-cols-3 items-center gap-4">
                         <label for="next_followup_date" class="text-sm font-medium text-gray-700">
                             Next FollowUp Date <span class="text-red-500">*</span>
                         </label>
@@ -275,6 +275,30 @@
                 }
             @endif
         });
+        function openCallModal() {
+        // Reset values to defaults as shown in screenshot
+        document.getElementById('call_status').value = '{{ App\Enums\CallStatus::Answered->value }}';
+        document.getElementById('interest').value = 'Yes';
+        document.getElementById('is_item_sold').value = '0';
+        
+        // Set Today's Date dynamically
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('next_followup_date').value = today;
+
+        // Toggle visible fields
+        toggleTelecallFields();
+
+        // Show modal function (if applicable)
+        if (typeof openModal === 'function') {
+            openModal('logCallModal');
+        } else {
+            document.getElementById('logCallModal').style.display = 'block';
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        toggleTelecallFields();
+    });
     </script>
 @endcan
 @foreach ($callHistory as $call)

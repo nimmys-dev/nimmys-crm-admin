@@ -43,12 +43,12 @@ class StoreCallDetailRequest extends FormRequest
             'duration' => ['nullable', 'integer', 'min:0', 'max:14400'],
 
             // Not Answered branch OR (Answered + Interested + Not Sold)
-            'next_followup_date' => [
-                'nullable',
-                Rule::requiredIf($isNotAnswered || ($isAnswered && $isInterested && ! $isItemSold)),
-                'date',
-                'after_or_equal:called_date',
-            ],
+            // 'next_followup_date' => [
+            //     'nullable',
+            //     Rule::requiredIf($isNotAnswered || ($isAnswered && $isInterested && ! $isItemSold)),
+            //     'date',
+            //     'after_or_equal:called_date',
+            // ],
 
             // Answered branch
             'interest' => [
@@ -129,7 +129,7 @@ class StoreCallDetailRequest extends FormRequest
         return [
             'called_date.before_or_equal' => 'The call date cannot be in the future.',
             'called_time.date_format' => 'Enter the call time as HH:MM.',
-            'next_followup_date.after_or_equal' => 'The follow-up must be on or after the call date.',
+            // 'next_followup_date.after_or_equal' => 'The follow-up must be on or after the call date.',
             'next_followup_date.required' => 'Next follow-up date is required.',
             'interest.required' => 'Please indicate whether the customer is interested.',
             'reason.required' => 'Please provide a reason for not interested.',

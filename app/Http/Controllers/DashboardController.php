@@ -66,55 +66,115 @@ class DashboardController extends Controller
 
     private function adminDashboard(User $user): View
     {
-       
-        
         $taskCounts = $this->getTaskDashboardCounts($user);
-        // Admin assigned/created task counts
+
         $adminTaskCounts = $this->getAdminAssignedTaskCounts($user);
 
         return view('dashboard.admin', [
             'pageTitle' => 'Dashboard',
             'breadcrumbs' => [['label' => 'Dashboard']],
             'photos' => $this->photos,
+
             'stats' => $this->dashboard->getAdminStatistics(),
             'upcomingIncrements' => $this->dashboard->getUpcomingIncrements(),
             'recentEmployees' => $this->dashboard->getRecentEmployees(),
             'recentShops' => $this->dashboard->getRecentShops(),
-            'leadStats' => $this->dashboard->getLeadStatistics($user),
-            'dueFollowUps' => $this->dashboard->getDueFollowUps($user),
+
             'leadStats' => $this->dashboard->getDashboardLeadStatistics($user),
+            'dueFollowUps' => $this->dashboard->getDueFollowUps($user),
+
             'todayDuty' => $taskCounts['todayDuty'],
             'overdueDuty' => $taskCounts['overdueDuty'],
             'upcomingDuty' => $taskCounts['upcomingDuty'],
             'approvalPending' => $taskCounts['approvalPending'],
 
-             // Admin assigned task counts
             'adminAssignedTaskCount' => $adminTaskCounts['total'],
             'adminOngoingTaskCount' => $adminTaskCounts['ongoing'],
             'adminOverdueTaskCount' => $adminTaskCounts['overdue'],
             'adminUpcomingTaskCount' => $adminTaskCounts['upcoming'],
             'adminApprovalPendingTaskCount' => $adminTaskCounts['approval_pending'],
-            
         ]);
     }
 
+    // private function getTaskDashboardCounts(User $user): array
+    // {
+    //     $query = Task::query();
+
+    //     // Admin → all tasks
+    //     // Manager / Employee → assigned / approved tasks
+    //     if ($user->role->value !== 'admin') {
+    //         $query->where(function ($query) use ($user) {
+    //             $query->where('assigned_to', $user->id);
+    //         });
+    //     }
+
+    //     // Approval Pending
+    //     $approvalPendingQuery = Task::query()
+    //         ->where('status', 'completed');
+
+    //     // Non-admin → only tasks assigned for approval to logged-in user
+    //     if ($user->role->value !== 'admin') {
+    //         $approvalPendingQuery->where('approved_by', $user->id);
+    //     }
+
+    //     return [
+    //         'todayDuty' => (clone $query)
+    //             ->where('status', 'ongoing')
+    //             ->count(),
+
+    //         'overdueDuty' => (clone $query)
+    //             ->where('status', 'overdue')
+    //             ->count(),
+
+    //         'upcomingDuty' => (clone $query)
+    //             ->where('status', 'upcoming')
+    //             ->count(),
+
+    //         'approvalPending' => $approvalPendingQuery->count(),
+    //     ];
+    // }
+
     private function getTaskDashboardCounts(User $user): array
     {
+        /*
+        |--------------------------------------------------------------------------
+        | Update automatic task statuses before calculating dashboard counts
+        |--------------------------------------------------------------------------
+        */
+        Task::query()
+            ->whereNotIn('status', [
+                'completed',
+                'approval_pending',
+                'approved',
+                'closed',
+            ])
+            ->get()
+            ->each(function (Task $task) {
+                $task->updateAutomaticStatus();
+            });
+
+        /*
+        |--------------------------------------------------------------------------
+        | Normal Task Counts
+        |--------------------------------------------------------------------------
+        */
         $query = Task::query();
 
         // Admin → all tasks
-        // Manager / Employee → assigned / approved tasks
+        // Manager / Employee → assigned tasks
         if ($user->role->value !== 'admin') {
-            $query->where(function ($query) use ($user) {
-                $query->where('assigned_to', $user->id);
-            });
+            $query->where('assigned_to', $user->id);
         }
 
-        // Approval Pending
+        /*
+        |--------------------------------------------------------------------------
+        | Approval Pending
+        |--------------------------------------------------------------------------
+        */
         $approvalPendingQuery = Task::query()
             ->where('status', 'completed');
 
-        // Non-admin → only tasks assigned for approval to logged-in user
+        // Manager / Employee → only tasks assigned to them for approval
         if ($user->role->value !== 'admin') {
             $approvalPendingQuery->where('approved_by', $user->id);
         }
