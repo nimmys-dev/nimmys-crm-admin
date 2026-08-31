@@ -399,7 +399,7 @@ class TaskController extends Controller
             $perPage = $validated['per_page'] ?? 10;
 
             $tasks = $query
-                ->latest()
+                ->orderBy('id', 'desc')
                 ->paginate($perPage)
                 ->withQueryString();
 
@@ -1326,5 +1326,50 @@ class TaskController extends Controller
                 'approvedBy:id,name',
             ]),
         ], 200);
+    }
+
+
+    public function assignedTasks(Request $request)
+    {
+        $request->validate([
+            'user_id' => 'required|exists:users,id',
+        ]);
+
+        $tasks = Task::with([
+            'assignedUser:id,name',
+            'approvedBy:id,name',
+        ])
+        ->where('assigned_to', $request->user_id)
+        ->orderBy('id', 'desc')
+        ->get();
+
+        return response()->json([
+            'status' => true,
+            'status_code' => 200,
+            'message' => 'Assigned task list retrieved successfully.',
+            'data' => $tasks,
+        ]);
+    }
+
+    public function tasksByStatus(Request $request)
+    {
+        $request->validate([
+            'status' => 'required|string',
+        ]);
+
+        $tasks = Task::with([
+            'assignedUser:id,name',
+            'approvedBy:id,name',
+        ])
+        ->where('status', $request->status)
+        ->orderBy('id', 'desc')
+        ->get();
+
+        return response()->json([
+            'status' => true,
+            'status_code' => 200,
+            'message' => 'Task list retrieved successfully.',
+            'data' => $tasks,
+        ]);
     }
 }

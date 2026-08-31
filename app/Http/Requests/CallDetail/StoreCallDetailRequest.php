@@ -43,12 +43,12 @@ class StoreCallDetailRequest extends FormRequest
             'duration' => ['nullable', 'integer', 'min:0', 'max:14400'],
 
             // Not Answered branch OR (Answered + Interested + Not Sold)
-            // 'next_followup_date' => [
-            //     'nullable',
-            //     Rule::requiredIf($isNotAnswered || ($isAnswered && $isInterested && ! $isItemSold)),
-            //     'date',
-            //     'after_or_equal:called_date',
-            // ],
+            'next_followup_date' => [
+                'nullable',
+                // Rule::requiredIf($isNotAnswered || ($isAnswered && $isInterested && ! $isItemSold)),
+                'date',
+                // 'after_or_equal:called_date',
+            ],
 
             // Answered branch
             'interest' => [

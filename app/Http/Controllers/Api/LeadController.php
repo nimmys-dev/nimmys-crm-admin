@@ -1591,58 +1591,57 @@ public function quotationPdfDetails(
     ], 200);
 }
 
-    public function addCall(StoreCallDetailRequest $request, Lead $lead): JsonResponse
-    {
-        try {
+    // Controller-ൽ Lead $lead എന്നതിന് പകരം $id വെച്ച് ചെയ്യാം
+public function addCall(StoreCallDetailRequest $request, Lead $lead): JsonResponse
+{
+    try {
+        $call = $this->calls->createCall(
+            $lead,
+            $request->callAttributes(),
+            $request->user(),
+            $request->file('invoice_file')
+        );
 
-            $call = $this->calls->createCall(
-                $lead,
-                $request->callAttributes(),
-                $request->user(),
-                $request->file('invoice_file')
-            );
+        $call->load([
+            'caller:id,name',
+            'lead:id,reference,name',
+        ]);
 
-            $call->load([
-                'caller:id,name',
-                'lead:id,reference,name',
-            ]);
+        return response()->json([
+            'status' => true,
+            'status_code' => 201,
+            'message' => "Call logged as {$call->call_status->label()}.",
+            'data' => [
+                'id' => $call->id,
+                'lead_id' => $call->lead_id,
+                'lead_reference' => $call->lead?->reference,
+                'lead_name' => $call->lead?->name,
+                'called_by' => $call->caller?->name,
+                'called_date' => $call->called_date,
+                'called_time' => $call->called_time,
+                'duration' => $call->duration,
+                'call_status' => $call->call_status?->value,
+                'call_status_label' => $call->call_status?->label(),
+                'interest' => $call->interest,
+                'reason' => $call->reason,
+                'is_item_sold' => $call->is_item_sold,
+                'invoice_number' => $call->invoice_number,
+                'next_followup_date' => $call->next_followup_date,
+                'remarks' => $call->remarks,
+                'invoice_file' => $call->invoiceUrl(),
+                'created_at' => $call->created_at,
+            ],
+        ], 201);
 
-            return response()->json([
-                'status' => true,
-                'status_code' => 201,
-                'message' => "Call logged as {$call->call_status->label()}.",
-                'data' => [
-                    'id' => $call->id,
-                    'lead_id' => $call->lead_id,
-                    'lead_reference' => $call->lead?->reference,
-                    'lead_name' => $call->lead?->name,
-                    'called_by' => $call->caller?->name,
-                    'called_date' => $call->called_date,
-                    'called_time' => $call->called_time,
-                    'duration' => $call->duration,
-                    'call_status' => $call->call_status?->value,
-                    'call_status_label' => $call->call_status?->label(),
-                    'interest' => $call->interest,
-                    'reason' => $call->reason,
-                    'is_item_sold' => $call->is_item_sold,
-                    'invoice_number' => $call->invoice_number,
-                    'next_followup_date' => $call->next_followup_date,
-                    'remarks' => $call->remarks,
-                    'invoice_file' => $call->invoiceUrl(),
-                    'created_at' => $call->created_at,
-                ],
-            ], 201);
-
-        } catch (\Throwable $e) {
-
-            return response()->json([
-                'status' => false,
-                'status_code' => 500,
-                'message' => 'Failed to log call.',
-                'error' => $e->getMessage(),
-            ], 500);
-        }
+    } catch (\Throwable $e) {
+        return response()->json([
+            'status' => false,
+            'status_code' => 500,
+            'message' => 'Failed to log call.',
+            'error' => $e->getMessage(),
+        ], 500);
     }
+}
 
     public function getCallDetails(Lead $lead, CallDetail $call): JsonResponse
     {

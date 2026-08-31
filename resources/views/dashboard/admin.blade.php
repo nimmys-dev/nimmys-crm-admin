@@ -191,7 +191,7 @@
         </a>
 
         {{-- Total Leads --}}
-        <a href="{{ route('leads.index') }}"class="lead-total-box total-leads-box">
+        <a href="{{ route('leads.index', ['filter' => 'total_leads']) }}"class="lead-total-box total-leads-box">
             <div>
                 <p>Total Leads</p>
                 <h4>{{ $leadStats['total_leads'] ?? 0 }}</h4>

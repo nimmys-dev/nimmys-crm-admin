@@ -50,6 +50,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/reassign-task',[TaskController::class, 'reassign']);
     Route::get('/approval-task',[TaskController::class, 'approvalIndex']);
     Route::post('/tasks/{task}/approve',[TaskController::class, 'approve']);
+    Route::get('/tasks-assigned', [TaskController::class, 'assignedTasks']);
+    Route::get('/tasks-status', [TaskController::class, 'tasksByStatus']);
 
     //settings
     Route::get('/company-profile',[SettingsController::class, 'companyProfile']);
