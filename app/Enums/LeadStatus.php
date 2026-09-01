@@ -17,6 +17,7 @@ enum LeadStatus: string
     case Negotiation = 'negotiation';
     case Won = 'won';
     case Lost = 'lost';
+    case Closed = 'closed';
 
     public function label(): string
     {
@@ -28,13 +29,10 @@ enum LeadStatus: string
             self::Negotiation => 'Negotiation',
             self::Won => 'Won',
             self::Lost => 'Lost',
+            self::Closed => 'Closed',
         };
     }
 
-    /**
-     * Still in play. Open leads are what follow-up reminders and the
-     * dashboard pipeline count.
-     */
     public function isOpen(): bool
     {
         return ! $this->isClosed();
@@ -42,21 +40,18 @@ enum LeadStatus: string
 
     public function isClosed(): bool
     {
-        return in_array($this, [self::Won, self::Lost], true);
+        return in_array($this, [
+            self::Won,
+            self::Lost,
+            self::Closed,
+        ], true);
     }
 
-    /**
-     * Losing a lead requires a reason; winning does not.
-     */
     public function requiresReason(): bool
     {
         return $this === self::Lost;
     }
 
-    /**
-     * Theme badge classes. Semantic colour, deliberately not the brand
-     * accent, so stage reads at a glance in a dense listing.
-     */
     public function badgeClass(): string
     {
         return match ($this) {
@@ -65,30 +60,30 @@ enum LeadStatus: string
             self::Proposal, self::Negotiation => 'badge-lead-active',
             self::Won => 'badge-lead-won',
             self::Lost => 'badge-lead-lost',
+            self::Closed => 'badge-lead-closed',
         };
     }
 
-    /**
-     * @return array<int, self>
-     */
     public static function open(): array
     {
-        return array_values(array_filter(self::cases(), fn (self $s) => $s->isOpen()));
+        return array_values(
+            array_filter(
+                self::cases(),
+                fn (self $s) => $s->isOpen()
+            )
+        );
     }
 
-    /**
-     * The outcomes a lead can be closed with, for the "close lead" action.
-     *
-     * @return array<int, self>
-     */
     public static function closed(): array
     {
-        return array_values(array_filter(self::cases(), fn (self $s) => $s->isClosed()));
+        return array_values(
+            array_filter(
+                self::cases(),
+                fn (self $s) => $s->isClosed()
+            )
+        );
     }
 
-    /**
-     * @return array<string, string>
-     */
     public static function options(): array
     {
         return collect(self::cases())

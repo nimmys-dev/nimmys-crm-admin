@@ -1423,5 +1423,32 @@ public function update(
         return back()->with('success', 'Task approved successfully.');
     }
 
+    public function sendingApproval(): View
+    {
+        $user = auth()->user();
+
+        $tasks = Task::with([
+            'assignedUser:id,name,email',
+            'approvedBy:id,name,email',
+            'quarters:id,task_id,quarter,start_date,end_date',
+        ])
+            // Current user completed tasks
+            ->where('assigned_to', $user->id)
+
+            // Completed = waiting for approver
+            ->whereIn('status', ['completed', 'approved'])
+            ->latest('id')
+            ->paginate(10)
+            ->withQueryString();
+
+        return view('tasks.sending-approval', [
+            'pageTitle' => 'Sending Approval',
+            'breadcrumbs' => [
+                ['label' => 'Tasks'],
+                ['label' => 'Sending Approval'],
+            ],
+            'tasks' => $tasks,
+        ]);
+    }
 
 }

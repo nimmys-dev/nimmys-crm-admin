@@ -46,7 +46,7 @@ class DashboardController extends Controller
 
     private function employeeDashboard(User $user): View
     {
-        $leadStats = $user->canAccessLeadModule() ? $this->dashboard->getLeadStatistics($user) : null;
+        // $leadStats = $user->canAccessLeadModule() ? $this->dashboard->getLeadStatistics($user) : null;
         $dueFollowUps = $user->canAccessLeadModule() ? $this->dashboard->getDueFollowUps($user) : collect();
          $taskCounts = $this->getTaskDashboardCounts($user);
 
@@ -55,7 +55,7 @@ class DashboardController extends Controller
             'breadcrumbs' => [['label' => 'Dashboard']],
             'user' => $user,
             'shop' => $user->shop,
-            'leadStats' => $leadStats,
+            'leadStats' => $this->dashboard->getDashboardLeadStatistics($user),
             'dueFollowUps' => $dueFollowUps,
             'todayDuty' => $taskCounts['todayDuty'],
             'overdueDuty' => $taskCounts['overdueDuty'],

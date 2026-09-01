@@ -250,207 +250,398 @@ class TaskController extends Controller
         ]);
     }
 
+    // public function index(Request $request): JsonResponse
+    // {
+    //     try {
+
+    //         $user = auth()->user();
+
+    //         /*
+    //         |--------------------------------------------------------------------------
+    //         | Validation
+    //         |--------------------------------------------------------------------------
+    //         */
+
+    //         $validated = $request->validate([
+
+    //             'search' => [
+    //                 'nullable',
+    //                 'string',
+    //                 'max:255',
+    //             ],
+
+    //             'task_type' => [
+    //                 'nullable',
+    //                 'in:daily,weekly,monthly,quarterly,yearly',
+    //             ],
+
+    //             'status' => [
+    //                 'nullable',
+    //                 'string',
+    //                 'max:50',
+    //             ],
+
+    //             'assigned_to' => [
+    //                 'nullable',
+    //                 'integer',
+    //                 'exists:users,id',
+    //             ],
+
+    //             'per_page' => [
+    //                 'nullable',
+    //                 'integer',
+    //                 'min:1',
+    //                 'max:100',
+    //             ],
+    //         ]);
+
+
+    //         /*
+    //         |--------------------------------------------------------------------------
+    //         | Task Query
+    //         |--------------------------------------------------------------------------
+    //         */
+
+    //         $query = Task::with([
+    //             'assignedUser:id,name,email,role',
+    //             'approvedBy:id,name,email,role',
+    //             'quarters:id,task_id,quarter,start_date,end_date',
+    //         ]);
+
+
+    //         /*
+    //         |--------------------------------------------------------------------------
+    //         | Role Based Task Access
+    //         |--------------------------------------------------------------------------
+    //         */
+
+    //         // Admin → all tasks
+    //         if ($user->role->value !== 'admin') {
+
+    //             // Other roles → only their assigned tasks
+    //             $query->where('assigned_to', $user->id);
+    //         }
+
+
+    //         /*
+    //         |--------------------------------------------------------------------------
+    //         | Search
+    //         |--------------------------------------------------------------------------
+    //         */
+
+    //         if (!empty($validated['search'])) {
+
+    //             $search = $validated['search'];
+
+    //             $query->where(function ($q) use ($search) {
+
+    //                 $q->where('title', 'like', "%{$search}%")
+    //                     ->orWhere('description', 'like', "%{$search}%");
+    //             });
+    //         }
+
+
+    //         /*
+    //         |--------------------------------------------------------------------------
+    //         | Task Type Filter
+    //         |--------------------------------------------------------------------------
+    //         */
+
+    //         if (!empty($validated['task_type'])) {
+
+    //             $query->where(
+    //                 'task_type',
+    //                 $validated['task_type']
+    //             );
+    //         }
+
+
+    //         /*
+    //         |--------------------------------------------------------------------------
+    //         | Status Filter
+    //         |--------------------------------------------------------------------------
+    //         */
+
+    //         if (!empty($validated['status'])) {
+
+    //             $query->where(
+    //                 'status',
+    //                 $validated['status']
+    //             );
+    //         }
+
+
+    //         /*
+    //         |--------------------------------------------------------------------------
+    //         | Assigned User Filter
+    //         |--------------------------------------------------------------------------
+    //         */
+
+    //         if (!empty($validated['assigned_to'])) {
+
+    //             // Non-admin cannot access another user's tasks
+    //             if ($user->role->value === 'admin') {
+
+    //                 $query->where(
+    //                     'assigned_to',
+    //                     $validated['assigned_to']
+    //                 );
+    //             }
+    //         }
+
+
+    //         /*
+    //         |--------------------------------------------------------------------------
+    //         | Pagination
+    //         |--------------------------------------------------------------------------
+    //         */
+
+    //         $perPage = $validated['per_page'] ?? 10;
+
+    //         $tasks = $query
+    //             ->orderBy('id', 'desc')
+    //             ->paginate($perPage)
+    //             ->withQueryString();
+
+
+    //         /*
+    //         |--------------------------------------------------------------------------
+    //         | Success Response
+    //         |--------------------------------------------------------------------------
+    //         */
+
+    //         return response()->json([
+    //             'status' => true,
+    //             'status_code' => 200,
+    //             'message' => 'Tasks retrieved successfully.',
+    //             'data' => $tasks->items(),
+
+    //             'pagination' => [
+    //                 'current_page' => $tasks->currentPage(),
+    //                 'per_page' => $tasks->perPage(),
+    //                 'total' => $tasks->total(),
+    //                 'last_page' => $tasks->lastPage(),
+    //                 'from' => $tasks->firstItem(),
+    //                 'to' => $tasks->lastItem(),
+    //             ],
+    //         ], 200);
+
+
+    //     } catch (\Illuminate\Validation\ValidationException $e) {
+
+    //         return response()->json([
+    //             'status' => false,
+    //             'status_code' => 422,
+    //             'message' => 'Validation failed.',
+    //             'errors' => $e->errors(),
+    //         ], 422);
+
+
+    //     } catch (\Throwable $e) {
+
+    //         \Log::error('Task list API failed', [
+    //             'user_id' => auth()->id(),
+    //             'error' => $e->getMessage(),
+    //         ]);
+
+    //         return response()->json([
+    //             'status' => false,
+    //             'status_code' => 500,
+    //             'message' => 'Something went wrong while retrieving tasks.',
+    //         ], 500);
+    //     }
+    // }
+
     public function index(Request $request): JsonResponse
-    {
-        try {
+{
+    try {
 
-            $user = auth()->user();
+        $user = auth()->user();
 
-            /*
-            |--------------------------------------------------------------------------
-            | Validation
-            |--------------------------------------------------------------------------
-            */
+        /*
+        |--------------------------------------------------------------------------
+        | Validation
+        |--------------------------------------------------------------------------
+        */
 
-            $validated = $request->validate([
+        $validated = $request->validate([
 
-                'search' => [
-                    'nullable',
-                    'string',
-                    'max:255',
-                ],
+            'search' => [
+                'nullable',
+                'string',
+                'max:255',
+            ],
 
-                'task_type' => [
-                    'nullable',
-                    'in:daily,weekly,monthly,quarterly,yearly',
-                ],
+            'task_type' => [
+                'nullable',
+                'in:daily,weekly,monthly,quarterly,yearly',
+            ],
 
-                'status' => [
-                    'nullable',
-                    'string',
-                    'max:50',
-                ],
+            'status' => [
+                'nullable',
+                'string',
+                'in:overdue,closed,approved,ongoing,upcoming,completed',
+            ],
 
-                'assigned_to' => [
-                    'nullable',
-                    'integer',
-                    'exists:users,id',
-                ],
+            'user_id' => [
+                'nullable',
+                'integer',
+                'exists:users,id',
+            ],
 
-                'per_page' => [
-                    'nullable',
-                    'integer',
-                    'min:1',
-                    'max:100',
-                ],
-            ]);
-
-
-            /*
-            |--------------------------------------------------------------------------
-            | Task Query
-            |--------------------------------------------------------------------------
-            */
-
-            $query = Task::with([
-                'assignedUser:id,name,email,role',
-                'approvedBy:id,name,email,role',
-                'quarters:id,task_id,quarter,start_date,end_date',
-            ]);
+            'per_page' => [
+                'nullable',
+                'integer',
+                'min:1',
+                'max:100',
+            ],
+        ]);
 
 
-            /*
-            |--------------------------------------------------------------------------
-            | Role Based Task Access
-            |--------------------------------------------------------------------------
-            */
+        /*
+        |--------------------------------------------------------------------------
+        | Task Query
+        |--------------------------------------------------------------------------
+        */
 
-            // Admin → all tasks
-            if ($user->role->value !== 'admin') {
-
-                // Other roles → only their assigned tasks
-                $query->where('assigned_to', $user->id);
-            }
-
-
-            /*
-            |--------------------------------------------------------------------------
-            | Search
-            |--------------------------------------------------------------------------
-            */
-
-            if (!empty($validated['search'])) {
-
-                $search = $validated['search'];
-
-                $query->where(function ($q) use ($search) {
-
-                    $q->where('title', 'like', "%{$search}%")
-                        ->orWhere('description', 'like', "%{$search}%");
-                });
-            }
+        $query = Task::with([
+            'assignedUser:id,name,email,role',
+            'approvedBy:id,name,email,role',
+            'quarters:id,task_id,quarter,start_date,end_date',
+        ]);
 
 
-            /*
-            |--------------------------------------------------------------------------
-            | Task Type Filter
-            |--------------------------------------------------------------------------
-            */
+        /*
+        |--------------------------------------------------------------------------
+        | Role Based Access
+        |--------------------------------------------------------------------------
+        */
 
-            if (!empty($validated['task_type'])) {
+        // Non-admin → only own assigned tasks
+        if ($user->role->value !== 'admin') {
 
-                $query->where(
-                    'task_type',
-                    $validated['task_type']
-                );
-            }
+            $query->where('assigned_to', $user->id);
 
+        } elseif (!empty($validated['user_id'])) {
 
-            /*
-            |--------------------------------------------------------------------------
-            | Status Filter
-            |--------------------------------------------------------------------------
-            */
-
-            if (!empty($validated['status'])) {
-
-                $query->where(
-                    'status',
-                    $validated['status']
-                );
-            }
-
-
-            /*
-            |--------------------------------------------------------------------------
-            | Assigned User Filter
-            |--------------------------------------------------------------------------
-            */
-
-            if (!empty($validated['assigned_to'])) {
-
-                // Non-admin cannot access another user's tasks
-                if ($user->role->value === 'admin') {
-
-                    $query->where(
-                        'assigned_to',
-                        $validated['assigned_to']
-                    );
-                }
-            }
-
-
-            /*
-            |--------------------------------------------------------------------------
-            | Pagination
-            |--------------------------------------------------------------------------
-            */
-
-            $perPage = $validated['per_page'] ?? 10;
-
-            $tasks = $query
-                ->orderBy('id', 'desc')
-                ->paginate($perPage)
-                ->withQueryString();
-
-
-            /*
-            |--------------------------------------------------------------------------
-            | Success Response
-            |--------------------------------------------------------------------------
-            */
-
-            return response()->json([
-                'status' => true,
-                'status_code' => 200,
-                'message' => 'Tasks retrieved successfully.',
-                'data' => $tasks->items(),
-
-                'pagination' => [
-                    'current_page' => $tasks->currentPage(),
-                    'per_page' => $tasks->perPage(),
-                    'total' => $tasks->total(),
-                    'last_page' => $tasks->lastPage(),
-                    'from' => $tasks->firstItem(),
-                    'to' => $tasks->lastItem(),
-                ],
-            ], 200);
-
-
-        } catch (\Illuminate\Validation\ValidationException $e) {
-
-            return response()->json([
-                'status' => false,
-                'status_code' => 422,
-                'message' => 'Validation failed.',
-                'errors' => $e->errors(),
-            ], 422);
-
-
-        } catch (\Throwable $e) {
-
-            \Log::error('Task list API failed', [
-                'user_id' => auth()->id(),
-                'error' => $e->getMessage(),
-            ]);
-
-            return response()->json([
-                'status' => false,
-                'status_code' => 500,
-                'message' => 'Something went wrong while retrieving tasks.',
-            ], 500);
+            // Admin → optional user filter
+            $query->where(
+                'assigned_to',
+                $validated['user_id']
+            );
         }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Search Filter - Optional
+        |--------------------------------------------------------------------------
+        */
+
+        if (!empty($validated['search'])) {
+
+            $search = $validated['search'];
+
+            $query->where(function ($q) use ($search) {
+
+                $q->where('title', 'like', "%{$search}%")
+                    ->orWhere('description', 'like', "%{$search}%");
+            });
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Task Type Filter - Optional
+        |--------------------------------------------------------------------------
+        */
+
+        if (!empty($validated['task_type'])) {
+
+            $query->where(
+                'task_type',
+                $validated['task_type']
+            );
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Status Filter - Optional
+        |--------------------------------------------------------------------------
+        */
+
+        if (!empty($validated['status'])) {
+
+            $query->where(
+                'status',
+                $validated['status']
+            );
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Pagination
+        |--------------------------------------------------------------------------
+        */
+
+        $perPage = $validated['per_page'] ?? 10;
+
+        $tasks = $query
+            ->orderBy('id', 'desc')
+            ->paginate($perPage)
+            ->withQueryString();
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Success Response
+        |--------------------------------------------------------------------------
+        */
+
+        return response()->json([
+            'status' => true,
+            'status_code' => 200,
+            'message' => 'Tasks retrieved successfully.',
+
+            'data' => $tasks->items(),
+
+            'pagination' => [
+                'current_page' => $tasks->currentPage(),
+                'per_page' => $tasks->perPage(),
+                'total' => $tasks->total(),
+                'last_page' => $tasks->lastPage(),
+                'from' => $tasks->firstItem(),
+                'to' => $tasks->lastItem(),
+            ],
+        ], 200);
+
+
+    } catch (\Illuminate\Validation\ValidationException $e) {
+
+        return response()->json([
+            'status' => false,
+            'status_code' => 422,
+            'message' => 'Validation failed.',
+            'errors' => $e->errors(),
+        ], 422);
+
+
+    } catch (\Throwable $e) {
+
+        \Log::error('Task list API failed', [
+            'user_id' => auth()->id(),
+            'error' => $e->getMessage(),
+        ]);
+
+        return response()->json([
+            'status' => false,
+            'status_code' => 500,
+            'message' => 'Something went wrong while retrieving tasks.',
+        ], 500);
     }
+}
 
     public function viewTask(Task $task): JsonResponse
     {
@@ -1333,21 +1524,39 @@ class TaskController extends Controller
     {
         $request->validate([
             'user_id' => 'required|exists:users,id',
+            'status' => 'nullable|string|in:overdue,closed,approved,ongoing,upcoming,completed',
+            'per_page' => 'nullable|integer|min:1|max:100',
         ]);
+
+        $perPage = $request->input('per_page', 10);
 
         $tasks = Task::with([
             'assignedUser:id,name',
             'approvedBy:id,name',
         ])
         ->where('assigned_to', $request->user_id)
+
+        // Status filter
+        ->when($request->filled('status'), function ($query) use ($request) {
+            $query->where('status', $request->status);
+        })
+
         ->orderBy('id', 'desc')
-        ->get();
+        ->paginate($perPage);
 
         return response()->json([
             'status' => true,
             'status_code' => 200,
             'message' => 'Assigned task list retrieved successfully.',
-            'data' => $tasks,
+            'data' => $tasks->items(),
+            'pagination' => [
+                'current_page' => $tasks->currentPage(),
+                'per_page' => $tasks->perPage(),
+                'total' => $tasks->total(),
+                'last_page' => $tasks->lastPage(),
+                'from' => $tasks->firstItem(),
+                'to' => $tasks->lastItem(),
+            ],
         ]);
     }
 

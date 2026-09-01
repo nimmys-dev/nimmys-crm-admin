@@ -11,6 +11,7 @@ use App\Services\CallDetailService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use App\Enums\LeadStatus;
 
 /**
  * Call details, nested under a lead.
@@ -24,19 +25,72 @@ class LeadCallDetailController extends Controller
 {
     public function __construct(private readonly CallDetailService $calls) {}
 
-    public function store(StoreCallDetailRequest $request, Lead $lead): RedirectResponse
-    {
-        $call = $this->calls->createCall(
-            $lead,
-            $request->callAttributes(),
-            $request->user(),
-            $request->file('invoice_file')
-        );
+   public function store(StoreCallDetailRequest $request, Lead $lead): RedirectResponse
+{
+    // Get values BEFORE creating call
+    $callStatus = strtolower((string) (
+        $request->input('call_status')
+        ?? $request->input('call_details')
+    ));
 
-        return redirect()
-            ->route('leads.show', $lead)
-            ->with('success', "Call logged as {$call->call_status->label()}.");
+    $interest = $request->input('interest');
+
+    $isItemSold = $request->input('is_item_sold');
+
+    /*
+    |--------------------------------------------------------------------------
+    | Answered + Interest = false
+    | Reason + Remarks
+    | Lead -> Closed
+    |--------------------------------------------------------------------------
+    */
+    if (
+        $callStatus === 'answered' &&
+        $interest === false
+    ) {
+        $lead->update([
+            'status' => LeadStatus::Closed->value,
+            'closed_at' => now(),
+        ]);
     }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Answered + Interest = true + Item Sold = yes
+    | Invoice + Remarks
+    | Lead -> Closed
+    |--------------------------------------------------------------------------
+    */
+    elseif (
+        $callStatus === 'answered' &&
+        $interest === true &&
+        in_array(
+            strtolower((string) $isItemSold),
+            ['yes', '1', 'true'],
+            true
+        )
+    ) {
+        $lead->update([
+            'status' => LeadStatus::Closed->value,
+            'closed_at' => now(),
+        ]);
+    }
+
+    // Create call AFTER lead status update
+    $call = $this->calls->createCall(
+        $lead,
+        $request->callAttributes(),
+        $request->user(),
+        $request->file('invoice_file')
+    );
+
+    return redirect()
+        ->route('leads.show', $lead)
+        ->with(
+            'success',
+            "Call logged as {$call->call_status->label()}."
+        );
+}
 
     public function show(Lead $lead, CallDetail $call): View
     {

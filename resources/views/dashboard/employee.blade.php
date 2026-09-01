@@ -3,6 +3,31 @@
 @section('title', 'Dashboard') 
 
 @section('content') 
+<style>
+    .dashboard-stats {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 24px;
+}
+
+@media (max-width: 1200px) {
+    .dashboard-stats {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .dashboard-stats {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 480px) {
+    .dashboard-stats {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
 
     {{-- Dashboard Duty Summary --}}
     <div class="dashboard-stats">
@@ -54,6 +79,16 @@
             </div>
             <div class="stat-icon pending-icon">
                 <i class="ti ti-clock-hour-4"></i>
+            </div>
+        </a>
+        <a href="{{ route('tasks.sending-approval') }}" class="stat-card">
+            <div class="stat-content">
+                <p>Sending Approval</p>
+                <h3>View</h3>
+            </div>
+
+            <div class="stat-icon pending-icon">
+                <i class="ti ti-send"></i>
             </div>
         </a>
 
@@ -125,7 +160,7 @@
     {{-- Your Leads & Total Leads --}}
     <div class="leads-total-row">
         {{-- Your Leads --}}
-        <a href="{{ route('leads.index', ['filter' => 'my_leads']) }}" class="lead-total-box your-leads-box">
+        <a href="{{ route('leads.index', ['filter' => 'my_leads']) }}"class="lead-total-box your-leads-box">
             <div>
                 <p>Your Leads</p>
                 <h4>{{ $leadStats['your_leads'] ?? 0 }}</h4>
@@ -136,7 +171,7 @@
         </a>
 
         {{-- Total Leads --}}
-        <a href="{{ route('leads.index', ['filter' => 'total_leads']) }}"class="lead-total-box total-leads-box">
+        <a href="{{ route('leads.index', ['filter' => 'total_leads']) }}" class="lead-total-box total-leads-box">
             <div>
                 <p>Total Leads</p>
                 <h4>{{ $leadStats['total_leads'] ?? 0 }}</h4>

@@ -156,6 +156,8 @@ Route::middleware(['auth', 'web.access'])->group(function () {
     Route::get('approval-task', [TaskController::class, 'approvalIndex'])->name('tasks.approval.index');
     Route::post('/tasks/{task}/approve', [TaskController::class, 'approve'])
     ->name('tasks.approve');
+    Route::get('/tasks-sending-approval', [TaskController::class, 'sendingApproval'])->name('tasks.sending-approval');
+    
     /*
      | Account
      */

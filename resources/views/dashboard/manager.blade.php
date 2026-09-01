@@ -3,7 +3,31 @@
 @section('title', 'Dashboard') 
 
 @section('content') 
+<style>
+    .dashboard-stats {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 24px;
+}
 
+@media (max-width: 1200px) {
+    .dashboard-stats {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .dashboard-stats {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 480px) {
+    .dashboard-stats {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
     {{-- Dashboard Duty Summary --}}
     <div class="dashboard-stats">
 
@@ -68,6 +92,16 @@
                 <i class="ti ti-clock-hour-4"></i>
             </div>
 
+        </a>
+        <a href="{{ route('tasks.sending-approval') }}" class="stat-card">
+            <div class="stat-content">
+                <p>Sending Approval</p>
+                <h3>View</h3>
+            </div>
+
+            <div class="stat-icon pending-icon">
+                <i class="ti ti-send"></i>
+            </div>
         </a>
 
     </div>
