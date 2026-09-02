@@ -402,6 +402,13 @@ class LeadController extends Controller
 
         $quotation = $lead->quotation;
 
+        // DB: new → API: open
+        $leadStatus = $lead->status?->value ?? $lead->status;
+
+        if ($leadStatus === 'new') {
+            $leadStatus = 'open';
+        }
+
         return response()->json([
             'status' => true,
             'status_code' => 200,
@@ -413,35 +420,39 @@ class LeadController extends Controller
                 'name' => $lead->name,
                 'phone' => $lead->phone,
                 'source' => $lead->source?->value ?? $lead->source,
+
+                // new → open, closed → closed
+                'status' => $leadStatus,
+
                 'assigned_to' => $lead->owner?->name,
                 'created_by' => $lead->creator?->name,
                 'description' => $lead->description,
                 'has_quotation' => (bool) $lead->has_quotation,
 
                 'quotation' => $quotation ? [
-                    'id' =>$quotation->id,
+                    'id' => $quotation->id,
                     'reference' => $quotation->reference,
-                    'customer_name' =>$quotation->customer_name,
-                    'customer_address' =>$quotation->customer_address,
-                    'issue_date' =>$quotation->issue_date,
-                    'terms' =>$quotation->terms,
-                    'subtotal' =>$quotation->subtotal,
-                    'discount_percent' =>$quotation->discount_percent,
-                    'tax_percent' =>$quotation->tax_percent,
-                    'total' =>$quotation->total,
+                    'customer_name' => $quotation->customer_name,
+                    'customer_address' => $quotation->customer_address,
+                    'issue_date' => $quotation->issue_date,
+                    'terms' => $quotation->terms,
+                    'subtotal' => $quotation->subtotal,
+                    'discount_percent' => $quotation->discount_percent,
+                    'tax_percent' => $quotation->tax_percent,
+                    'total' => $quotation->total,
 
                     'items' => $quotation->items
                         ->map(function ($item) {
                             return [
-                                'id' =>$item->id,
-                                'description' =>$item->description,
-                                'quantity' =>$item->quantity,
-                                'rate' =>$item->rate,
-                                'basic_rate' =>$item->basic_rate,
-                                'tax_percent' =>$item->tax_percent,
-                                'tax_amount' =>$item->tax_amount,
-                                'amount' =>$item->amount,
-                                'sort_order' =>$item->sort_order,
+                                'id' => $item->id,
+                                'description' => $item->description,
+                                'quantity' => $item->quantity,
+                                'rate' => $item->rate,
+                                'basic_rate' => $item->basic_rate,
+                                'tax_percent' => $item->tax_percent,
+                                'tax_amount' => $item->tax_amount,
+                                'amount' => $item->amount,
+                                'sort_order' => $item->sort_order,
                             ];
                         })
                         ->values()
@@ -1093,10 +1104,16 @@ class LeadController extends Controller
 
         // SEARCH
         $search = trim($request->get('search', ''));
+
+        // STATUS FILTER
+        $status = $request->get('status');
+
         $query = Lead::with([
             'owner:id,name',
             'creator:id,name',
         ]);
+
+        // SEARCH
         if ($search !== '') {
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
@@ -1105,40 +1122,61 @@ class LeadController extends Controller
                     ->orWhereHas('owner', function ($ownerQuery) use ($search) {
                         $ownerQuery->where('name', 'like', "%{$search}%");
                     });
-
             });
         }
+
+        // STATUS FILTER
+        if (!empty($status)) {
+
+            // API "open" => DB "new"
+            $dbStatus = $status === 'open' ? 'new' : $status;
+
+            $query->where('status', $dbStatus);
+        }
+
         $leads = $query->latest('id')->paginate($perPage);
+
         $data = $leads->getCollection()->map(function ($lead) {
+
+            // DB "new" => API "open"
+            $responseStatus = $lead->status?->value ?? $lead->status;
+
+            if ($responseStatus === 'new') {
+                $responseStatus = 'open';
+            }
+
             return [
-                'id' =>$lead->id,
-                'reference' =>$lead->reference,
-                'name' =>$lead->name,
-                'phone' =>$lead->phone,
-                'source' =>$lead->source?->value ?? $lead->source,
-                'assigned_to' =>$lead->owner?->name,
-                'created_by' =>$lead->creator?->name,
-                'description' =>$lead->description,
-                 // Quotation exists or not
+                'id' => $lead->id,
+                'reference' => $lead->reference,
+                'name' => $lead->name,
+                'phone' => $lead->phone,
+
+                'source' => $lead->source?->value ?? $lead->source,
+
+                'status' => $responseStatus,
+
+                'assigned_to' => $lead->owner?->name,
+                'created_by' => $lead->creator?->name,
+                'description' => $lead->description,
+
                 'has_quotation' => (bool) $lead->has_quotation,
             ];
-            })->values();
-        return response()->json([
+        })->values();
 
-            'status' =>true,
-            'status_code' =>200,
-            'message' =>'Leads retrieved successfully',
-            'data' =>$data,
+        return response()->json([
+            'status' => true,
+            'status_code' => 200,
+            'message' => 'Leads retrieved successfully',
+            'data' => $data,
 
             'pagination' => [
-                'current_page' =>$leads->currentPage(),
-                'per_page' =>$leads->perPage(),
-                'total' =>$leads->total(),
-                'last_page' =>$leads->lastPage(),
-                'from' =>$leads->firstItem(),
-                'to' =>$leads->lastItem(),
+                'current_page' => $leads->currentPage(),
+                'per_page' => $leads->perPage(),
+                'total' => $leads->total(),
+                'last_page' => $leads->lastPage(),
+                'from' => $leads->firstItem(),
+                'to' => $leads->lastItem(),
             ],
-
         ], 200);
     }
 
