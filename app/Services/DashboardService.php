@@ -124,7 +124,7 @@ public function getDashboardLeadStatistics(User $user): array
 
     $query = Lead::query()
         ->where('assigned_to', $user->id)
-        ->where('status', '!=', 'closed');
+        ->where('status', '!=', 'closed') ->where('status', '!=', 'lost');
 
 
     return [
@@ -157,16 +157,18 @@ public function getDashboardLeadStatistics(User $user): array
         'your_leads' => Lead::query()
             ->where('assigned_to', $user->id)
             ->where('status', '!=', 'closed')
+             ->where('status', '!=', 'lost')
             ->count(),
 
         // 'total_leads' => Lead::query()->count(),
-        'total_leads' => Lead::query() ->where('status', '!=', 'closed') ->count(),
+        'total_leads' => Lead::query() ->where('status', '!=', 'closed')  ->where('status', '!=', 'lost')->count(),
     ];
 }
 
 public function getDashboardAllLeadStatistics(User $user): array
 {
     $query = Lead::query()
+        ->where('status', '!=', 'lost')
         ->where('status', '!=', 'closed');
 
     return [

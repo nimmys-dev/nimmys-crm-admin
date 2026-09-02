@@ -244,7 +244,12 @@ public function index(LeadIndexRequest $request): View
     $dashboardFilter = $request->query('filter');
 
     $isAdmin = (isset($user->role->value) && $user->role->value === 'admin') || $user->isAdmin();
-
+    if ($dashboardFilter) {
+        $query->whereNotIn('status', [
+            LeadStatus::Lost->value,
+            'closed' // 'closed' എന്ന പഴയ string status ഉണ്ടെങ്കിൽ അതും ഒഴിവാക്കും
+        ]);
+    }
     $query = Lead::query()->with([
         'owner',
         'latestCall',
@@ -310,7 +315,7 @@ public function index(LeadIndexRequest $request): View
 $filter = $request->query('filter');
 
 if ($filter) {
-    $query->where('status', '!=', 'closed');
+    $query->where('status', '!=', 'closed') ->where('status', '!=', 'lost');
 }
 
 switch ($filter) {
