@@ -448,9 +448,10 @@ switch ($filter) {
                 ->mapWithKeys(fn (LeadStatus $status) => [$status->value => $status->label()])
                 ->all(),
             'followUpTypes' => FollowUpType::options(),
-            'assignableUsers' => $request->user()->can('leads.assign')
-                ? AssignLeadRequest::assignableOptions()
-                : [],
+            // 'assignableUsers' => $request->user()->can('leads.assign')
+            //     ? AssignLeadRequest::assignableOptions()
+            //     : [],
+            'assignableUsers' => AssignLeadRequest::assignableOptions(),
             'activities' => app(\App\Services\LeadActivityService::class)->getActivitiesForLead($lead),
         ]);
     }
