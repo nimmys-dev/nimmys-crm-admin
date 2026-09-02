@@ -1800,5 +1800,34 @@ public function addCall(StoreCallDetailRequest $request, Lead $lead): JsonRespon
         ]);
     }
 
+    public function callReasons(): JsonResponse
+{
+    $reasons = [
+        [
+            'name' => 'Not eligible for finance',
+            'value' => 'Not eligible for finance',
+        ],
+        [
+            'name' => 'Not planning now',
+            'value' => 'Not planning now',
+        ],
+        [
+            'name' => 'Price is higher',
+            'value' => 'Price is higher',
+        ],
+        [
+            'name' => 'Purchased from another store',
+            'value' => 'Purchased from another store',
+        ],
+    ];
+
+    return response()->json([
+        'status' => true,
+        'status_code' => 200,
+        'message' => 'Call reasons retrieved successfully.',
+        'data' => $reasons,
+    ], 200);
+}
+
 
 }

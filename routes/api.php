@@ -37,6 +37,7 @@ Route::middleware('auth:sanctum')->group(function () {
      Route::get('/leads/{lead}/calls/{call}',[LeadController::class, 'getCallDetails']);
      Route::put('/leads/{lead}/close',[LeadController::class, 'closeLead']);
      Route::get('/lead-call-history/{lead}/calls',[LeadController::class, 'callHistory']);
+     Route::get('/call-reasons', [LeadController::class, 'callReasons']);
 
     //task
     Route::post('/tasks',[TaskController::class, 'store'])->name('api.tasks.store');
@@ -58,6 +59,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/company-profile/update',[SettingsController::class, 'updateCompanyProfile']);
 
     Route::get('/dashboard/task-counts',[DashboardController::class, 'dashboardCounts']);
+    Route::get('/dashboard-lead-statistics',[DashboardController::class, 'dashboardLeadStatistics'])->name('api.dashboard.lead.statistics');
 
 
    

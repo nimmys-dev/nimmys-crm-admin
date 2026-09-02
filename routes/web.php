@@ -16,6 +16,7 @@ use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\ShopController;
 use App\Http\Controllers\StaffController;
 use App\Http\Controllers\TaskController;
+use App\Http\Controllers\Auth\ForgotPasswordController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -27,6 +28,22 @@ use Illuminate\Support\Facades\Route;
 Route::middleware('guest')->group(function () {
     Route::get('login', [LoginController::class, 'create'])->name('login');
     Route::post('login', [LoginController::class, 'store'])->name('login.store');
+    
+
+    // Forgot Password
+    Route::get('/forgot-password', [ForgotPasswordController::class, 'showForgotForm'])
+        ->name('password.request');
+
+    Route::post('/forgot-password', [ForgotPasswordController::class, 'sendResetLink'])
+        ->name('password.email');
+
+    // Reset Password
+    Route::get('/reset-password/{token}', [ForgotPasswordController::class, 'showResetForm'])
+        ->name('password.reset');
+
+    Route::post('/reset-password', [ForgotPasswordController::class, 'resetPassword'])
+        ->name('password.update');
+
 });
 
 /*

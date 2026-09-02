@@ -33,13 +33,34 @@
             />
         </div>
 
+
         <div class="flex mt-4 justify-between items-center flex-wrap">
+
             <div class="form-check">
-                <input class="form-check-input input-primary" type="checkbox" name="remember" id="remember"
-                    value="1" @checked(old('remember')) />
-                <label class="form-check-label text-muted" for="remember">Remember me</label>
+                <input
+                    class="form-check-input input-primary"
+                    type="checkbox"
+                    name="remember"
+                    id="remember"
+                    value="1"
+                    @checked(old('remember'))
+                />
+
+                <label class="form-check-label text-muted" for="remember">
+                    Remember me
+                </label>
             </div>
+
+            <div>
+                <a href="{{ route('password.request') }}"
+                class="text-primary text-decoration-none">
+                    Forgot Password?
+                </a>
+            </div>
+
         </div>
+
+
 
         <div class="mt-4 text-center">
             <x-button type="submit" class="mx-auto">Log in</x-button>

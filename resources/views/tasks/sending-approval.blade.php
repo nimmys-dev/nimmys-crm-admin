@@ -89,22 +89,27 @@
                                 </td>
 
                                 <td>
-    @php
-        $statusClass = match ($task->status) {
-            'pending'     => 'status-pending',
-            'in_progress' => 'status-progress',
-            'completed'   => 'status-completed',
-            'approved'    => 'status-approved',
-            'closed'      => 'status-closed',
-            'overdue'     => 'status-overdue',
-            default       => 'status-default',
-        };
-    @endphp
+                                    @php
+                                        $statusClass = match ($task->status) {
+                                            'pending'     => 'status-pending',
+                                            'in_progress' => 'status-progress',
+                                            'completed'   => 'status-completed',
+                                            'approved'    => 'status-approved',
+                                            'closed'      => 'status-closed',
+                                            'overdue'     => 'status-overdue',
+                                            default       => 'status-default',
+                                        };
 
-    <span class="badge {{ $statusClass }}">
-        {{ ucfirst(str_replace('_', ' ', $task->status)) }}
-    </span>
-</td>
+                                        $statusLabel = match ($task->status) {
+                                            'completed' => 'Approval Pending',
+                                            default => ucfirst(str_replace('_', ' ', $task->status)),
+                                        };
+                                    @endphp
+
+                                    <span class="badge {{ $statusClass }}">
+                                        {{ $statusLabel }}
+                                    </span>
+                                </td>
                             </tr>
 
                         @empty

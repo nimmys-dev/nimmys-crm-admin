@@ -84,7 +84,7 @@
         <a href="{{ route('tasks.sending-approval') }}" class="stat-card">
             <div class="stat-content">
                 <p>Sending Approval</p>
-                <h3>View</h3>
+                <h3>{{ $sendingApproval }}</h3>
             </div>
 
             <div class="stat-icon pending-icon">

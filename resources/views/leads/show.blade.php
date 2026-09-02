@@ -20,7 +20,7 @@
                 Log Call
             </button>
         @endcan
-        @if ($lead->status->isOpen())
+        <!-- @if ($lead->status->isOpen())
             <x-button
                 variant="danger"
                 icon="ti ti-flag-off"
@@ -29,7 +29,7 @@
             >
                 Close Lead
             </x-button>
-        @endif
+        @endif -->
         {{-- Activity Log --}}
         <button
             type="button"
@@ -42,7 +42,7 @@
         </button>
 
         {{-- Reassign --}}
-        @can('assign', $lead)
+        <!-- permission @can('assign', $lead) @endcan-->
 
             <button
                 type="button"
@@ -53,8 +53,6 @@
                 <i class="ti ti-user-check me-1"></i>
                 Reassign
             </button>
-
-        @endcan
          {{-- Quotation --}}
         @if ($lead->quotation || Auth::user()->can('update', $lead))
 

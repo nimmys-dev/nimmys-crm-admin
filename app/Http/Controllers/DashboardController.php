@@ -61,6 +61,7 @@ class DashboardController extends Controller
             'overdueDuty' => $taskCounts['overdueDuty'],
             'upcomingDuty' => $taskCounts['upcomingDuty'],
             'approvalPending' => $taskCounts['approvalPending'],
+            'sendingApproval' => $taskCounts['sendingApproval'],
         ]);
     }
 
@@ -82,17 +83,20 @@ class DashboardController extends Controller
 
             'leadStats' => $this->dashboard->getDashboardLeadStatistics($user),
             'dueFollowUps' => $this->dashboard->getDueFollowUps($user),
+            'statistics' => $this->dashboard->getDashboardAllLeadStatistics($user),
 
             'todayDuty' => $taskCounts['todayDuty'],
             'overdueDuty' => $taskCounts['overdueDuty'],
             'upcomingDuty' => $taskCounts['upcomingDuty'],
             'approvalPending' => $taskCounts['approvalPending'],
+            'sendingApproval' => $taskCounts['sendingApproval'],
 
             'adminAssignedTaskCount' => $adminTaskCounts['total'],
             'adminOngoingTaskCount' => $adminTaskCounts['ongoing'],
             'adminOverdueTaskCount' => $adminTaskCounts['overdue'],
             'adminUpcomingTaskCount' => $adminTaskCounts['upcoming'],
             'adminApprovalPendingTaskCount' => $adminTaskCounts['approval_pending'],
+            'adminSendingPendingTaskCount' => $adminTaskCounts['sending_approval'],
         ]);
     }
 
@@ -178,6 +182,9 @@ class DashboardController extends Controller
         if ($user->role->value !== 'admin') {
             $approvalPendingQuery->where('approved_by', $user->id);
         }
+         $sendingApprovalQuery = Task::query()
+        ->where('assigned_to', $user->id)
+        ->where('status', 'completed');
 
         return [
             'todayDuty' => (clone $query)
@@ -193,6 +200,7 @@ class DashboardController extends Controller
                 ->count(),
 
             'approvalPending' => $approvalPendingQuery->count(),
+            'sendingApproval' => $sendingApprovalQuery->count(),
         ];
     }
 
@@ -215,7 +223,9 @@ class DashboardController extends Controller
             'upcoming' => (clone $query)
                 ->where('status', 'upcoming')
                 ->count(),
-
+            'sending_approval' => (clone $query)
+                ->where('status', 'completed')
+                ->count(),
             'approval_pending' => (clone $query)
                 ->where('status', 'completed')
                 ->count(),
@@ -252,6 +262,7 @@ class DashboardController extends Controller
         'overdueDuty' => $taskCounts['overdueDuty'],
         'upcomingDuty' => $taskCounts['upcomingDuty'],
         'approvalPending' => $taskCounts['approvalPending'],
+        'sendingApproval' => $taskCounts['sendingApproval'],
         ]);
     }
 }

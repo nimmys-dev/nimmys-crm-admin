@@ -1436,7 +1436,7 @@ public function update(
             ->where('assigned_to', $user->id)
 
             // Completed = waiting for approver
-            ->whereIn('status', ['completed', 'approved'])
+            ->whereIn('status', ['completed'])
             ->latest('id')
             ->paginate(10)
             ->withQueryString();

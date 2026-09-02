@@ -246,10 +246,14 @@
                                 'closed' => 'task-status closed',
                                 default => 'task-status',
                             };
+                             $statusLabel = match ($task->status) {
+                                'completed' => 'Approval Pending',
+                                default => ucfirst(str_replace('_', ' ', $task->status)),
+                            };
                         @endphp
 
-                        <span class="{{ $statusClass }}">
-                            {{ ucwords(str_replace('_', ' ', $task->status)) }}
+                        <span class="badge {{ $statusClass }}">
+                            {{ $statusLabel }}
                         </span>
 
                     </td>

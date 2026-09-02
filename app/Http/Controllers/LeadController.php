@@ -231,9 +231,10 @@ public function getDashboardLeadStatistics(User $user): array
 
         'your_leads' => Lead::query()
             ->where('assigned_to', $user->id)
+            ->where('status', '!=', 'closed')
             ->count(),
 
-        'total_leads' => Lead::query()->count(),
+        'total_leads' => Lead::query() ->where('status', '!=', 'closed') ->count(),
     ];
 }
 public function index(LeadIndexRequest $request): View
@@ -291,11 +292,11 @@ public function index(LeadIndexRequest $request): View
 
         case 'my_leads':
         case 'your_leads':
-            $query->where('assigned_to', $user->id);
+            $query->where('assigned_to', $user->id)->where('status', '!=', 'closed');
             break;
 
         case 'total_leads':
-            // Total Leads ക്ലിക്ക് ചെയ്താൽ Admin ആയാലും Employee ആയാലും All 4 leads ലിസ്റ്റ് ചെയ്യും
+                $query->where('status', '!=', 'closed');
             break;
             
         default:
@@ -306,7 +307,49 @@ public function index(LeadIndexRequest $request): View
             }
             break;
     }
+$filter = $request->query('filter');
 
+if ($filter) {
+    $query->where('status', '!=', 'closed');
+}
+
+switch ($filter) {
+
+    case 'unattended':
+        $query->whereDoesntHave('callDetails');
+        break;
+
+    case 'today_followup':
+        $query->whereHas('latestCall', function ($q) {
+            $q->whereNotNull('next_followup_date')
+              ->whereDate('next_followup_date', today());
+        });
+        break;
+
+    case 'overdue_followup':
+        $query->whereHas('latestCall', function ($q) {
+            $q->whereNotNull('next_followup_date')
+              ->whereDate('next_followup_date', '<', today());
+        });
+        break;
+
+    case 'upcoming_followup':
+        $query->whereHas('latestCall', function ($q) {
+            $q->whereNotNull('next_followup_date')
+              ->whereDate('next_followup_date', '>', today());
+        });
+        break;
+
+    case 'total_leads':
+        // All open leads
+        break;
+
+    default:
+        if (!$isAdmin) {
+            $query->where('assigned_to', $user->id);
+        }
+        break;
+}
     /* Standard Search & Filters */
     if ($request->filled('q')) {
         $search = $request->q;

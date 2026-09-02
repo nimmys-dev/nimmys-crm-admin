@@ -114,13 +114,18 @@ class DashboardService
 public function getDashboardLeadStatistics(User $user): array
 {
     // Role check controller-ൽ ഉള്ളതുപോലെ തന്നെ uniform ആക്കുക
-    $isAdmin = (isset($user->role->value) && $user->role->value === 'admin') || $user->isAdmin();
+    // $isAdmin = (isset($user->role->value) && $user->role->value === 'admin') || $user->isAdmin();
 
-    $query = Lead::query();
+    // $query = Lead::query();
 
-    if (!$isAdmin) {
-        $query->where('assigned_to', $user->id);
-    }
+    // if (!$isAdmin) {
+    //     $query->where('assigned_to', $user->id);
+    // }
+
+    $query = Lead::query()
+        ->where('assigned_to', $user->id)
+        ->where('status', '!=', 'closed');
+
 
     return [
         'unattended' => (clone $query)
@@ -151,13 +156,49 @@ public function getDashboardLeadStatistics(User $user): array
 
         'your_leads' => Lead::query()
             ->where('assigned_to', $user->id)
+            ->where('status', '!=', 'closed')
             ->count(),
 
-        'total_leads' => Lead::query()->count(),
+        // 'total_leads' => Lead::query()->count(),
+        'total_leads' => Lead::query() ->where('status', '!=', 'closed') ->count(),
     ];
 }
 
+public function getDashboardAllLeadStatistics(User $user): array
+{
+    $query = Lead::query()
+        ->where('status', '!=', 'closed');
 
+    return [
+
+        'unattended' => (clone $query)
+            ->whereDoesntHave('callDetails')
+            ->count(),
+
+        'today_followup' => (clone $query)
+            ->whereHas('latestCall', function ($q) {
+                $q->whereNotNull('next_followup_date')
+                  ->whereDate('next_followup_date', today());
+            })
+            ->count(),
+
+        'overdue_followup' => (clone $query)
+            ->whereHas('latestCall', function ($q) {
+                $q->whereNotNull('next_followup_date')
+                  ->whereDate('next_followup_date', '<', today());
+            })
+            ->count(),
+
+        'upcoming_followup' => (clone $query)
+            ->whereHas('latestCall', function ($q) {
+                $q->whereNotNull('next_followup_date')
+                  ->whereDate('next_followup_date', '>', today());
+            })
+            ->count(),
+
+        'total_leads' => (clone $query)->count(),
+    ];
+}
 
 //     public function getDashboardLeadStatistics(User $user): array
 // {
