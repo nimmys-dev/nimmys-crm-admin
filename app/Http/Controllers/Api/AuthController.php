@@ -14,12 +14,71 @@ use App\Models\Shop;
 
 class AuthController extends Controller
 {
+    // public function login(Request $request)
+    // {
+    //     // Validate request
+    //     $validator = Validator::make($request->all(), [
+    //         'email' => 'required|email',
+    //         'password' => 'required',
+    //     ]);
+
+    //     if ($validator->fails()) {
+    //         return response()->json([
+    //             'status' => false,
+    //             'status_code' => 422,
+    //             'message' => 'Validation failed',
+    //             'errors' => $validator->errors(),
+    //         ], 422);
+    //     }
+
+    //     // Find user by email
+    //     $user = User::where('email', $request->email)->first();
+
+    //     if (! $user) {
+    //         return response()->json([
+    //             'status' => false,
+    //             'status_code' => 404,
+    //             'message' => 'User not found',
+    //         ], 404);
+    //     }
+    //     // dd($request->password, $user->password);
+
+    //     // Verify hashed password
+    //     if (! Hash::check($request->password, $user->password)) {
+    //         return response()->json([
+    //             'status' => false,
+    //             'status_code' => 401,
+    //             'message' => 'Incorrect password',
+    //         ], 401);
+    //     }
+
+    //     // Delete old tokens
+    //     $user->tokens()->delete();
+
+    //     // Generate new token
+    //     $token = $user->createToken('auth_token')->plainTextToken;
+
+    //     return response()->json([
+    //         'status' => true,
+    //         'status_code' => 200,
+    //         'message' => 'Login successful',
+    //         'token' => $token,
+    //         'user' => [
+    //             'id' => $user->id,
+    //             'name' => $user->name,
+    //             'email' => $user->email,
+    //             'role' => $user->role,
+    //         ],
+    //     ], 200);
+    // }
+
     public function login(Request $request)
     {
         // Validate request
         $validator = Validator::make($request->all(), [
             'email' => 'required|email',
             'password' => 'required',
+            'fcm_token' => 'required|string',
         ]);
 
         if ($validator->fails()) {
@@ -41,7 +100,6 @@ class AuthController extends Controller
                 'message' => 'User not found',
             ], 404);
         }
-        // dd($request->password, $user->password);
 
         // Verify hashed password
         if (! Hash::check($request->password, $user->password)) {
@@ -51,6 +109,10 @@ class AuthController extends Controller
                 'message' => 'Incorrect password',
             ], 401);
         }
+
+        // Save FCM token
+        $user->fcm_token = $request->fcm_token;
+        $user->save();
 
         // Delete old tokens
         $user->tokens()->delete();
@@ -68,10 +130,10 @@ class AuthController extends Controller
                 'name' => $user->name,
                 'email' => $user->email,
                 'role' => $user->role,
+                'fcm_token' => $user->fcm_token,
             ],
         ], 200);
     }
-
     public function profile(Request $request)
     {
         $user = $request->user();

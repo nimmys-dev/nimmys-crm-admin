@@ -60,8 +60,8 @@ class StoreLeadRequest extends FormRequest
         $validator->after(function (Validator $validator) {
             $status = $this->input('status');
 
-            if ($status === LeadStatus::Lost->value && blank($this->input('lost_reason'))) {
-                $validator->errors()->add('lost_reason', 'Please record why this lead was lost.');
+            if ($status === LeadStatus::Closed->value) {
+                // closed related validation മാത്രം ഇവിടെ വേണമെങ്കിൽ വെക്കാം
             }
         });
     }

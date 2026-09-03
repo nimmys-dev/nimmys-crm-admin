@@ -197,7 +197,7 @@ class DashboardController extends Controller
         ], 200);
     }
 
-   public function dashboardLeadStatistics(Request $request): JsonResponse
+  public function getDashboardLeadStatistics(Request $request): JsonResponse
 {
     $user = auth()->user();
 
@@ -206,20 +206,17 @@ class DashboardController extends Controller
 
     /*
     |--------------------------------------------------------------------------
-    | My Leads Query
+    | Base Queries (Excludes 'closed', 'lost', and 'won')
     |--------------------------------------------------------------------------
     */
+    // Logged-in user-ന് assign ചെയ്ത leads
     $myLeadsQuery = Lead::query()
         ->where('assigned_to', $user->id)
-        ->where('status', '!=', 'closed');
+        ->whereNotIn('status', ['closed', 'lost', 'won']);
 
-    /*
-    |--------------------------------------------------------------------------
-    | Total Leads Query
-    |--------------------------------------------------------------------------
-    */
-    $totalLeadsQuery = Lead::query()
-        ->where('status', '!=', 'closed');
+    // All users-ന്റെയും leads
+    $allLeadsQuery = Lead::query()
+        ->whereNotIn('status', ['closed', 'lost', 'won']);
 
     /*
     |--------------------------------------------------------------------------
@@ -252,16 +249,16 @@ class DashboardController extends Controller
             })
             ->count(),
 
-        'my_leads' => (clone $myLeadsQuery)
+        'your_leads' => (clone $myLeadsQuery)
             ->count(),
 
-        'total_leads' => (clone $totalLeadsQuery)
+        'total_leads' => (clone $allLeadsQuery)
             ->count(),
     ];
 
     /*
     |--------------------------------------------------------------------------
-    | Filter Query
+    | Lead Filtering Logic
     |--------------------------------------------------------------------------
     */
     $filteredQuery = null;
@@ -297,20 +294,18 @@ class DashboardController extends Controller
                 });
             break;
 
-        case 'my_leads':
-            // Logged-in user's assigned open leads
+        case 'your_leads':
             $filteredQuery = clone $myLeadsQuery;
             break;
 
         case 'total_leads':
-            // All open leads
-            $filteredQuery = clone $totalLeadsQuery;
+            $filteredQuery = clone $allLeadsQuery;
             break;
     }
 
     /*
     |--------------------------------------------------------------------------
-    | Pagination
+    | Pagination & Relationship Loading
     |--------------------------------------------------------------------------
     */
     $leads = null;
@@ -334,28 +329,24 @@ class DashboardController extends Controller
     return response()->json([
         'status' => true,
         'status_code' => 200,
-        'message' => 'Lead dashboard statistics retrieved successfully.',
+        'message' => 'Dashboard lead statistics and filtered list retrieved successfully.',
 
         'data' => [
             'filter' => $filter,
 
             'counts' => $counts,
 
-            'filtered_count' => $leads
-                ? $leads->total()
-                : null,
+            'filtered_count' => $leads ? $leads->total() : null,
 
-            'leads' => $leads
-                ? $leads->items()
-                : [],
+            'leads' => $leads ? $leads->items() : [],
 
             'pagination' => $leads ? [
                 'current_page' => $leads->currentPage(),
-                'per_page' => $leads->perPage(),
-                'total' => $leads->total(),
-                'last_page' => $leads->lastPage(),
-                'from' => $leads->firstItem(),
-                'to' => $leads->lastItem(),
+                'per_page'     => $leads->perPage(),
+                'total'        => $leads->total(),
+                'last_page'    => $leads->lastPage(),
+                'from'         => $leads->firstItem(),
+                'to'           => $leads->lastItem(),
             ] : null,
         ],
     ], 200);

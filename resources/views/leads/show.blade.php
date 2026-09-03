@@ -81,7 +81,15 @@
             <x-card :title="$lead->reference">
 
                 <x-slot:actions>
-                    <x-lead-status-badge :status="$lead->status" />
+                    @php
+                        $status = $lead->status instanceof \BackedEnum
+                            ? $lead->status->value
+                            : $lead->status;
+                        @endphp
+
+                    <span class="badge bg-secondary">
+                        {{ in_array($status, ['closed', 'lost', 'won']) ? 'Closed' : ucfirst($status) }}
+                    </span>
 
                     <span class="badge {{ $lead->priority->badgeClass() }}">
                         {{ $lead->priority->label() }}

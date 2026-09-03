@@ -157,6 +157,7 @@ Route::middleware(['auth', 'web.access'])->group(function () {
             ->name('leads.calls.destroy');
 
         Route::resource('leads', LeadController::class);
+        Route::get('leads-closed', [LeadController::class, 'closed'])->name('leads.closed');
     });
 
     Route::get('tasks', [TaskController::class, 'index'])

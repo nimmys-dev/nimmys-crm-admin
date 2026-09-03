@@ -35,7 +35,7 @@ enum CallStatus: string
     public function badgeClass(): string
     {
         return match ($this) {
-            self::Answered => 'badge-lead-won',
+            self::Answered => 'badge-lead-success',
             self::NotAnswered => 'badge-off',
         };
     }

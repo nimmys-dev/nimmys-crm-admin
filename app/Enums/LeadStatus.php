@@ -15,8 +15,6 @@ enum LeadStatus: string
     case Qualified = 'qualified';
     case Proposal = 'proposal';
     case Negotiation = 'negotiation';
-    case Won = 'won';
-    case Lost = 'lost';
     case Closed = 'closed';
 
     public function label(): string
@@ -27,8 +25,6 @@ enum LeadStatus: string
             self::Qualified => 'Qualified',
             self::Proposal => 'Proposal Sent',
             self::Negotiation => 'Negotiation',
-            self::Won => 'Won',
-            self::Lost => 'Lost',
             self::Closed => 'Closed',
         };
     }
@@ -40,16 +36,7 @@ enum LeadStatus: string
 
     public function isClosed(): bool
     {
-        return in_array($this, [
-            self::Won,
-            self::Lost,
-            self::Closed,
-        ], true);
-    }
-
-    public function requiresReason(): bool
-    {
-        return $this === self::Lost;
+        return $this === self::Closed;
     }
 
     public function badgeClass(): string
@@ -58,8 +45,6 @@ enum LeadStatus: string
             self::New => 'badge-lead-new',
             self::Contacted, self::Qualified => 'badge-lead-progress',
             self::Proposal, self::Negotiation => 'badge-lead-active',
-            self::Won => 'badge-lead-won',
-            self::Lost => 'badge-lead-lost',
             self::Closed => 'badge-lead-closed',
         };
     }

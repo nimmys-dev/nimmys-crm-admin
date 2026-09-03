@@ -7,10 +7,14 @@ use App\Http\Controllers\Api\LeadController;
 use App\Http\Controllers\Api\SettingsController;
 use App\Http\Controllers\Api\TaskController;
 use App\Http\Controllers\Api\DashboardController;
-
+use App\Http\Controllers\Api\ForgotPasswordController;
 
 Route::post('/login', [AuthController::class, 'login']);
+Route::post('/forgot-password', [ForgotPasswordController::class, 'sendResetLinkApi'])
+    ->name('api.password.email');
 
+Route::post('/reset-password', [ForgotPasswordController::class, 'resetPasswordApi'])
+    ->name('api.password.reset');
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/profile', [AuthController::class, 'profile']);
     Route::post('/logout', [AuthController::class, 'logout']);
@@ -59,7 +63,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/company-profile/update',[SettingsController::class, 'updateCompanyProfile']);
 
     Route::get('/dashboard/task-counts',[DashboardController::class, 'dashboardCounts']);
-    Route::get('/dashboard-lead-statistics',[DashboardController::class, 'dashboardLeadStatistics'])->name('api.dashboard.lead.statistics');
+    Route::get('/dashboard-lead-statistics',[DashboardController::class, 'getDashboardLeadStatistics'])->name('api.dashboard.lead.statistics');
 
 
    

@@ -782,4 +782,30 @@ public function index(LeadIndexRequest $request): View
             'canAssign' => $canAssign,
         ];
     }
+
+
+public function closed(): View
+{
+    $leads = Lead::query()
+        ->with([
+            'owner',
+            'latestCall',
+        ])
+        ->whereIn('status', [
+            'closed',
+            'lost',
+            'won',
+        ])
+        ->paginate(10);
+
+    return view('leads.closed', [
+        'pageTitle' => 'Closed / Lost / Won Leads',
+        'breadcrumbs' => [
+            ['label' => 'Leads'],
+            ['label' => 'Closed / Lost / Won Leads'],
+        ],
+        'leads' => $leads,
+    ]);
+}
+
 }

@@ -6,10 +6,16 @@
     @can('create', App\Models\Lead::class)
         <x-button :href="route('leads.create')" icon="ti ti-plus">Add Lead</x-button>
     @endcan
+      @if(auth()->user()->role->value === 'admin')
+        <a href="{{ route('leads.closed') }}"
+           class="btn btn-secondary ms-2">
+            <i class="ti ti-lock"></i>
+            Closed Leads
+        </a>
+    @endif
 @endsection
 
 @section('content')
-
     {{-- Pipeline summary. Already scoped to the viewer by the repository. --}}
     {{-- <div class="grid grid-cols-12 gap-x-6">
         <div class="col-span-12 md:col-span-6 xl:col-span-3">
