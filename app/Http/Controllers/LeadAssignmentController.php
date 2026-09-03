@@ -7,6 +7,7 @@ use App\Models\Lead;
 use App\Models\User;
 use App\Services\LeadService;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 
 /**
  * Reassigning a lead's owner.
@@ -20,19 +21,49 @@ class LeadAssignmentController extends Controller
 {
     public function __construct(private readonly LeadService $service) {}
 
-    public function update(AssignLeadRequest $request, Lead $lead): RedirectResponse
-    {
-        $userId = $request->validated('assigned_to');
+    // public function update(AssignLeadRequest $request, Lead $lead): RedirectResponse
+    // {
+    //     $userId = $request->validated('assigned_to');
 
-        $this->service->assign($lead, $userId ? (int) $userId : null);
+    //     $this->service->assign($lead, $userId ? (int) $userId : null);
 
-        $owner = $userId ? User::find($userId)?->name : null;
+    //     $owner = $userId ? User::find($userId)?->name : null;
 
-        return back()->with(
-            'success',
-            $owner
-                ? "Lead {$lead->reference} was assigned to {$owner}."
-                : "Lead {$lead->reference} is now unassigned."
-        );
-    }
+    //     return back()->with(
+    //         'success',
+    //         $owner
+    //             ? "Lead {$lead->reference} was assigned to {$owner}."
+    //             : "Lead {$lead->reference} is now unassigned."
+    //     );
+    // }
+
+    public function update(Request $request, Lead $lead): RedirectResponse
+{
+    $request->validate([
+        'assigned_to' => [
+            'nullable',
+            'exists:users,id',
+        ],
+    ]);
+
+    $userId = $request->input('assigned_to');
+
+    $this->service->assign(
+        $lead,
+        $userId ? (int) $userId : null
+    );
+
+    $owner = $userId
+        ? User::find($userId)?->name
+        : null;
+
+    return redirect()
+    ->route('dashboard')
+    ->with(
+        'success',
+        $owner
+            ? "Lead {$lead->reference} was assigned to {$owner}."
+            : "Lead {$lead->reference} is now unassigned."
+    );
+}
 }

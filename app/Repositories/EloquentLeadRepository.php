@@ -104,27 +104,27 @@ class EloquentLeadRepository implements LeadRepository
         $open = collect(LeadStatus::open())
             ->sum(fn (LeadStatus $status) => $byStatus[$status->value]);
 
-        $won = $byStatus[LeadStatus::Won->value];
-        $lost = $byStatus[LeadStatus::Lost->value];
-        $closed = $won + $lost;
+        // $won = $byStatus[LeadStatus::Won->value];
+        // $lost = $byStatus[LeadStatus::Lost->value];
+        // $closed = $won + $lost;
 
         // Aggregates in a single pass rather than three separate queries.
-        $totals = $this->visibleTo($viewer)
-            ->selectRaw('COUNT(*) AS total, SUM(CASE WHEN status = ? THEN value ELSE 0 END) AS won_value', [LeadStatus::Won->value])
-            ->first();
+        // $totals = $this->visibleTo($viewer)
+        //     ->selectRaw('COUNT(*) AS total, SUM(CASE WHEN status = ? THEN value ELSE 0 END) AS won_value', [LeadStatus::Won->value])
+        //     ->first();
 
         return [
             'total' => (int) ($totals->total ?? 0),
             'by_status' => $byStatus,
             'open' => $open,
-            'won' => $won,
-            'lost' => $lost,
-            'won_value' => (float) ($totals->won_value ?? 0),
+            // 'won' => $won,
+            // 'lost' => $lost,
+            // 'won_value' => (float) ($totals->won_value ?? 0),
 
             // Share of *decided* leads that were won. Measuring against every
             // lead would drag the rate down simply because the pipeline is
             // full, which is the opposite of the signal wanted.
-            'conversion_rate' => $closed > 0 ? round($won / $closed * 100, 1) : null,
+            // 'conversion_rate' => $closed > 0 ? round($won / $closed * 100, 1) : null,
 
             'due_today' => $this->visibleTo($viewer)->dueForFollowUp()->count(),
             'overdue' => $this->visibleTo($viewer)

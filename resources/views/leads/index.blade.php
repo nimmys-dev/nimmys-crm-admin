@@ -113,22 +113,59 @@
                                 <x-bool-badge :state="$lead->status->isOpen()" on="Open" off="Closed" />
                             </td>
 
-                            <td>
-                                {{-- Sourced from the latest logged call, not the lead's own
-                                     next_follow_up_at — that column tracks the separate,
-                                     currently-unused follow-up feature. --}}
-                                @php $nextFollowUp = $lead->latestCall?->next_followup_date; @endphp
+                           <td>
+                                @php
+                                    $nextFollowUp = $lead->latestCall?->next_followup_date;
 
-                                @if ($nextFollowUp)
-                                    @php $isOverdue = $lead->status->isOpen() && $nextFollowUp->isPast(); @endphp
-                                    <span @class(['text-danger-500' => $isOverdue])>
-                                        {{ $nextFollowUp->format('j M Y') }}
+                                    $followUpDate = $nextFollowUp
+                                        ? \Carbon\Carbon::parse($nextFollowUp)
+                                        : null;
+
+                                    $isOpen = $lead->status instanceof \BackedEnum
+                                        ? $lead->status->value === 'new'
+                                        : $lead->status === 'new';
+
+                                    $isOverdue = $isOpen
+                                        && $followUpDate
+                                        && $followUpDate->isBefore(today());
+
+                                    $isToday = $isOpen
+                                        && $followUpDate
+                                        && $followUpDate->isToday();
+
+                                    $isUpcoming = $isOpen
+                                        && $followUpDate
+                                        && $followUpDate->isAfter(today());
+                                @endphp
+
+                                @if ($followUpDate)
+
+                                    <span @class([
+                                        'text-danger' => $isOverdue,
+                                        'text-warning' => $isToday,
+                                        'text-success' => $isUpcoming,
+                                    ])>
+                                        {{ $followUpDate->format('j M Y') }}
                                     </span>
+
                                     @if ($isOverdue)
-                                        <span class="badge badge-lead-lost">Overdue</span>
+                                        <span class="badge bg-danger">
+                                            Overdue
+                                        </span>
+                                    @elseif ($isToday)
+                                        <span class="badge bg-warning">
+                                            Today
+                                        </span>
+                                    @elseif ($isUpcoming)
+                                        <span class="badge bg-success">
+                                            Upcoming
+                                        </span>
                                     @endif
+
                                 @else
+
                                     <span class="text-muted">—</span>
+
                                 @endif
                             </td>
                             <td style="
