@@ -111,68 +111,87 @@
     <div class="mt-6 bg-white rounded-xl border border-gray-200 shadow-sm p-5">
         <div class="flex items-center justify-between mb-4">
             <h3 class="text-lg font-semibold text-gray-800">
-               MY Leads
+                MY Leads
             </h3>
-            <a href="{{ route('leads.index') }}"
+
+            <a href="{{ route('leads.index', ['filter' => 'my_leads']) }}"
             class="text-sm text-primary">
                 View All
             </a>
         </div>
 
         <div class="leads-inner-grid">
+
             {{-- Unattended Leads --}}
-            <a href="{{ route('leads.index', ['filter' => 'unattended']) }}"
+            <a href="{{ route('leads.index', ['filter' => 'my_unattended']) }}"
             class="lead-stat-box">
+
                 <div>
                     <p>Unattended Leads</p>
                     <h4>{{ $leadStats['unattended'] ?? 0 }}</h4>
                 </div>
+
                 <div class="lead-stat-icon unattended-icon">
                     <i class="ti ti-user-question"></i>
                 </div>
+
             </a>
 
+
             {{-- Today's Follow Up --}}
-            <a href="{{ route('leads.index', ['filter' => 'today_followup']) }}"class="lead-stat-box">
+            <a href="{{ route('leads.index', ['filter' => 'my_today_followup']) }}"
+            class="lead-stat-box">
+
                 <div>
                     <p>Today's Follow Up</p>
                     <h4>{{ $leadStats['today_followup'] ?? 0 }}</h4>
                 </div>
+
                 <div class="lead-stat-icon today-followup-icon">
                     <i class="ti ti-calendar-event"></i>
                 </div>
+
             </a>
 
+
             {{-- Overdue Follow Up --}}
-            <a href="{{ route('leads.index', ['filter' => 'overdue_followup']) }}"
+            <a href="{{ route('leads.index', ['filter' => 'my_overdue_followup']) }}"
             class="lead-stat-box">
+
                 <div>
                     <p>Overdue Follow Up</p>
                     <h4>{{ $leadStats['overdue_followup'] ?? 0 }}</h4>
                 </div>
+
                 <div class="lead-stat-icon overdue-followup-icon">
                     <i class="ti ti-alert-circle"></i>
                 </div>
+
             </a>
 
+
             {{-- Upcoming Follow Up --}}
-            <a href="{{ route('leads.index', ['filter' => 'upcoming_followup']) }}"
+            <a href="{{ route('leads.index', ['filter' => 'my_upcoming_followup']) }}"
             class="lead-stat-box">
+
                 <div>
                     <p>Upcoming Follow Up</p>
                     <h4>{{ $leadStats['upcoming_followup'] ?? 0 }}</h4>
                 </div>
+
                 <div class="lead-stat-icon upcoming-followup-icon">
                     <i class="ti ti-calendar-time"></i>
                 </div>
+
             </a>
+
         </div>
     </div>
 
     {{-- Your Leads & Total Leads --}}
-    <div class="leads-total-row">
+     <div class="leads-total-row">
         {{-- Your Leads --}}
-        <a href="{{ route('leads.index', ['filter' => 'my_leads']) }}"class="lead-total-box your-leads-box">
+        <a href="{{ route('leads.index', ['filter' => 'my_leads']) }}" class="lead-total-box your-leads-box">
             <div>
                 <p>Your Leads</p>
                 <h4>{{ $leadStats['your_leads'] ?? 0 }}</h4>
@@ -183,7 +202,7 @@
         </a>
 
         {{-- Total Leads --}}
-        <a href="{{ route('leads.index', ['filter' => 'total_leads']) }}" class="lead-total-box total-leads-box">
+        <a href="{{ route('leads.index', ['filter' => 'total_leads']) }}"class="lead-total-box total-leads-box">
             <div>
                 <p>Total Leads</p>
                 <h4>{{ $leadStats['total_leads'] ?? 0 }}</h4>

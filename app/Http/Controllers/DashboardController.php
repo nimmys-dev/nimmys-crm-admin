@@ -82,6 +82,7 @@ class DashboardController extends Controller
             'recentShops' => $this->dashboard->getRecentShops(),
 
             'leadStats' => $this->dashboard->getDashboardLeadStatistics($user),
+            'statistics' => $this->dashboard->getDashboardAllLeadStatistics($user),
             'dueFollowUps' => $this->dashboard->getDueFollowUps($user),
             'statistics' => $this->dashboard->getDashboardAllLeadStatistics($user),
 

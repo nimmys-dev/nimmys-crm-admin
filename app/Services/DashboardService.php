@@ -111,133 +111,235 @@ class DashboardService
     // }
 
 
+// public function getDashboardLeadStatistics(User $user): array
+// {
+//     // Role check controller-ൽ ഉള്ളതുപോലെ തന്നെ uniform ആക്കുക
+//     // $isAdmin = (isset($user->role->value) && $user->role->value === 'admin') || $user->isAdmin();
+
+//     // $query = Lead::query();
+
+//     // if (!$isAdmin) {
+//     //     $query->where('assigned_to', $user->id);
+//     // }
+
+//     $query = Lead::query()
+//         ->where('assigned_to', $user->id)
+//         ->where('status', '!=', 'closed');
+
+
+//     return [
+//         'unattended' => (clone $query)
+//             ->whereDoesntHave('callDetails')
+//             ->count(),
+
+//         // callDetails ന് പകരം latestCall ഉപയോഗിക്കുക
+//         'today_followup' => (clone $query)
+//             ->whereHas('latestCall', function ($q) {
+//                 $q->whereNotNull('next_followup_date')
+//                   ->whereDate('next_followup_date', today());
+//             })
+//             ->count(),
+
+//         'overdue_followup' => (clone $query)
+//             ->whereHas('latestCall', function ($q) {
+//                 $q->whereNotNull('next_followup_date')
+//                   ->whereDate('next_followup_date', '<', today());
+//             })
+//             ->count(),
+
+//         'upcoming_followup' => (clone $query)
+//             ->whereHas('latestCall', function ($q) {
+//                 $q->whereNotNull('next_followup_date')
+//                   ->whereDate('next_followup_date', '>', today());
+//             })
+//             ->count(),
+
+//         'your_leads' => Lead::query()
+//             ->where('assigned_to', $user->id)
+//             ->where('status', '!=', 'closed')
+//             ->count(),
+
+//         // 'total_leads' => Lead::query()->count(),
+//         'total_leads' => Lead::query() ->where('status', '!=', 'closed') ->count(),
+//     ];
+// }
+
+// public function getDashboardAllLeadStatistics(User $user): array
+// {
+//     $query = Lead::query()
+//         ->where('status', '!=', 'closed');
+
+//     return [
+
+//         'unattended' => (clone $query)
+//             ->whereDoesntHave('callDetails')
+//             ->count(),
+
+//         'today_followup' => (clone $query)
+//             ->whereHas('latestCall', function ($q) {
+//                 $q->whereNotNull('next_followup_date')
+//                   ->whereDate('next_followup_date', today());
+//             })
+//             ->count(),
+
+//         'overdue_followup' => (clone $query)
+//             ->whereHas('latestCall', function ($q) {
+//                 $q->whereNotNull('next_followup_date')
+//                   ->whereDate('next_followup_date', '<', today());
+//             })
+//             ->count(),
+
+//         'upcoming_followup' => (clone $query)
+//             ->whereHas('latestCall', function ($q) {
+//                 $q->whereNotNull('next_followup_date')
+//                   ->whereDate('next_followup_date', '>', today());
+//             })
+//             ->count(),
+
+//         'total_leads' => (clone $query)->count(),
+//     ];
+// }
+
 public function getDashboardLeadStatistics(User $user): array
 {
-    // Role check controller-ൽ ഉള്ളതുപോലെ തന്നെ uniform ആക്കുക
-    // $isAdmin = (isset($user->role->value) && $user->role->value === 'admin') || $user->isAdmin();
-
-    // $query = Lead::query();
-
-    // if (!$isAdmin) {
-    //     $query->where('assigned_to', $user->id);
-    // }
-
+    /*
+    |--------------------------------------------------------------------------
+    | Current user's assigned leads
+    |--------------------------------------------------------------------------
+    */
     $query = Lead::query()
         ->where('assigned_to', $user->id)
-        ->where('status', '!=', 'closed');
+        ->whereNotIn('status', ['closed', 'lost','won']);
 
 
+    /*
+    |--------------------------------------------------------------------------
+    | Dashboard statistics
+    |--------------------------------------------------------------------------
+    */
     return [
+
+        // Assigned leads മാത്രം
         'unattended' => (clone $query)
             ->whereDoesntHave('callDetails')
             ->count(),
 
-        // callDetails ന് പകരം latestCall ഉപയോഗിക്കുക
+        // Assigned leads മാത്രം
         'today_followup' => (clone $query)
             ->whereHas('latestCall', function ($q) {
                 $q->whereNotNull('next_followup_date')
-                  ->whereDate('next_followup_date', today());
+                    ->whereDate('next_followup_date', today());
             })
             ->count(),
 
+        // Assigned leads മാത്രം
         'overdue_followup' => (clone $query)
             ->whereHas('latestCall', function ($q) {
                 $q->whereNotNull('next_followup_date')
-                  ->whereDate('next_followup_date', '<', today());
+                    ->whereDate('next_followup_date', '<', today());
             })
             ->count(),
 
+        // Assigned leads മാത്രം
         'upcoming_followup' => (clone $query)
             ->whereHas('latestCall', function ($q) {
                 $q->whereNotNull('next_followup_date')
-                  ->whereDate('next_followup_date', '>', today());
+                    ->whereDate('next_followup_date', '>', today());
             })
             ->count(),
 
-        'your_leads' => Lead::query()
-            ->where('assigned_to', $user->id)
-            ->where('status', '!=', 'closed')
+        // Current user-ന് assign ചെയ്ത leads മാത്രം
+        'your_leads' => (clone $query)
             ->count(),
 
-        // 'total_leads' => Lead::query()->count(),
-        'total_leads' => Lead::query() ->where('status', '!=', 'closed') ->count(),
+        // ALL users-ന്റെയും leads
+        // closed + lost ഒഴിവാക്കും
+        // SoftDeletes ഉണ്ടെങ്കിൽ deleted records automatically ഒഴിവാകും
+        'total_leads' => Lead::query()
+            ->whereNotIn('status', ['closed', 'lost','won'])
+            ->count(),
     ];
 }
 
 public function getDashboardAllLeadStatistics(User $user): array
 {
-    $query = Lead::query()
-        ->where('status', '!=', 'closed');
+    /*
+    |--------------------------------------------------------------------------
+    | All Users Leads
+    |--------------------------------------------------------------------------
+    | Closed + Lost leads excluded
+    | Soft deleted leads are automatically excluded if SoftDeletes is used
+    */
+
+    $query = Lead::query()->with([
+    'owner',
+    'latestCall',
+    ]);
+
+    // Always exclude closed, lost and deleted leads
+    $query->whereNull('deleted_at')
+        ->whereNotIn('status', [
+            'closed',
+            'lost',
+            'won'
+        ]);
 
     return [
 
+        /*
+        |--------------------------------------------------------------------------
+        | All Users Unattended Leads
+        |--------------------------------------------------------------------------
+        */
         'unattended' => (clone $query)
             ->whereDoesntHave('callDetails')
             ->count(),
 
+        /*
+        |--------------------------------------------------------------------------
+        | All Users Today's Follow Up
+        |--------------------------------------------------------------------------
+        */
         'today_followup' => (clone $query)
             ->whereHas('latestCall', function ($q) {
                 $q->whereNotNull('next_followup_date')
-                  ->whereDate('next_followup_date', today());
+                    ->whereDate('next_followup_date', today());
             })
             ->count(),
 
+        /*
+        |--------------------------------------------------------------------------
+        | All Users Overdue Follow Up
+        |--------------------------------------------------------------------------
+        */
         'overdue_followup' => (clone $query)
             ->whereHas('latestCall', function ($q) {
                 $q->whereNotNull('next_followup_date')
-                  ->whereDate('next_followup_date', '<', today());
+                    ->whereDate('next_followup_date', '<', today());
             })
             ->count(),
 
+        /*
+        |--------------------------------------------------------------------------
+        | All Users Upcoming Follow Up
+        |--------------------------------------------------------------------------
+        */
         'upcoming_followup' => (clone $query)
             ->whereHas('latestCall', function ($q) {
                 $q->whereNotNull('next_followup_date')
-                  ->whereDate('next_followup_date', '>', today());
+                    ->whereDate('next_followup_date', '>', today());
             })
             ->count(),
 
-        'total_leads' => (clone $query)->count(),
+        /*
+        |--------------------------------------------------------------------------
+        | All Users Total Leads
+        |--------------------------------------------------------------------------
+        */
+        'total_leads' => (clone $query)
+            ->count(),
     ];
 }
-
-//     public function getDashboardLeadStatistics(User $user): array
-// {
-//     $query = Lead::query();
-
-//     // Admin → all leads
-//     // Manager / Employee → logged-in user's leads
-//     if (!$user->isAdmin()) {
-//         $query->where('assigned_to', $user->id);
-//     }
-
-//     return [
-//         'unattended' => (clone $query)
-//             ->whereNull('assigned_to')
-//             ->count(),
-
-//         'today_followup' => (clone $query)
-//             ->whereDate('next_follow_up_at', today())
-//             ->count(),
-
-//         'overdue_followup' => (clone $query)
-//             ->whereDate('next_follow_up_at', '<', today())
-//             ->count(),
-
-//         'upcoming_followup' => (clone $query)
-//             ->whereDate('next_follow_up_at', '>', today())
-//             ->count(),
-
-//         // Logged-in user's leads
-//         'your_leads' => Lead::query()
-//             ->where('assigned_to', $user->id)
-//             ->count(),
-
-//         // All roles → all leads
-//         'total_leads' => Lead::query()
-//             ->count(),
-//     ];
-// }
-
 
     /**
      * Figures narrowed to the shop this Manager runs.

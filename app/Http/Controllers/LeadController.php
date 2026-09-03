@@ -239,166 +239,430 @@ public function getDashboardLeadStatistics(User $user): array
 }
 
 
+// public function index(LeadIndexRequest $request): View
+// {
+//     $user = $request->user();
+//     $filters = $request->filters();
+//     $dashboardFilter = $request->query('filter');
+
+//     $isAdmin = (isset($user->role->value) && $user->role->value === 'admin') || $user->isAdmin();
+
+//     $query = Lead::query()->with([
+//         'owner',
+//         'latestCall',
+//     ]);
+
+//     /* Dashboard Filter Logic */
+//     switch ($dashboardFilter) {
+
+//         case 'unattended':
+//             $query->whereDoesntHave('callDetails');
+//             if (!$isAdmin) {
+//                 $query->where('assigned_to', $user->id);
+//             }
+//             break;
+
+//         case 'today_followup':
+//             if (!$isAdmin) {
+//                 $query->where('assigned_to', $user->id);
+//             }
+//             $query->whereHas('latestCall', function ($q) {
+//                 $q->whereNotNull('next_followup_date')
+//                   ->whereDate('next_followup_date', today());
+//             });
+//             break;
+
+//         case 'overdue_followup':
+//             if (!$isAdmin) {
+//                 $query->where('assigned_to', $user->id);
+//             }
+//             $query->whereHas('latestCall', function ($q) {
+//                 $q->whereNotNull('next_followup_date')
+//                   ->whereDate('next_followup_date', '<', today());
+//             });
+//             break;
+
+//         case 'upcoming_followup':
+//             if (!$isAdmin) {
+//                 $query->where('assigned_to', $user->id);
+//             }
+//             $query->whereHas('latestCall', function ($q) {
+//                 $q->whereNotNull('next_followup_date')
+//                   ->whereDate('next_followup_date', '>', today());
+//             });
+//             break;
+
+//         case 'my_leads':
+//         case 'your_leads':
+//             $query->where('assigned_to', $user->id)->where('status', '!=', 'closed');
+//             break;
+
+//         case 'total_leads':
+//                 $query->where('status', '!=', 'closed');
+//             break;
+            
+//         default:
+//             // Sidebar-ലെ 'Lead Management' ക്ലിക്ക് ചെയ്ത് വരുമ്പോൾ 
+//             // Normal Employee ആണെങ്കിൽ സ്വന്തം Leads മാത്രം കാണിക്കും
+//             if (!$isAdmin) {
+//                 $query->where('assigned_to', $user->id);
+//             }
+//             break;
+//     }
+// $filter = $request->query('filter');
+
+// if ($filter) {
+//     $query->where('status', '!=', 'closed');
+// }
+
+// switch ($filter) {
+
+//     case 'unattended':
+//         $query->whereDoesntHave('callDetails');
+//         break;
+
+//     case 'today_followup':
+//         $query->whereHas('latestCall', function ($q) {
+//             $q->whereNotNull('next_followup_date')
+//               ->whereDate('next_followup_date', today());
+//         });
+//         break;
+
+//     case 'overdue_followup':
+//         $query->whereHas('latestCall', function ($q) {
+//             $q->whereNotNull('next_followup_date')
+//               ->whereDate('next_followup_date', '<', today());
+//         });
+//         break;
+
+//     case 'upcoming_followup':
+//         $query->whereHas('latestCall', function ($q) {
+//             $q->whereNotNull('next_followup_date')
+//               ->whereDate('next_followup_date', '>', today());
+//         });
+//         break;
+
+//     case 'total_leads':
+//         // All open leads
+//         break;
+
+//     default:
+//         if (!$isAdmin) {
+//             $query->where('assigned_to', $user->id);
+//         }
+//         break;
+// }
+//     /* Standard Search & Filters */
+//     if ($request->filled('q')) {
+//         $search = $request->q;
+//         $query->where(function ($q) use ($search) {
+//             $q->where('name', 'like', "%{$search}%")
+//                 ->orWhere('company', 'like', "%{$search}%")
+//                 ->orWhere('email', 'like', "%{$search}%")
+//                 ->orWhere('phone', 'like', "%{$search}%")
+//                 ->orWhere('reference', 'like', "%{$search}%");
+//         });
+//     }
+
+//     if ($request->filled('status')) {
+//         $query->where('status', $request->status);
+//     }
+//     if ($request->filled('priority')) {
+//         $query->where('priority', $request->priority);
+//     }
+//     if ($request->filled('source')) {
+//         $query->where('source', $request->source);
+//     }
+//     if ($request->filled('assigned_to')) {
+//         $query->where('assigned_to', $request->assigned_to);
+//     }
+//     if ($request->filled('shop_id')) {
+//         $query->where('shop_id', $request->shop_id);
+//     }
+
+//     $sort = $request->input('sort', 'created_at');
+//     $direction = $request->input('direction', 'desc');
+
+//     $leads = $query->orderBy($sort, $direction)
+//         ->paginate($request->input('per_page', 15))
+//         ->withQueryString();
+
+//     return view('leads.index', [
+//         'pageTitle' => 'Lead Management',
+//         'breadcrumbs' => [['label' => 'Leads']],
+//         'filters' => $filters,
+//         'leads' => $leads,
+//         'hasActiveFilters' => $request->hasActiveFilters(),
+//         'statistics' => $this->getDashboardLeadStatistics($user),
+//         ...$this->formOptions($request),
+//     ]);
+// }
+
 public function index(LeadIndexRequest $request): View
 {
     $user = $request->user();
     $filters = $request->filters();
-    $dashboardFilter = $request->query('filter');
 
-    $isAdmin = (isset($user->role->value) && $user->role->value === 'admin') || $user->isAdmin();
+    $filter = $request->query('filter');
 
-    $query = Lead::query()->with([
-        'owner',
-        'latestCall',
-    ]);
+    $isAdmin = (isset($user->role->value) && $user->role->value === 'admin')
+        || $user->isAdmin();
 
-    /* Dashboard Filter Logic */
-    switch ($dashboardFilter) {
+    /*
+    |--------------------------------------------------------------------------
+    | Base Query
+    |--------------------------------------------------------------------------
+    | Lost, Won, Closed leads are excluded everywhere.
+    | If Lead model uses SoftDeletes, deleted leads are automatically excluded.
+    |--------------------------------------------------------------------------
+    */
 
-        case 'unattended':
-            $query->whereDoesntHave('callDetails');
-            if (!$isAdmin) {
-                $query->where('assigned_to', $user->id);
-            }
+    $query = Lead::query()
+        ->with([
+            'owner',
+            'latestCall',
+        ])
+        ->whereNotIn('status', [
+            'lost',
+            'won',
+            'closed',
+        ]);
+
+    /*
+    |--------------------------------------------------------------------------
+    | Dashboard Filter
+    |--------------------------------------------------------------------------
+    */
+
+    switch ($filter) {
+
+        /*
+        |--------------------------------------------------------------------------
+        | MY LEADS
+        |--------------------------------------------------------------------------
+        */
+
+        case 'my_unattended':
+
+            $query->where('assigned_to', $user->id)
+                ->whereDoesntHave('callDetails');
+
             break;
 
-        case 'today_followup':
-            if (!$isAdmin) {
-                $query->where('assigned_to', $user->id);
-            }
-            $query->whereHas('latestCall', function ($q) {
-                $q->whereNotNull('next_followup_date')
-                  ->whereDate('next_followup_date', today());
-            });
+
+        case 'my_today_followup':
+
+            $query->where('assigned_to', $user->id)
+                ->whereHas('latestCall', function ($q) {
+                    $q->whereNotNull('next_followup_date')
+                        ->whereDate('next_followup_date', today());
+                });
+
             break;
 
-        case 'overdue_followup':
-            if (!$isAdmin) {
-                $query->where('assigned_to', $user->id);
-            }
-            $query->whereHas('latestCall', function ($q) {
-                $q->whereNotNull('next_followup_date')
-                  ->whereDate('next_followup_date', '<', today());
-            });
+
+        case 'my_overdue_followup':
+
+            $query->where('assigned_to', $user->id)
+                ->whereHas('latestCall', function ($q) {
+                    $q->whereNotNull('next_followup_date')
+                        ->whereDate('next_followup_date', '<', today());
+                });
+
             break;
 
-        case 'upcoming_followup':
-            if (!$isAdmin) {
-                $query->where('assigned_to', $user->id);
-            }
-            $query->whereHas('latestCall', function ($q) {
-                $q->whereNotNull('next_followup_date')
-                  ->whereDate('next_followup_date', '>', today());
-            });
+
+        case 'my_upcoming_followup':
+
+            $query->where('assigned_to', $user->id)
+                ->whereHas('latestCall', function ($q) {
+                    $q->whereNotNull('next_followup_date')
+                        ->whereDate('next_followup_date', '>', today());
+                });
+
             break;
+
 
         case 'my_leads':
-        case 'your_leads':
-            $query->where('assigned_to', $user->id)->where('status', '!=', 'closed');
+
+            $query->where('assigned_to', $user->id);
+
             break;
 
-        case 'total_leads':
-                $query->where('status', '!=', 'closed');
+
+        /*
+        |--------------------------------------------------------------------------
+        | ALL LEADS
+        |--------------------------------------------------------------------------
+        */
+
+        case 'all_unattended':
+
+            $query->whereDoesntHave('callDetails');
+
             break;
-            
+
+
+        case 'all_today_followup':
+
+            $query->whereHas('latestCall', function ($q) {
+                $q->whereNotNull('next_followup_date')
+                    ->whereDate('next_followup_date', today());
+            });
+
+            break;
+
+
+        case 'all_overdue_followup':
+
+            $query->whereHas('latestCall', function ($q) {
+                $q->whereNotNull('next_followup_date')
+                    ->whereDate('next_followup_date', '<', today());
+            });
+
+            break;
+
+
+        case 'all_upcoming_followup':
+
+            $query->whereHas('latestCall', function ($q) {
+                $q->whereNotNull('next_followup_date')
+                    ->whereDate('next_followup_date', '>', today());
+            });
+
+            break;
+
+
+        case 'total_leads':
+
+            // All active leads.
+            // Lost, Won and Closed already excluded by base query.
+
+            break;
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | NORMAL LEADS PAGE
+        |--------------------------------------------------------------------------
+        */
+
         default:
-            // Sidebar-ലെ 'Lead Management' ക്ലിക്ക് ചെയ്ത് വരുമ്പോൾ 
-            // Normal Employee ആണെങ്കിൽ സ്വന്തം Leads മാത്രം കാണിക്കും
+
             if (!$isAdmin) {
                 $query->where('assigned_to', $user->id);
             }
+
             break;
     }
-$filter = $request->query('filter');
 
-if ($filter) {
-    $query->where('status', '!=', 'closed');
-}
 
-switch ($filter) {
+    /*
+    |--------------------------------------------------------------------------
+    | Standard Search
+    |--------------------------------------------------------------------------
+    */
 
-    case 'unattended':
-        $query->whereDoesntHave('callDetails');
-        break;
-
-    case 'today_followup':
-        $query->whereHas('latestCall', function ($q) {
-            $q->whereNotNull('next_followup_date')
-              ->whereDate('next_followup_date', today());
-        });
-        break;
-
-    case 'overdue_followup':
-        $query->whereHas('latestCall', function ($q) {
-            $q->whereNotNull('next_followup_date')
-              ->whereDate('next_followup_date', '<', today());
-        });
-        break;
-
-    case 'upcoming_followup':
-        $query->whereHas('latestCall', function ($q) {
-            $q->whereNotNull('next_followup_date')
-              ->whereDate('next_followup_date', '>', today());
-        });
-        break;
-
-    case 'total_leads':
-        // All open leads
-        break;
-
-    default:
-        if (!$isAdmin) {
-            $query->where('assigned_to', $user->id);
-        }
-        break;
-}
-    /* Standard Search & Filters */
     if ($request->filled('q')) {
+
         $search = $request->q;
+
         $query->where(function ($q) use ($search) {
+
             $q->where('name', 'like', "%{$search}%")
                 ->orWhere('company', 'like', "%{$search}%")
                 ->orWhere('email', 'like', "%{$search}%")
                 ->orWhere('phone', 'like', "%{$search}%")
                 ->orWhere('reference', 'like', "%{$search}%");
+
         });
     }
 
+
+    /*
+    |--------------------------------------------------------------------------
+    | Normal Filters
+    |--------------------------------------------------------------------------
+    */
+
     if ($request->filled('status')) {
+
         $query->where('status', $request->status);
     }
+
+
     if ($request->filled('priority')) {
+
         $query->where('priority', $request->priority);
     }
+
+
     if ($request->filled('source')) {
+
         $query->where('source', $request->source);
     }
+
+
     if ($request->filled('assigned_to')) {
+
         $query->where('assigned_to', $request->assigned_to);
     }
+
+
     if ($request->filled('shop_id')) {
+
         $query->where('shop_id', $request->shop_id);
     }
 
+
+    /*
+    |--------------------------------------------------------------------------
+    | Sorting
+    |--------------------------------------------------------------------------
+    */
+
     $sort = $request->input('sort', 'created_at');
+
     $direction = $request->input('direction', 'desc');
 
-    $leads = $query->orderBy($sort, $direction)
+
+    /*
+    |--------------------------------------------------------------------------
+    | Pagination
+    |--------------------------------------------------------------------------
+    */
+
+    $leads = $query
+        ->orderBy($sort, $direction)
         ->paginate($request->input('per_page', 15))
         ->withQueryString();
 
+
+    /*
+    |--------------------------------------------------------------------------
+    | View
+    |--------------------------------------------------------------------------
+    */
+
     return view('leads.index', [
+
         'pageTitle' => 'Lead Management',
-        'breadcrumbs' => [['label' => 'Leads']],
+
+        'breadcrumbs' => [
+            ['label' => 'Leads'],
+        ],
+
         'filters' => $filters,
+
         'leads' => $leads,
+
         'hasActiveFilters' => $request->hasActiveFilters(),
+
         'statistics' => $this->getDashboardLeadStatistics($user),
+
         ...$this->formOptions($request),
     ]);
 }
-
-
 
 
     public function create(Request $request): View
