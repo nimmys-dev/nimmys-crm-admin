@@ -89,7 +89,10 @@ Route::middleware(['auth', 'web.access'])->group(function () {
 
         Route::resource('staff', StaffController::class)
             ->parameters(['staff' => 'staff']);
-    });
+        Route::get('/staff/{member}/reset-password', [StaffController::class, 'resetPassword'])->name('staff.reset-password');
+        Route::put('/staff/{member}/reset-password', [StaffController::class, 'updatePassword'])
+        ->name('staff.update-password');
+        });
 
     /*
      | Lead module. The `leads` middleware admits Admins and Managers on their

@@ -10,6 +10,8 @@ use App\Support\EmployeeCode;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Hash;
 
 class StaffController extends Controller
 {
@@ -280,5 +282,60 @@ class StaffController extends Controller
                 'deleted_at' => $staff->deleted_at,
             ],
         ], 200);
+    }
+
+    public function resetPassword(Request $request, $id): JsonResponse
+    {
+        // 1. User ഉണ്ടോ എന്ന് ചെക്ക് ചെയ്യുന്നു
+        $member = User::find($id);
+
+        if (!$member) {
+            return response()->json([
+                'status'  => false,
+                'message' => 'Staff member not found.',
+            ], 404);
+        }
+
+        // 2. Manual Validation (500 Error വരാതിരിക്കാൻ)
+        $validator = Validator::make($request->all(), [
+            'password' => [
+                'required',
+                'string',
+                'min:8',
+                'confirmed',
+            ],
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status'  => false,
+                'message' => 'Validation error.',
+                'errors'  => $validator->errors(),
+            ], 422);
+        }
+
+        try {
+            // 3. Password Update
+            $member->password = Hash::make($request->password);
+            $member->updated_at = now();
+            $member->save();
+
+            return response()->json([
+                'status'  => true,
+                'message' => "Password reset successfully for {$member->name}.",
+                'data'    => [
+                    'id'         => $member->id,
+                    'name'       => $member->name,
+                    'email'      => $member->email,
+                    'updated_at' => $member->updated_at->toDateTimeString(),
+                ],
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'status'  => false,
+                'message' => 'Server error: ' . $e->getMessage(),
+            ], 500);
+        }
     }
 }

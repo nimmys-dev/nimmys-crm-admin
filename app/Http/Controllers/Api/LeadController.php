@@ -1096,6 +1096,90 @@ class LeadController extends Controller
         ], 200);
     }
 
+    // public function leadList(Request $request): JsonResponse
+    // {
+    //     // PAGINATION
+    //     $perPage = (int) $request->get('per_page', 10);
+    //     $perPage = min(max($perPage, 1), 100);
+
+    //     // SEARCH
+    //     $search = trim($request->get('search', ''));
+
+    //     // STATUS FILTER
+    //     $status = $request->get('status');
+
+    //     $query = Lead::with([
+    //         'owner:id,name',
+    //         'creator:id,name',
+    //     ]);
+
+    //     // SEARCH
+    //     if ($search !== '') {
+    //         $query->where(function ($q) use ($search) {
+    //             $q->where('name', 'like', "%{$search}%")
+    //                 ->orWhere('phone', 'like', "%{$search}%")
+    //                 ->orWhere('reference', 'like', "%{$search}%")
+    //                 ->orWhereHas('owner', function ($ownerQuery) use ($search) {
+    //                     $ownerQuery->where('name', 'like', "%{$search}%");
+    //                 });
+    //         });
+    //     }
+
+    //     // STATUS FILTER
+    //     if (!empty($status)) {
+
+    //         // API "open" => DB "new"
+    //         $dbStatus = $status === 'open' ? 'new' : $status;
+
+    //         $query->where('status', $dbStatus);
+    //     }
+
+    //     $leads = $query->latest('id')->paginate($perPage);
+
+    //     $data = $leads->getCollection()->map(function ($lead) {
+
+    //         // DB "new" => API "open"
+    //         $responseStatus = $lead->status?->value ?? $lead->status;
+
+    //         if ($responseStatus === 'new') {
+    //             $responseStatus = 'open';
+    //         }
+
+    //         return [
+    //             'id' => $lead->id,
+    //             'reference' => $lead->reference,
+    //             'name' => $lead->name,
+    //             'phone' => $lead->phone,
+
+    //             'source' => $lead->source?->value ?? $lead->source,
+
+    //             'status' => $responseStatus,
+
+    //             'assigned_to' => $lead->owner?->name,
+    //             'created_by' => $lead->creator?->name,
+    //             'description' => $lead->description,
+
+    //             'has_quotation' => (bool) $lead->has_quotation,
+    //         ];
+    //     })->values();
+
+    //     return response()->json([
+    //         'status' => true,
+    //         'status_code' => 200,
+    //         'message' => 'Leads retrieved successfully',
+    //         'data' => $data,
+
+    //         'pagination' => [
+    //             'current_page' => $leads->currentPage(),
+    //             'per_page' => $leads->perPage(),
+    //             'total' => $leads->total(),
+    //             'last_page' => $leads->lastPage(),
+    //             'from' => $leads->firstItem(),
+    //             'to' => $leads->lastItem(),
+    //         ],
+    //     ], 200);
+    // }
+
     public function leadList(Request $request): JsonResponse
     {
         // PAGINATION
@@ -1111,6 +1195,7 @@ class LeadController extends Controller
         $query = Lead::with([
             'owner:id,name',
             'creator:id,name',
+            'latestCall',
         ]);
 
         // SEARCH
@@ -1125,13 +1210,31 @@ class LeadController extends Controller
             });
         }
 
-        // STATUS FILTER
+        /*
+        |--------------------------------------------------------------------------
+        | STATUS & FOLLOW-UP FILTERING
+        |--------------------------------------------------------------------------
+        */
         if (!empty($status)) {
+            if (in_array($status, ['today', 'overdue', 'upcoming'])) {
+                // ഫോളോ-അപ്പ് സ്റ്റാറ്റസ് ഫിൽട്ടറുകൾ ('new' സ്റ്റാറ്റസ് ഉള്ളവ മാത്രം)
+                $query->where('status', 'new')
+                    ->whereHas('latestCall', function ($q) use ($status) {
+                        $q->whereNotNull('next_followup_date');
 
-            // API "open" => DB "new"
-            $dbStatus = $status === 'open' ? 'new' : $status;
-
-            $query->where('status', $dbStatus);
+                        if ($status === 'today') {
+                            $q->whereDate('next_followup_date', today());
+                        } elseif ($status === 'overdue') {
+                            $q->whereDate('next_followup_date', '<', today());
+                        } elseif ($status === 'upcoming') {
+                            $q->whereDate('next_followup_date', '>', today());
+                        }
+                    });
+            } else {
+                // സാദാ സ്റ്റാറ്റസ് ഫിൽട്ടർ (API "open" => DB "new")
+                $dbStatus = $status === 'open' ? 'new' : $status;
+                $query->where('status', $dbStatus);
+            }
         }
 
         $leads = $query->latest('id')->paginate($perPage);
@@ -1140,9 +1243,31 @@ class LeadController extends Controller
 
             // DB "new" => API "open"
             $responseStatus = $lead->status?->value ?? $lead->status;
-
             if ($responseStatus === 'new') {
                 $responseStatus = 'open';
+            }
+
+            /*
+            |--------------------------------------------------------------------------
+            | FOLLOW-UP CALCULATION
+            |--------------------------------------------------------------------------
+            */
+            $nextFollowUp = $lead->latestCall?->next_followup_date;
+            $followUpDate = $nextFollowUp ? \Carbon\Carbon::parse($nextFollowUp) : null;
+
+            $isOpen = ($lead->status?->value ?? $lead->status) === 'new';
+
+            $isOverdue  = $isOpen && $followUpDate && $followUpDate->isBefore(today());
+            $isToday    = $isOpen && $followUpDate && $followUpDate->isToday();
+            $isUpcoming = $isOpen && $followUpDate && $followUpDate->isAfter(today());
+
+            $followupStatus = null;
+            if ($isOverdue) {
+                $followupStatus = 'overdue';
+            } elseif ($isToday) {
+                $followupStatus = 'today';
+            } elseif ($isUpcoming) {
+                $followupStatus = 'upcoming';
             }
 
             return [
@@ -1152,7 +1277,6 @@ class LeadController extends Controller
                 'phone' => $lead->phone,
 
                 'source' => $lead->source?->value ?? $lead->source,
-
                 'status' => $responseStatus,
 
                 'assigned_to' => $lead->owner?->name,
@@ -1160,6 +1284,10 @@ class LeadController extends Controller
                 'description' => $lead->description,
 
                 'has_quotation' => (bool) $lead->has_quotation,
+
+                'next_followup_date' => $followUpDate ? $followUpDate->format('Y-m-d') : null,
+                'formatted_next_followup_date' => $followUpDate ? $followUpDate->format('j M Y') : null,
+                'followup_status' => $followupStatus,
             ];
         })->values();
 
@@ -1171,11 +1299,11 @@ class LeadController extends Controller
 
             'pagination' => [
                 'current_page' => $leads->currentPage(),
-                'per_page' => $leads->perPage(),
-                'total' => $leads->total(),
-                'last_page' => $leads->lastPage(),
-                'from' => $leads->firstItem(),
-                'to' => $leads->lastItem(),
+                'per_page'     => $leads->perPage(),
+                'total'        => $leads->total(),
+                'last_page'    => $leads->lastPage(),
+                'from'         => $leads->firstItem(),
+                'to'           => $leads->lastItem(),
             ],
         ], 200);
     }

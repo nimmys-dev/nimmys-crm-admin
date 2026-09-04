@@ -312,3 +312,22 @@
         />
     @endcan
 @endforeach
+<script>
+document.getElementById('logCallForm').addEventListener('submit', function (e) {
+    const form = this;
+    const button = document.getElementById('logCallSubmitBtn');
+
+    // തുടർച്ചയായ ക്ലിക്കുകൾ തടയുന്നു
+    if (form.dataset.submitted === 'true') {
+        e.preventDefault();
+        return false;
+    }
+
+    // ഫോം സബ്മിറ്റ് ആയി എന്ന് മാർക്ക് ചെയ്യുന്നു
+    form.dataset.submitted = 'true';
+
+    // ഒറ്റ ക്ലിക്കിൽ ബട്ടൺ ഡിസേബിൾ ചെയ്യുകയും ഹൈഡ് ചെയ്യുകയും ചെയ്യുന്നു
+    button.disabled = true;
+    button.style.display = 'none';
+});
+</script>

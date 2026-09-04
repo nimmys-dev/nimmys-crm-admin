@@ -14,6 +14,7 @@ use App\Support\EmployeeCode;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 
 /**
  * Staff Management — Admin only.
@@ -211,5 +212,37 @@ class StaffController extends Controller
     private function shopOptions(): array
     {
         return Shop::query()->orderBy('name')->pluck('name', 'id')->all();
+    }
+
+    public function resetPassword(User $member)
+    {
+        return view('staff.reset-password', compact('member'));
+    }
+
+
+
+    public function updatePassword(Request $request, User $member): RedirectResponse
+    {
+        $request->validate([
+            'password' => [
+                'required',
+                'string',
+                'min:8',
+                'confirmed',
+            ],
+        ]);
+
+        // Hash::make ഉപയോഗിച്ച് പാസ്‌വേഡ് ഹാഷ് ചെയ്യുന്നു
+        $member->password = Hash::make($request->password);
+
+        // Explicit ആയി updated_at അപ്ഡേറ്റ് ആകാൻ
+        $member->updated_at = now(); 
+
+        // ഡാറ്റാബേസിൽ സേവ് ചെയ്യുന്നു
+        $member->save();
+
+        return redirect()
+            ->route('staff.index')
+            ->with('success', "Password reset successfully for {$member->name}.");
     }
 }

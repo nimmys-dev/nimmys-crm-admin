@@ -128,6 +128,12 @@
                                         icon="ti ti-pencil"
                                         aria-label="Edit {{ $member->name }}"
                                     />
+                                    {{-- Reset Password --}} 
+                                    <x-button variant="light" 
+                                    size="sm" :href="route('staff.reset-password', $member)" 
+                                    icon="ti ti-key" 
+                                    aria-label="Reset Password for {{ $member->name }}" 
+                                    />
                                     <x-button
                                         variant="light"
                                         size="sm"

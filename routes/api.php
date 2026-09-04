@@ -28,6 +28,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/view-staff/{id}', [StaffController::class, 'viewStaff']);
     Route::post('/update-staff/{id}', [StaffController::class, 'updateStaff']);
     Route::delete('/delete-staff/{id}', [StaffController::class, 'deleteStaff']);
+    Route::post('/staff/{staff}/reset-password', [StaffController::class, 'resetPassword']);
 
     //lead
      Route::post('/create-leads', [LeadController::class, 'createLead']);
