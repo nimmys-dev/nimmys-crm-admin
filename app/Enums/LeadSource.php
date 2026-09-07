@@ -4,20 +4,20 @@ namespace App\Enums;
 
 enum LeadSource: string
 {
-    case Website = 'website';
+    // case Website = 'website';
     case Call = 'call';
     case SocialMedia = 'social_media';
     case WhatsApp = 'WhatsApp';
-    case Ref = 'referral';
+    // case Ref = 'referral';
 
     public function label(): string
     {
         return match ($this) {
-            self::Website => 'Website',
+            // self::Website => 'Website',
             self::SocialMedia => 'Social Media',
             self::Call =>'Call',
             self::WhatsApp =>'WhatsApp',
-            self::Ref =>'Reff'
+            // self::Ref =>'Reff'
         };
     }
 
