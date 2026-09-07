@@ -821,4 +821,16 @@ class Task extends Model
     {
         return $this->hasMany(TaskQuarter::class);
     }
+
+    public function assignedTo()
+    {
+        // 'assigned_to' എന്നത് Task ടേബിളിലെ Foreign Key Column Name ആണ്
+        return $this->belongsTo(User::class, 'assigned_to');
+    }
+
+    public function lead()
+    {
+        // 'lead_id' എന്നത് Tasks ടേബിളിലെ Foreign Key Column ആണ്
+        return $this->belongsTo(Lead::class, 'lead_id');
+    }
 }

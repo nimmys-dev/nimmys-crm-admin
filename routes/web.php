@@ -170,6 +170,9 @@ Route::middleware(['auth', 'web.access'])->group(function () {
     Route::get('reports', [ReportController::class, 'index'])
         ->middleware('can:reports.view')
         ->name('reports.index');
+    
+    // Download Single Report
+    Route::get('/reports/download/{id}', [ReportController::class, 'download'])->name('reports.download');
     Route::resource('tasks', TaskController::class);
     Route::patch('/tasks/{task}/complete',[TaskController::class, 'complete'])->name('tasks.complete');
     Route::get('/my-tasks', [TaskController::class, 'myTasks'])->name('my-tasks.index');

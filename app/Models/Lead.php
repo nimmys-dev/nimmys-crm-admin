@@ -293,4 +293,9 @@ class Lead extends Model
             ? (int) today()->diffInDays($this->next_follow_up_at, false)
             : null;
     }
+
+    public function assignedUser()
+    {
+        return $this->belongsTo(User::class, 'assigned_to');
+    }
 }

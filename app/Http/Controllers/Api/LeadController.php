@@ -1197,7 +1197,7 @@ class LeadController extends Controller
             'creator:id,name',
             'latestCall',
         ]);
-
+        $query->where('status', '!=', 'closed');
         // SEARCH
         if ($search !== '') {
             $query->where(function ($q) use ($search) {
@@ -1992,6 +1992,80 @@ public function addCall(StoreCallDetailRequest $request, Lead $lead): JsonRespon
         'status_code' => 200,
         'message' => 'Call reasons retrieved successfully.',
         'data' => $reasons,
+    ], 200);
+}
+
+public function closedLeadList(Request $request): JsonResponse
+{
+    // PAGINATION
+    $perPage = (int) $request->get('per_page', 10);
+    $perPage = min(max($perPage, 1), 100);
+
+    // SEARCH
+    $search = trim($request->get('search', ''));
+
+    $query = Lead::with([
+        'owner:id,name',
+        'creator:id,name',
+        'latestCall',
+    ])->where('status', 'closed');
+
+    // SEARCH
+    if ($search !== '') {
+        $query->where(function ($q) use ($search) {
+            $q->where('name', 'like', "%{$search}%")
+                ->orWhere('phone', 'like', "%{$search}%")
+                ->orWhere('reference', 'like', "%{$search}%")
+                ->orWhereHas('owner', function ($ownerQuery) use ($search) {
+                    $ownerQuery->where('name', 'like', "%{$search}%");
+                });
+        });
+    }
+
+    $leads = $query
+        ->latest('id')
+        ->paginate($perPage);
+
+    $data = $leads->getCollection()->map(function ($lead) {
+
+        $responseStatus = $lead->status?->value ?? $lead->status;
+
+        return [
+            'id' => $lead->id,
+            'reference' => $lead->reference,
+            'name' => $lead->name,
+            'phone' => $lead->phone,
+
+            'source' => $lead->source?->value ?? $lead->source,
+            'status' => $responseStatus,
+
+            'assigned_to' => $lead->owner?->name,
+            'created_by' => $lead->creator?->name,
+            'description' => $lead->description,
+
+            'has_quotation' => (bool) $lead->has_quotation,
+
+            'next_followup_date' => null,
+            'formatted_next_followup_date' => null,
+            'followup_status' => null,
+        ];
+    })->values();
+
+    return response()->json([
+        'status' => true,
+        'status_code' => 200,
+        'message' => 'Closed leads retrieved successfully',
+
+        'data' => $data,
+
+        'pagination' => [
+            'current_page' => $leads->currentPage(),
+            'per_page'     => $leads->perPage(),
+            'total'        => $leads->total(),
+            'last_page'    => $leads->lastPage(),
+            'from'         => $leads->firstItem(),
+            'to'           => $leads->lastItem(),
+        ],
     ], 200);
 }
 
