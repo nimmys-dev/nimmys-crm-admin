@@ -7,6 +7,9 @@ use App\Http\Requests\CompanyProfile\UpdateCompanyProfileRequest;
 use App\Models\CompanyProfile;
 use App\Services\CompanyLogoService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Validator;
 
 class SettingsController extends Controller
 {
@@ -93,6 +96,53 @@ class SettingsController extends Controller
                     ? url('storage/' . $company->logo_path)
                     : null,
             ],
+        ], 200);
+    }
+
+    public function changePassword(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'current_password' => ['required', 'string'],
+            'password' => ['required', 'string', 'min:8', 'confirmed'],
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => false,
+                'status_code' => 422,
+                'message' => 'Validation failed.',
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        $user = $request->user();
+
+        if (!$user) {
+            return response()->json([
+                'status' => false,
+                'status_code' => 401,
+                'message' => 'Unauthenticated.',
+            ], 401);
+        }
+
+        // Check current password
+        if (!Hash::check($request->current_password, $user->password)) {
+            return response()->json([
+                'status' => false,
+                'status_code' => 422,
+                'message' => 'Current password is incorrect.',
+            ], 422);
+        }
+
+        // Update password
+        $user->update([
+            'password' => Hash::make($request->password),
+        ]);
+
+        return response()->json([
+            'status' => true,
+            'status_code' => 200,
+            'message' => 'Password changed successfully.',
         ], 200);
     }
 }

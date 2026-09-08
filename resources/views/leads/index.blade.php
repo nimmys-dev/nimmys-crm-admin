@@ -200,6 +200,12 @@
                                             aria-label="Edit {{ $lead->reference }}"
                                         />
                                     @endcan
+                                    <a href="https://wa.me/{{ $lead->phone }}"
+                                        target="_blank"
+                                        class="btn btn-success"
+                                        title="WhatsApp">
+                                        <i class="ti ti-brand-whatsapp"></i>
+                                     </a>
 
                                     <!-- @can('delete', $lead)
                                         <x-button

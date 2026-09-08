@@ -15,11 +15,11 @@
 
             <!-- Export Buttons -->
             <div class="flex items-center space-x-2">
-                <a href="{{ route('reports.index', array_merge(request()->query(), ['export' => 'csv'])) }}" 
+                <!-- <a href="{{ route('reports.index', array_merge(request()->query(), ['export' => 'csv'])) }}" 
                    style="background-color: #059669 !important; color: #ffffff !important;"
                    class="px-4 py-2 rounded-lg text-sm font-semibold hover:opacity-90 transition flex items-center shadow-sm">
                     <i class="ti ti-file-spreadsheet mr-1.5 text-base"></i> Export CSV
-                </a>
+                </a> -->
 
                 <a href="{{ route('reports.index', array_merge(request()->query(), ['export' => 'excel'])) }}" 
                    style="background-color: #2563eb !important; color: #ffffff !important;"

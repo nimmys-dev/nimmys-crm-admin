@@ -189,7 +189,8 @@ Route::middleware(['auth', 'web.access'])->group(function () {
     Route::get('profile', [ProfileController::class, 'index'])
         ->middleware('can:profile.view')
         ->name('profile.index');
-
+    Route::post('/change-password', [ProfileController::class, 'changePassword'])
+        ->name('change-password.update');
     Route::get('settings', [SettingsController::class, 'index'])
         ->middleware('can:settings.manage')
         ->name('settings.index');

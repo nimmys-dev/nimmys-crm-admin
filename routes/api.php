@@ -17,6 +17,7 @@ Route::post('/reset-password', [ForgotPasswordController::class, 'resetPasswordA
     ->name('api.password.reset');
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/profile', [AuthController::class, 'profile']);
+    Route::post('/change-password', [SettingsController::class, 'changePassword']);
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/user-statuses', [AuthController::class, 'getUserStatuses']);
     Route::get('/user-roles', [AuthController::class, 'getUserRoles']);
