@@ -18,8 +18,6 @@ use App\Http\Controllers\StaffController;
 use App\Http\Controllers\TaskController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
 use Illuminate\Support\Facades\Route;
-use App\Models\User;
-use App\Services\FirebaseNotificationService;
 /*
 |--------------------------------------------------------------------------
 | Guest
@@ -62,24 +60,6 @@ Route::middleware('guest')->group(function () {
 */
 
 Route::middleware(['auth', 'web.access'])->group(function () {
-    Route::get('/test-fcm', function (FirebaseNotificationService $firebaseService) {
-        $user = User::whereNotNull('fcm_token')->first();
-
-        if (!$user) {
-            return 'Database-ൽ FCM Token ഉള്ള User ആരും ഇല്ല! ആദ്യം Login ചെയ്യൂ.';
-        }
-
-        $status = $firebaseService->sendToUser(
-            $user,
-            '🎉 Test Notification!',
-            'Localhost-ൽ നിന്നുള്ള Firebase Push Notification വിജയകരമായി പ്രവർത്തിക്കുന്നു.',
-            ['type' => 'test', 'id' => 1]
-        );
-
-        return $status 
-            ? "Notification Success! Check your browser." 
-            : "Failed! Check storage/logs/laravel.log";
-    });
 
 
     Route::post('logout', [LoginController::class, 'destroy'])->name('logout');
