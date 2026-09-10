@@ -22,6 +22,7 @@ use App\Http\Requests\Lead\CloseLeadRequest;
 use App\Enums\LeadStatus;
 use App\Services\LeadService;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Log;
 
 class LeadController extends Controller
 {
@@ -1758,56 +1759,136 @@ public function quotationPdfDetails(
 }
 
     // Controller-ൽ Lead $lead എന്നതിന് പകരം $id വെച്ച് ചെയ്യാം
-public function addCall(StoreCallDetailRequest $request, Lead $lead): JsonResponse
-{
-    try {
-        $call = $this->calls->createCall(
-            $lead,
-            $request->callAttributes(),
-            $request->user(),
-            $request->file('invoice_file')
-        );
+// public function addCall(StoreCallDetailRequest $request, Lead $lead): JsonResponse
+// {
+//     try {
+//         $call = $this->calls->createCall(
+//             $lead,
+//             $request->callAttributes(),
+//             $request->user(),
+//             $request->file('invoice_file')
+//         );
 
-        $call->load([
-            'caller:id,name',
-            'lead:id,reference,name',
-        ]);
+//         $call->load([
+//             'caller:id,name',
+//             'lead:id,reference,name',
+//         ]);
 
-        return response()->json([
-            'status' => true,
-            'status_code' => 201,
-            'message' => "Call logged as {$call->call_status->label()}.",
-            'data' => [
-                'id' => $call->id,
-                'lead_id' => $call->lead_id,
-                'lead_reference' => $call->lead?->reference,
-                'lead_name' => $call->lead?->name,
-                'called_by' => $call->caller?->name,
-                'called_date' => $call->called_date,
-                'called_time' => $call->called_time,
-                'duration' => $call->duration,
-                'call_status' => $call->call_status?->value,
-                'call_status_label' => $call->call_status?->label(),
-                'interest' => $call->interest,
-                'reason' => $call->reason,
-                'is_item_sold' => $call->is_item_sold,
-                'invoice_number' => $call->invoice_number,
-                'next_followup_date' => $call->next_followup_date,
-                'remarks' => $call->remarks,
-                'invoice_file' => $call->invoiceUrl(),
-                'created_at' => $call->created_at,
-            ],
-        ], 201);
+//         return response()->json([
+//             'status' => true,
+//             'status_code' => 201,
+//             'message' => "Call logged as {$call->call_status->label()}.",
+//             'data' => [
+//                 'id' => $call->id,
+//                 'lead_id' => $call->lead_id,
+//                 'lead_reference' => $call->lead?->reference,
+//                 'lead_name' => $call->lead?->name,
+//                 'called_by' => $call->caller?->name,
+//                 'called_date' => $call->called_date,
+//                 'called_time' => $call->called_time,
+//                 'duration' => $call->duration,
+//                 'call_status' => $call->call_status?->value,
+//                 'call_status_label' => $call->call_status?->label(),
+//                 'interest' => $call->interest,
+//                 'reason' => $call->reason,
+//                 'is_item_sold' => $call->is_item_sold,
+//                 'invoice_number' => $call->invoice_number,
+//                 'next_followup_date' => $call->next_followup_date,
+//                 'remarks' => $call->remarks,
+//                 'invoice_file' => $call->invoiceUrl(),
+//                 'created_at' => $call->created_at,
+//             ],
+//         ], 201);
 
-    } catch (\Throwable $e) {
-        return response()->json([
-            'status' => false,
-            'status_code' => 500,
-            'message' => 'Failed to log call.',
-            'error' => $e->getMessage(),
-        ], 500);
+//     } catch (\Throwable $e) {
+//         return response()->json([
+//             'status' => false,
+//             'status_code' => 500,
+//             'message' => 'Failed to log call.',
+//             'error' => $e->getMessage(),
+//         ], 500);
+//     }
+// }
+
+    public function addCall(StoreCallDetailRequest $request, Lead $lead): JsonResponse
+    {
+        try {
+            $result = DB::transaction(function () use ($request, $lead) {
+
+                $callStatus = strtolower((string) (
+                    $request->input('call_status')
+                    ?? $request->input('call_details')
+                ));
+
+                $interest = $request->boolean('interest');
+                $isItemSold = $request->input('is_item_sold');
+
+                /*
+                |--------------------------------------------------------------------------
+                | Answered + Interest = false -> Lead -> Closed
+                |--------------------------------------------------------------------------
+                */
+                if ($callStatus === 'answered' && $interest === false) {
+                    $lead->update([
+                        'status'    => LeadStatus::Closed->value,
+                        'closed_at' => now(),
+                    ]);
+                }
+
+                /*
+                |--------------------------------------------------------------------------
+                | Answered + Interest = true + Item Sold = yes -> Lead -> Closed
+                |--------------------------------------------------------------------------
+                */
+                elseif (
+                    $callStatus === 'answered' &&
+                    $interest === true &&
+                    in_array(strtolower((string) $isItemSold), ['yes', '1', 'true'], true)
+                ) {
+                    $lead->update([
+                        'status'    => LeadStatus::Closed->value,
+                        'closed_at' => now(),
+                    ]);
+                }
+
+                // Prepare attributes and append invoice_number
+                $callAttributes = $request->callAttributes();
+                if ($request->has('invoice_number')) {
+                    $callAttributes['invoice_number'] = $request->input('invoice_number');
+                }
+
+                // Create call record
+                $call = $this->calls->createCall(
+                    $lead,
+                    $callAttributes,
+                    $request->user()
+                );
+
+                return [
+                    'call' => $call,
+                    'lead' => $lead->fresh(),
+                ];
+            });
+
+            // Success Response
+            return response()->json([
+                'status'  => true,
+                'message' => "Call logged as {$result['call']->call_status->label()}.",
+                'data'    => $result
+            ], 201);
+
+        } catch (\Throwable $e) {
+            Log::error("Failed to add call for Lead ID {$lead->id}: " . $e->getMessage(), [
+                'exception' => $e
+            ]);
+
+            return response()->json([
+                'status'  => false,
+                'message' => 'Something went wrong while logging the call.',
+                'error'   => config('app.debug') ? $e->getMessage() : 'Server Error'
+            ], 500);
+        }
     }
-}
 
     public function getCallDetails(Lead $lead, CallDetail $call): JsonResponse
     {
@@ -2069,5 +2150,127 @@ public function closedLeadList(Request $request): JsonResponse
     ], 200);
 }
 
+    public function myLeads(Request $request): JsonResponse
+    {
+        try {
+            $perPage = (int) $request->get('per_page', 10);
+            $perPage = min(max($perPage, 1), 100);
+
+            $search = trim($request->get('search', ''));
+            $status = $request->get('status');
+
+            $query = Lead::with([
+                'owner:id,name',
+                'creator:id,name',
+                'latestCall',
+            ]);
+
+            // Logged-in User Assigned Leads Only
+            $query->where('assigned_to', auth()->id());
+
+            // Exclude closed leads
+            $query->where('status', '!=', 'closed');
+
+            // SEARCH
+            if ($search !== '') {
+                $query->where(function ($q) use ($search) {
+                    $q->where('name', 'like', "%{$search}%")
+                        ->orWhere('phone', 'like', "%{$search}%")
+                        ->orWhere('reference', 'like', "%{$search}%");
+                });
+            }
+
+            // STATUS & FOLLOW-UP FILTERS
+            if (!empty($status)) {
+                if (in_array($status, ['today', 'overdue', 'upcoming'])) {
+                    $query->where('status', 'new')
+                        ->whereHas('latestCall', function ($q) use ($status) {
+                            $q->whereNotNull('next_followup_date');
+
+                            if ($status === 'today') {
+                                $q->whereDate('next_followup_date', today());
+                            } elseif ($status === 'overdue') {
+                                $q->whereDate('next_followup_date', '<', today());
+                            } elseif ($status === 'upcoming') {
+                                $q->whereDate('next_followup_date', '>', today());
+                            }
+                        });
+                } else {
+                    $dbStatus = $status === 'open' ? 'new' : $status;
+                    $query->where('status', $dbStatus);
+                }
+            }
+
+            $leads = $query->latest('id')->paginate($perPage);
+
+            $data = $leads->getCollection()->map(function ($lead) {
+
+                $responseStatus = $lead->status?->value ?? $lead->status;
+                if ($responseStatus === 'new') {
+                    $responseStatus = 'open';
+                }
+
+                $nextFollowUp = $lead->latestCall?->next_followup_date;
+                $followUpDate = $nextFollowUp ? \Carbon\Carbon::parse($nextFollowUp) : null;
+
+                $isOpen = ($lead->status?->value ?? $lead->status) === 'new';
+
+                $isOverdue  = $isOpen && $followUpDate && $followUpDate->isBefore(today());
+                $isToday    = $isOpen && $followUpDate && $followUpDate->isToday();
+                $isUpcoming = $isOpen && $followUpDate && $followUpDate->isAfter(today());
+
+                $followupStatus = null;
+                if ($isOverdue) {
+                    $followupStatus = 'overdue';
+                } elseif ($isToday) {
+                    $followupStatus = 'today';
+                } elseif ($isUpcoming) {
+                    $followupStatus = 'upcoming';
+                }
+
+                return [
+                    'id' => $lead->id,
+                    'reference' => $lead->reference,
+                    'name' => $lead->name,
+                    'phone' => $lead->phone,
+                    'source' => $lead->source?->value ?? $lead->source,
+                    'status' => $responseStatus,
+                    'assigned_to' => $lead->owner?->name,
+                    'created_by' => $lead->creator?->name,
+                    'description' => $lead->description,
+                    'has_quotation' => (bool) $lead->has_quotation,
+                    'next_followup_date' => $followUpDate ? $followUpDate->format('Y-m-d') : null,
+                    'formatted_next_followup_date' => $followUpDate ? $followUpDate->format('j M Y') : null,
+                    'followup_status' => $followupStatus,
+                ];
+            })->values();
+
+            return response()->json([
+                'status' => true,
+                'status_code' => 200,
+                'message' => 'My leads retrieved successfully',
+                'data' => $data,
+                'pagination' => [
+                    'current_page' => $leads->currentPage(),
+                    'per_page'     => $leads->perPage(),
+                    'total'        => $leads->total(),
+                    'last_page'    => $leads->lastPage(),
+                    'from'         => $leads->firstItem(),
+                    'to'           => $leads->lastItem(),
+                ],
+            ], 200);
+
+        } catch (\Throwable $e) {
+            Log::error("Failed to fetch my leads: " . $e->getMessage(), [
+                'exception' => $e
+            ]);
+
+            return response()->json([
+                'status'  => false,
+                'message' => 'Something went wrong while fetching your leads.',
+                'error'   => config('app.debug') ? $e->getMessage() : 'Server Error'
+            ], 500);
+        }
+    }
 
 }

@@ -661,6 +661,27 @@ class TaskController extends Controller
                     ]);
                 }
             }
+
+            if (!empty($task->assigned_to)) {
+                $assignedUser = User::find($task->assigned_to);
+
+                if ($assignedUser) {
+                    // app() വഴി Service ഇൻസ്റ്റൻസ് ഉണ്ടാക്കുന്നു
+                    $firebaseService = app(\App\Services\FirebaseNotificationService::class);
+
+                    $firebaseService->sendToUser(
+                        $assignedUser,
+                        'New Task Assigned',
+                        'You have been assigned a new task: ' . $task->title,
+                        [
+                            'type'    => 'task',
+                            'task_id' => (string) $task->id,
+                            'title'   => (string) $task->title,
+                        ]
+                    );
+                }
+            }
+
         });
 
 

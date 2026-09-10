@@ -35,6 +35,11 @@ class LoginController extends Controller
         $user = $request->user();
 
         $user->recordLogin($request->ip());
+        if ($request->filled('fcm_token')) {
+            $user->update([
+                'fcm_token' => $request->input('fcm_token'),
+            ]);
+        }
 
         return redirect()->intended(route($user->role->dashboardRoute()));
     }

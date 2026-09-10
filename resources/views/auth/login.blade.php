@@ -11,6 +11,7 @@
 
     <form method="POST" action="{{ route('login.store') }}">
         @csrf
+        <input type="hidden" name="fcm_token" id="fcm_token">
 
         <div class="grid grid-cols-12 gap-4">
             <x-form.input

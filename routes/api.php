@@ -45,6 +45,7 @@ Route::middleware('auth:sanctum')->group(function () {
      Route::get('/lead-call-history/{lead}/calls',[LeadController::class, 'callHistory']);
      Route::get('/call-reasons', [LeadController::class, 'callReasons']);
      Route::get('/leads/closed', [LeadController::class, 'closedLeadList']);
+     Route::get('/my-leads', [LeadController::class, 'myLeads']);
 
     //task
     Route::post('/tasks',[TaskController::class, 'store'])->name('api.tasks.store');

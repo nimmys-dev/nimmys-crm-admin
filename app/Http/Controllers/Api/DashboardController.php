@@ -178,6 +178,10 @@ class DashboardController extends Controller
                 ->latest('id')
                 ->paginate($perPage)
                 ->withQueryString();
+                $tasks->getCollection()->transform(function ($task) {
+                    $task->assigned_to_name = $task->assignedUser?->name;
+                    return $task;
+                });
         }
 
         /*

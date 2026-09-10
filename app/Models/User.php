@@ -42,6 +42,7 @@ class User extends Authenticatable
         'description',
         'status',
         'device_token',
+        'fcm_token',
     ];
 
     /**
