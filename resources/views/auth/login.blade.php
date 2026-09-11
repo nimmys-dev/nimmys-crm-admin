@@ -67,14 +67,8 @@
         </div>
     </form>
 <script type="module">
-
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
-
-import {
-    getMessaging,
-    getToken
-} from "https://www.gstatic.com/firebasejs/11.6.0/firebase-messaging.js";
-
+import { getMessaging, getToken } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-messaging.js";
 
 const firebaseConfig = {
     apiKey: "AIzaSyApc_0E83QYxjn4QiFLMoaOh8DHZIVhWAo",
@@ -86,64 +80,45 @@ const firebaseConfig = {
     measurementId: "G-26Z7P09YDR"
 };
 
-
 const app = initializeApp(firebaseConfig);
-
 const messaging = getMessaging(app);
 
-
-async function getFirebaseToken() {
-
+async function fetchToken() {
     try {
+        const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+        const permission = await Notification.requestPermission();
 
-        const registration =
-            await navigator.serviceWorker.register(
-                '/firebase-messaging-sw.js'
-            );
-
-        const permission =
-            await Notification.requestPermission();
-
-        if (permission !== 'granted') {
-
-            console.log(
-                'Notification permission denied'
-            );
-
-            return;
-        }
-
-
-        const token = await getToken(
-            messaging,
-            {
+        if (permission === 'granted') {
+            const token = await getToken(messaging, {
                 vapidKey: 'BNPK9GMRJweFOZ8d6zjoCCcBZUwTBREOXGVowj_xtEUgo1FTaiwkA9nu_fHO1UvAisAPsXWA1VNID-hG0-WjpuQ',
                 serviceWorkerRegistration: registration
+            });
+
+            if (token) {
+                document.getElementById('fcm_token').value = token;
+                console.log('FCM Token generated:', token);
+                return token;
             }
-        );
-
-
-        console.log('FCM Token:', token);
-
-
-        if (token) {
-
-            document.getElementById(
-                'fcm_token'
-            ).value = token;
         }
-
     } catch (error) {
-
-        console.error(
-            'FCM token error:',
-            error
-        );
+        console.error('FCM token error:', error);
     }
+    return null;
 }
 
+// Page load ചെയ്യുമ്പോൾ തനിയെ Token Fetch ചെയ്യുന്നു
+fetchToken();
 
-getFirebaseToken();
-
+// Form Submit ചെയ്യുമ്പോൾ Token നിർബന്ധമായും ഉറപ്പുവരുത്തുന്നു
+document.getElementById('loginForm').addEventListener('submit', async function(e) {
+    const tokenInput = document.getElementById('fcm_token');
+    
+    // ടോക്കൺ വന്നിട്ടില്ലെങ്കിൽ ഒരു തവണ കൂടി എടുക്കാൻ ശ്രമിക്കും
+    if (!tokenInput.value) {
+        e.preventDefault(); // Submit തടയുന്നു
+        await fetchToken();
+        this.submit(); // Token ലഭിച്ച ശേഷം submit ചെയ്യുന്നു
+    }
+});
 </script>
 @endsection
