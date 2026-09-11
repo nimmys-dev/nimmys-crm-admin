@@ -3,36 +3,70 @@
 namespace App\Services;
 
 use App\Models\User;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use Kreait\Firebase\Factory;
-use Kreait\Firebase\Messaging\CloudMessage;
-use Kreait\Firebase\Messaging\Notification;
 
 class FirebaseNotificationService
 {
-    protected $messaging;
+    protected string $projectId;
+    protected string $credentialsPath;
 
     public function __construct()
     {
         $credentials = config('services.firebase.credentials');
 
-        // Convert relative path to absolute path
         if (!str_starts_with($credentials, DIRECTORY_SEPARATOR)
             && !preg_match('/^[A-Za-z]:[\\\\\/]/', $credentials)) {
-
             $credentials = base_path($credentials);
         }
 
-        if (!file_exists($credentials)) {
-            throw new \Exception(
-                'Firebase credentials file not found: ' . $credentials
-            );
+        $this->credentialsPath = $credentials;
+    }
+
+    /**
+     * Google Access Token ഉണ്ടാക്കാൻ (OAuth2)
+     */
+    private function getAccessToken(): ?string
+    {
+        if (!file_exists($this->credentialsPath)) {
+            Log::error('Firebase credentials file missing: ' . $this->credentialsPath);
+            return null;
         }
 
-        $factory = (new Factory)
-            ->withServiceAccount($credentials);
+        $jsonKey = json_decode(file_get_contents($this->credentialsPath), true);
+        $this->projectId = $jsonKey['project_id'] ?? '';
 
-        $this->messaging = $factory->createMessaging();
+        // JWT Header
+        $header = base64_encode(json_encode(['alg' => 'RS256', 'typ' => 'JWT']));
+
+        // JWT Claim Set
+        $now = time();
+        $claimSet = base64_encode(json_encode([
+            'iss' => $jsonKey['client_email'],
+            'scope' => 'https://www.googleapis.com/auth/firebase.messaging',
+            'aud' => 'https://oauth2.googleapis.com/token',
+            'exp' => $now + 3600,
+            'iat' => $now,
+        ]));
+
+        // Sign JWT with Private Key
+        $signature = '';
+        openssl_sign(
+            $header . '.' . $claimSet,
+            $signature,
+            $jsonKey['private_key'],
+            'SHA256'
+        );
+
+        $jwt = $header . '.' . $claimSet . '.' . base64_encode($signature);
+
+        // Fetch Access Token from Google
+        $response = Http::asForm()->post('https://oauth2.googleapis.com/token', [
+            'grant_type' => 'urn:ietf:params:oauth:grant-type:jwt-bearer',
+            'assertion' => $jwt,
+        ]);
+
+        return $response->json()['access_token'] ?? null;
     }
 
     /**
@@ -44,45 +78,50 @@ class FirebaseNotificationService
         string $body,
         array $data = []
     ): bool {
-
         try {
-
             $token = $user->fcm_token;
 
             if (empty($token)) {
-
-                Log::warning('FCM token not found', [
-                    'user_id' => $user->id,
-                    'user_name' => $user->name,
-                ]);
-
+                Log::warning('FCM token not found', ['user_id' => $user->id]);
                 return false;
             }
 
-            $notification = Notification::create(
-                $title,
-                $body
-            );
+            $accessToken = $this->getAccessToken();
 
-            $message = CloudMessage::withTarget(
-                'token',
-                $token
-            )
-                ->withNotification($notification)
-                ->withData($data);
+            if (!$accessToken) {
+                Log::error('Failed to generate FCM access token');
+                return false;
+            }
 
-            $this->messaging->send($message);
+            // Firebase HTTP v1 API Request
+            $url = "https://fcm.googleapis.com/v1/projects/{$this->projectId}/messages:send";
 
-            Log::info('FCM notification sent', [
-                'user_id' => $user->id,
-                'title' => $title,
-            ]);
+            $response = Http::withToken($accessToken)
+                ->post($url, [
+                    'message' => [
+                        'token' => $token,
+                        'notification' => [
+                            'title' => $title,
+                            'body' => $body,
+                        ],
+                        'data' => array_map('strval', $data), // Data values string ആയിരിക്കണം
+                    ],
+                ]);
 
-            return true;
-
-        } catch (\Throwable $e) {
+            if ($response->successful()) {
+                Log::info('FCM notification sent successfully', ['user_id' => $user->id]);
+                return true;
+            }
 
             Log::error('FCM notification failed', [
+                'user_id' => $user->id,
+                'response' => $response->json(),
+            ]);
+
+            return false;
+
+        } catch (\Throwable $e) {
+            Log::error('FCM notification Exception', [
                 'user_id' => $user->id,
                 'error' => $e->getMessage(),
             ]);
