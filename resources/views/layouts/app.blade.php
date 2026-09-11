@@ -37,7 +37,54 @@
     @stack('modals')
 
     @include('partials.scripts')
+<script type="module">
 
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
+
+import {
+    getMessaging,
+    onMessage
+} from "https://www.gstatic.com/firebasejs/11.6.0/firebase-messaging.js";
+
+
+const firebaseConfig = {
+    apiKey: "AIzaSyApc_0E83QYxjn4QiFLMoaOh8DHZIVhWAo",
+    authDomain: "nimmyscrm.firebaseapp.com",
+    projectId: "nimmyscrm",
+    storageBucket: "nimmyscrm.firebasestorage.app",
+    messagingSenderId: "44488471486",
+    appId: "1:44488471486:web:ec579ba2f62de86499bfef",
+    measurementId: "G-26Z7P09YDR"
+};
+
+
+const app = initializeApp(firebaseConfig);
+const messaging = getMessaging(app);
+
+
+onMessage(messaging, (payload) => {
+
+    console.log('FCM foreground message:', payload);
+
+    const title =
+        payload.notification?.title || 'Nimmys CRM';
+
+    const body =
+        payload.notification?.body || '';
+
+
+    if (Notification.permission === 'granted') {
+
+        new Notification(title, {
+            body: body,
+            icon: '/favicon.ico'
+        });
+
+    }
+
+});
+
+</script>
 </body>
 
 </html>

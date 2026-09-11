@@ -11,7 +11,7 @@
 
     <form method="POST" action="{{ route('login.store') }}">
         @csrf
-
+<input type="hidden" name="fcm_token" id="fcm_token">
         <div class="grid grid-cols-12 gap-4">
             <x-form.input
                 name="email"
@@ -66,5 +66,84 @@
             <x-button type="submit" class="mx-auto">Log in</x-button>
         </div>
     </form>
+<script type="module">
 
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
+
+import {
+    getMessaging,
+    getToken
+} from "https://www.gstatic.com/firebasejs/11.6.0/firebase-messaging.js";
+
+
+const firebaseConfig = {
+    apiKey: "AIzaSyApc_0E83QYxjn4QiFLMoaOh8DHZIVhWAo",
+    authDomain: "nimmyscrm.firebaseapp.com",
+    projectId: "nimmyscrm",
+    storageBucket: "nimmyscrm.firebasestorage.app",
+    messagingSenderId: "44488471486",
+    appId: "1:44488471486:web:ec579ba2f62de86499bfef",
+    measurementId: "G-26Z7P09YDR"
+};
+
+
+const app = initializeApp(firebaseConfig);
+
+const messaging = getMessaging(app);
+
+
+async function getFirebaseToken() {
+
+    try {
+
+        const registration =
+            await navigator.serviceWorker.register(
+                '/firebase-messaging-sw.js'
+            );
+
+        const permission =
+            await Notification.requestPermission();
+
+        if (permission !== 'granted') {
+
+            console.log(
+                'Notification permission denied'
+            );
+
+            return;
+        }
+
+
+        const token = await getToken(
+            messaging,
+            {
+                vapidKey: 'BNPK9GMRJweFOZ8d6zjoCCcBZUwTBREOXGVowj_xtEUgo1FTaiwkA9nu_fHO1UvAisAPsXWA1VNID-hG0-WjpuQ',
+                serviceWorkerRegistration: registration
+            }
+        );
+
+
+        console.log('FCM Token:', token);
+
+
+        if (token) {
+
+            document.getElementById(
+                'fcm_token'
+            ).value = token;
+        }
+
+    } catch (error) {
+
+        console.error(
+            'FCM token error:',
+            error
+        );
+    }
+}
+
+
+getFirebaseToken();
+
+</script>
 @endsection

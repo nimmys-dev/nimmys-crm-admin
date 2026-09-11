@@ -61,7 +61,10 @@ Route::middleware('guest')->group(function () {
 
 Route::middleware(['auth', 'web.access'])->group(function () {
 
-
+  Route::post('/firebase/token', [
+        FirebaseTokenController::class,
+        'save'
+    ])->name('firebase.token');
     Route::post('logout', [LoginController::class, 'destroy'])->name('logout');
 
     Route::redirect('/', '/dashboard')->name('home');

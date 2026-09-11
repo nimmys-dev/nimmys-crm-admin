@@ -33,6 +33,13 @@ class LoginController extends Controller
         $request->session()->regenerate();
 
         $user = $request->user();
+        // Save Firebase FCM token
+        if ($request->filled('fcm_token')) {
+            $user->update([
+                'fcm_token' => $request->fcm_token,
+            ]);
+        }
+
 
         $user->recordLogin($request->ip());
 

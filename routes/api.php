@@ -16,6 +16,11 @@ Route::post('/forgot-password', [ForgotPasswordController::class, 'sendResetLink
 Route::post('/reset-password', [ForgotPasswordController::class, 'resetPasswordApi'])
     ->name('api.password.reset');
 Route::middleware('auth:sanctum')->group(function () {
+
+    Route::post('/firebase/token', [
+        FirebaseController::class,
+        'saveToken'
+    ]);
     Route::get('/profile', [AuthController::class, 'profile']);
     Route::post('/change-password', [SettingsController::class, 'changePassword']);
     Route::post('/logout', [AuthController::class, 'logout']);

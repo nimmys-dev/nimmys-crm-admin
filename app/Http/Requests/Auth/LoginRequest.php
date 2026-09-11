@@ -25,6 +25,7 @@ class LoginRequest extends FormRequest
             'email' => ['required', 'string', 'email:rfc', 'max:255'],
             'password' => ['required', 'string', 'max:255'],
             'remember' => ['nullable', 'boolean'],
+            'fcm_token' => ['nullable', 'string'],
         ];
     }
 

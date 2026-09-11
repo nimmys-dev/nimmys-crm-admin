@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 namespace GuzzleHttp\Promise;
 
 final class Utils
@@ -19,9 +17,11 @@ final class Utils
      * }
      * </code>
      *
-     * @param TaskQueueInterface|null $assign Optionally specify a new queue instance.
+     * @param TaskQueueInterface $assign Optionally specify a new queue instance.
+     *
+     * @return TaskQueueInterface
      */
-    public static function queue(?TaskQueueInterface $assign = null): TaskQueueInterface
+    public static function queue(TaskQueueInterface $assign = null)
     {
         static $queue;
 
@@ -39,17 +39,21 @@ final class Utils
      * returns a promise that is fulfilled or rejected with the result.
      *
      * @param callable $task Task function to run.
+     *
+     * @return PromiseInterface
      */
-    public static function task(callable $task): PromiseInterface
+    public static function task(callable $task)
     {
         $queue = self::queue();
         $promise = new Promise([$queue, 'run']);
-        $queue->add(function () use ($task, $promise): void {
+        $queue->add(function () use ($task, $promise) {
             try {
                 if (Is::pending($promise)) {
                     $promise->resolve($task());
                 }
             } catch (\Throwable $e) {
+                $promise->reject($e);
+            } catch (\Exception $e) {
                 $promise->reject($e);
             }
         });
@@ -68,23 +72,21 @@ final class Utils
      * key mapping to the rejection reason of the promise.
      *
      * @param PromiseInterface $promise Promise or value.
+     *
+     * @return array
      */
-    public static function inspect(PromiseInterface $promise): array
+    public static function inspect(PromiseInterface $promise)
     {
         try {
             return [
                 'state' => PromiseInterface::FULFILLED,
-                'value' => $promise->wait(),
+                'value' => $promise->wait()
             ];
+        } catch (RejectionException $e) {
+            return ['state' => PromiseInterface::REJECTED, 'reason' => $e->getReason()];
         } catch (\Throwable $e) {
-            if ($e instanceof AggregateException) {
-                return ['state' => PromiseInterface::REJECTED, 'reason' => $e];
-            }
-
-            if ($e instanceof RejectionException) {
-                return ['state' => PromiseInterface::REJECTED, 'reason' => $e->getReason()];
-            }
-
+            return ['state' => PromiseInterface::REJECTED, 'reason' => $e];
+        } catch (\Exception $e) {
             return ['state' => PromiseInterface::REJECTED, 'reason' => $e];
         }
     }
@@ -98,11 +100,11 @@ final class Utils
      * @see inspect for the inspection state array format.
      *
      * @param PromiseInterface[] $promises Traversable of promises to wait upon.
+     *
+     * @return array
      */
-    public static function inspectAll($promises): array
+    public static function inspectAll($promises)
     {
-        $promises = self::prepareIterable($promises, __FUNCTION__);
-
         $results = [];
         foreach ($promises as $key => $promise) {
             $results[$key] = self::inspect($promise);
@@ -120,12 +122,13 @@ final class Utils
      *
      * @param iterable<PromiseInterface> $promises Iterable of PromiseInterface objects to wait on.
      *
-     * @throws \Throwable on error
+     * @return array
+     *
+     * @throws \Exception on error
+     * @throws \Throwable on error in PHP >=7
      */
-    public static function unwrap($promises): array
+    public static function unwrap($promises)
     {
-        $promises = self::prepareIterable($promises, __FUNCTION__);
-
         $results = [];
         foreach ($promises as $key => $promise) {
             $results[$key] = $promise->wait();
@@ -144,42 +147,32 @@ final class Utils
      *
      * @param mixed $promises  Promises or values.
      * @param bool  $recursive If true, resolves new promises that might have been added to the stack during its own resolution.
+     *
+     * @return PromiseInterface
      */
-    public static function all($promises, bool $recursive = false): PromiseInterface
+    public static function all($promises, $recursive = false)
     {
-        $promises = self::prepareIterable($promises, __FUNCTION__);
-
         $results = [];
         $promise = Each::of(
             $promises,
-            function ($value, $idx) use (&$results): void {
+            function ($value, $idx) use (&$results) {
                 $results[$idx] = $value;
             },
-            function ($reason, $idx, Promise $aggregate): void {
-                if (Is::pending($aggregate)) {
-                    $aggregate->reject($reason);
-                }
+            function ($reason, $idx, Promise $aggregate) {
+                $aggregate->reject($reason);
             }
         )->then(function () use (&$results) {
             ksort($results);
-
             return $results;
         });
 
         if (true === $recursive) {
             $promise = $promise->then(function ($results) use ($recursive, &$promises) {
-                // A consumed generator cannot be traversed again, so a
-                // recursive pass has nothing further to observe.
-                if ($promises instanceof \Generator) {
-                    return $results;
-                }
-
                 foreach ($promises as $promise) {
                     if (Is::pending($promise)) {
                         return self::all($promises, $recursive);
                     }
                 }
-
                 return $results;
             });
         }
@@ -200,17 +193,17 @@ final class Utils
      *
      * @param int   $count    Total number of promises.
      * @param mixed $promises Promises or values.
+     *
+     * @return PromiseInterface
      */
-    public static function some(int $count, $promises): PromiseInterface
+    public static function some($count, $promises)
     {
-        $promises = self::prepareIterable($promises, __FUNCTION__);
-
         $results = [];
         $rejections = [];
 
         return Each::of(
             $promises,
-            function ($value, $idx, PromiseInterface $p) use (&$results, $count): void {
+            function ($value, $idx, PromiseInterface $p) use (&$results, $count) {
                 if (Is::settled($p)) {
                     return;
                 }
@@ -219,7 +212,7 @@ final class Utils
                     $p->resolve(null);
                 }
             },
-            function ($reason) use (&$rejections): void {
+            function ($reason) use (&$rejections) {
                 $rejections[] = $reason;
             }
         )->then(
@@ -231,7 +224,6 @@ final class Utils
                     );
                 }
                 ksort($results);
-
                 return array_values($results);
             }
         );
@@ -242,11 +234,11 @@ final class Utils
      * fulfillment value is not an array of 1 but the value directly.
      *
      * @param mixed $promises Promises or values.
+     *
+     * @return PromiseInterface
      */
-    public static function any($promises): PromiseInterface
+    public static function any($promises)
     {
-        $promises = self::prepareIterable($promises, __FUNCTION__);
-
         return self::some(1, $promises)->then(function ($values) {
             return $values[0];
         });
@@ -261,51 +253,24 @@ final class Utils
      * @see inspect for the inspection state array format.
      *
      * @param mixed $promises Promises or values.
+     *
+     * @return PromiseInterface
      */
-    public static function settle($promises): PromiseInterface
+    public static function settle($promises)
     {
-        $promises = self::prepareIterable($promises, __FUNCTION__);
-
         $results = [];
 
         return Each::of(
             $promises,
-            function ($value, $idx) use (&$results): void {
+            function ($value, $idx) use (&$results) {
                 $results[$idx] = ['state' => PromiseInterface::FULFILLED, 'value' => $value];
             },
-            function ($reason, $idx) use (&$results): void {
+            function ($reason, $idx) use (&$results) {
                 $results[$idx] = ['state' => PromiseInterface::REJECTED, 'reason' => $reason];
             }
         )->then(function () use (&$results) {
             ksort($results);
-
             return $results;
         });
-    }
-
-    private static function prepareIterable($promises, string $method): iterable
-    {
-        if (is_iterable($promises)) {
-            return $promises;
-        }
-
-        self::triggerNonIterableDeprecation($promises, $method);
-
-        return [$promises];
-    }
-
-    private static function triggerNonIterableDeprecation($promises, string $method): void
-    {
-        if (is_iterable($promises)) {
-            return;
-        }
-
-        \trigger_deprecation(
-            'guzzlehttp/promises',
-            '2.5',
-            'Passing a non-iterable to %s::%s() is deprecated; guzzlehttp/promises 3.0 will require an iterable.',
-            self::class,
-            $method
-        );
     }
 }

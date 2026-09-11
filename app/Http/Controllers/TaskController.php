@@ -671,8 +671,8 @@ class TaskController extends Controller
 
                     $firebaseService->sendToUser(
                         $assignedUser,
-                        'New Task Assigned',
-                        'You have been assigned a new task: ' . $task->title,
+                        'Task Created',
+                        'A new task has been created and assigned to you: ' . $task->title,
                         [
                             'type'    => 'task',
                             'task_id' => (string) $task->id,
