@@ -28,12 +28,26 @@ class FirebaseNotificationService
      */
     private function getAccessToken(): ?string
     {
-        if (!file_exists($this->credentialsPath)) {
-            Log::error('Firebase credentials file missing: ' . $this->credentialsPath);
+        $credentialsPath = $this->credentialsPath;
+
+        // പാത്ത് ഒരു Directory ആണോ അതോ ഫയൽ ആണോ എന്ന് ചെക്ക് ചെയ്യുന്നു
+        if (is_dir($credentialsPath)) {
+            Log::error('FCM Error: Given path is a directory, not a file: ' . $credentialsPath);
             return null;
         }
 
-        $jsonKey = json_decode(file_get_contents($this->credentialsPath), true);
+        if (!file_exists($credentialsPath)) {
+            Log::error('FCM Error: Credentials file missing at: ' . $credentialsPath);
+            return null;
+        }
+
+        $jsonKey = json_decode(file_get_contents($credentialsPath), true);
+        
+        if (!$jsonKey) {
+            Log::error('FCM Error: Invalid JSON structure in credentials file.');
+            return null;
+        }
+
         $this->projectId = $jsonKey['project_id'] ?? '';
 
         // JWT Header
