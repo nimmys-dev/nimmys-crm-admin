@@ -17,6 +17,7 @@ use App\Http\Controllers\ShopController;
 use App\Http\Controllers\StaffController;
 use App\Http\Controllers\TaskController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
+use App\Http\Controllers\FirebaseTokenController;
 use Illuminate\Support\Facades\Route;
 /*
 |--------------------------------------------------------------------------

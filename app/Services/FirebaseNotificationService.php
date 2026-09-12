@@ -8,12 +8,16 @@ use Illuminate\Support\Facades\Log;
 
 class FirebaseNotificationService
 {
-    protected string $projectId;
-    protected string $credentialsPath;
+    protected string $projectId = '';
+    protected string $credentialsPath = '';
 
     public function __construct()
     {
-        $credentials = config('services.firebase.credentials');
+        $credentials = trim((string) config('services.firebase.credentials', ''));
+
+        if ($credentials === '') {
+            return;
+        }
 
         if (!str_starts_with($credentials, DIRECTORY_SEPARATOR)
             && !preg_match('/^[A-Za-z]:[\\\\\/]/', $credentials)) {
@@ -30,6 +34,11 @@ class FirebaseNotificationService
     {
         $credentialsPath = $this->credentialsPath;
 
+        if ($credentialsPath === '') {
+            Log::error('FCM credentials are not configured. Set FIREBASE_CREDENTIALS to the service-account JSON path.');
+            return null;
+        }
+
         // പാത്ത് ഒരു Directory ആണോ അതോ ഫയൽ ആണോ എന്ന് ചെക്ക് ചെയ്യുന്നു
         if (is_dir($credentialsPath)) {
             Log::error('FCM Error: Given path is a directory, not a file: ' . $credentialsPath);
@@ -41,9 +50,10 @@ class FirebaseNotificationService
             return null;
         }
 
-        $jsonKey = json_decode(file_get_contents($credentialsPath), true);
+        $credentialsJson = file_get_contents($credentialsPath);
+        $jsonKey = is_string($credentialsJson) ? json_decode($credentialsJson, true) : null;
         
-        if (!$jsonKey) {
+        if (!is_array($jsonKey) || !isset($jsonKey['project_id'], $jsonKey['client_email'], $jsonKey['private_key'])) {
             Log::error('FCM Error: Invalid JSON structure in credentials file.');
             return null;
         }
@@ -51,36 +61,61 @@ class FirebaseNotificationService
         $this->projectId = $jsonKey['project_id'] ?? '';
 
         // JWT Header
-        $header = base64_encode(json_encode(['alg' => 'RS256', 'typ' => 'JWT']));
+        $header = $this->base64UrlEncode(json_encode(['alg' => 'RS256', 'typ' => 'JWT'], JSON_THROW_ON_ERROR));
 
         // JWT Claim Set
         $now = time();
-        $claimSet = base64_encode(json_encode([
+        $claimSet = $this->base64UrlEncode(json_encode([
             'iss' => $jsonKey['client_email'],
             'scope' => 'https://www.googleapis.com/auth/firebase.messaging',
             'aud' => 'https://oauth2.googleapis.com/token',
             'exp' => $now + 3600,
             'iat' => $now,
-        ]));
+        ], JSON_THROW_ON_ERROR));
 
         // Sign JWT with Private Key
         $signature = '';
-        openssl_sign(
+        if (!openssl_sign(
             $header . '.' . $claimSet,
             $signature,
             $jsonKey['private_key'],
             'SHA256'
-        );
+        )) {
+            Log::error('FCM Error: Unable to sign the OAuth JWT with the service-account private key.');
+            return null;
+        }
 
-        $jwt = $header . '.' . $claimSet . '.' . base64_encode($signature);
+        $jwt = $header . '.' . $claimSet . '.' . $this->base64UrlEncode($signature);
 
         // Fetch Access Token from Google
-        $response = Http::asForm()->post('https://oauth2.googleapis.com/token', [
-            'grant_type' => 'urn:ietf:params:oauth:grant-type:jwt-bearer',
-            'assertion' => $jwt,
-        ]);
+        try {
+            $response = Http::asForm()
+                ->connectTimeout(10)
+                ->timeout(30)
+                ->retry(2, 250)
+                ->post('https://oauth2.googleapis.com/token', [
+                    'grant_type' => 'urn:ietf:params:oauth:grant-type:jwt-bearer',
+                    'assertion' => $jwt,
+                ]);
+        } catch (\Throwable $exception) {
+            Log::error('FCM OAuth request failed.', ['error' => $exception->getMessage()]);
+            return null;
+        }
+
+        if (!$response->successful() || blank($response->json('access_token'))) {
+            Log::error('FCM OAuth request was rejected.', [
+                'status' => $response->status(),
+                'response' => $response->json(),
+            ]);
+            return null;
+        }
 
         return $response->json()['access_token'] ?? null;
+    }
+
+    private function base64UrlEncode(string $value): string
+    {
+        return rtrim(strtr(base64_encode($value), '+/', '-_'), '=');
     }
 
     /**
@@ -111,6 +146,9 @@ class FirebaseNotificationService
             $url = "https://fcm.googleapis.com/v1/projects/{$this->projectId}/messages:send";
 
             $response = Http::withToken($accessToken)
+                ->connectTimeout(10)
+                ->timeout(30)
+                ->retry(2, 250)
                 ->post($url, [
                     'message' => [
                         'token' => $token,
@@ -129,6 +167,7 @@ class FirebaseNotificationService
 
             Log::error('FCM notification failed', [
                 'user_id' => $user->id,
+                'status' => $response->status(),
                 'response' => $response->json(),
             ]);
 

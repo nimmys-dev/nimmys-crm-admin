@@ -9,7 +9,7 @@
     {{-- Field errors render inline below, so only flash messages belong here. --}}
     <x-alerts :show-errors="false" />
 
-    <form method="POST" action="{{ route('login.store') }}">
+    <form id="loginForm" method="POST" action="{{ route('login.store') }}">
         @csrf
 <input type="hidden" name="fcm_token" id="fcm_token">
         <div class="grid grid-cols-12 gap-4">

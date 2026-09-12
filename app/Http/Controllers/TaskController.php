@@ -10,6 +10,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 use App\Models\TaskQuarter;
+use App\Services\FirebaseNotificationService;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 
@@ -662,12 +663,12 @@ class TaskController extends Controller
                 }
             }
 
-            if (!empty($task->assigned_to)) {
+            DB::afterCommit(function () use ($task) {
                 $assignedUser = User::find($task->assigned_to);
 
                 if ($assignedUser) {
                     // app() വഴി Service ഇൻസ്റ്റൻസ് ഉണ്ടാക്കുന്നു
-                    $firebaseService = app(\App\Services\FirebaseNotificationService::class);
+                    $firebaseService = app(FirebaseNotificationService::class);
 
                     $firebaseService->sendToUser(
                         $assignedUser,
@@ -680,7 +681,7 @@ class TaskController extends Controller
                         ]
                     );
                 }
-            }
+            });
 
         });
 

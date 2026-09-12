@@ -43,6 +43,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebas
 
 import {
     getMessaging,
+    getToken,
     onMessage
 } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-messaging.js";
 
@@ -60,6 +61,54 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const messaging = getMessaging(app);
+
+async function saveFcmToken() {
+    // Service workers and browser notifications require HTTPS (localhost is
+    // the only HTTP exception), so an HTTP production deployment cannot use FCM.
+    if (!window.isSecureContext || !('serviceWorker' in navigator)) {
+        console.warn('FCM requires HTTPS and service worker support.');
+        return;
+    }
+
+    try {
+        const permission = Notification.permission === 'default'
+            ? await Notification.requestPermission()
+            : Notification.permission;
+
+        if (permission !== 'granted') {
+            return;
+        }
+
+        const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+        const token = await getToken(messaging, {
+            vapidKey: 'BNPK9GMRJweFOZ8d6zjoCCcBZUwTBREOXGVowj_xtEUgo1FTaiwkA9nu_fHO1UvAisAPsXWA1VNID-hG0-WjpuQ',
+            serviceWorkerRegistration: registration,
+        });
+
+        if (!token) {
+            return;
+        }
+
+        const response = await fetch('{{ route('firebase.token') }}', {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+            },
+            body: JSON.stringify({ fcm_token: token }),
+        });
+
+        if (!response.ok) {
+            throw new Error(`Unable to save FCM token (${response.status}).`);
+        }
+    } catch (error) {
+        console.error('FCM token registration failed:', error);
+    }
+}
+
+saveFcmToken();
 
 
 onMessage(messaging, (payload) => {

@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\SettingsController;
 use App\Http\Controllers\Api\TaskController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\ForgotPasswordController;
+use App\Http\Controllers\Api\FirebaseController;
 
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/forgot-password', [ForgotPasswordController::class, 'sendResetLinkApi'])
