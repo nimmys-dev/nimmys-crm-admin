@@ -81,10 +81,15 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
-const messaging = getMessaging(app);
 
 async function fetchToken() {
+    if (!window.isSecureContext || !('serviceWorker' in navigator)) {
+        console.error('FCM token was not generated: the live site must use HTTPS and support service workers.');
+        return null;
+    }
+
     try {
+        const messaging = getMessaging(app);
         const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
         const permission = await Notification.requestPermission();
 

@@ -60,17 +60,18 @@ const firebaseConfig = {
 
 
 const app = initializeApp(firebaseConfig);
-const messaging = getMessaging(app);
+let messaging = null;
 
 async function saveFcmToken() {
     // Service workers and browser notifications require HTTPS (localhost is
     // the only HTTP exception), so an HTTP production deployment cannot use FCM.
     if (!window.isSecureContext || !('serviceWorker' in navigator)) {
-        console.warn('FCM requires HTTPS and service worker support.');
+        console.error('FCM token was not saved: the live site must use HTTPS and support service workers.');
         return;
     }
 
     try {
+        messaging = getMessaging(app);
         const permission = Notification.permission === 'default'
             ? await Notification.requestPermission()
             : Notification.permission;
@@ -101,17 +102,22 @@ async function saveFcmToken() {
         });
 
         if (!response.ok) {
-            throw new Error(`Unable to save FCM token (${response.status}).`);
+            const result = await response.json().catch(() => ({}));
+            throw new Error(result.message || `Unable to save FCM token (${response.status}).`);
         }
+
+        console.info('FCM token saved successfully.');
     } catch (error) {
         console.error('FCM token registration failed:', error);
     }
 }
 
-saveFcmToken();
+saveFcmToken().then(() => {
+    if (!messaging) {
+        return;
+    }
 
-
-onMessage(messaging, (payload) => {
+    onMessage(messaging, (payload) => {
 
     console.log('FCM foreground message:', payload);
 
@@ -131,6 +137,7 @@ onMessage(messaging, (payload) => {
 
     }
 
+    });
 });
 
 </script>
