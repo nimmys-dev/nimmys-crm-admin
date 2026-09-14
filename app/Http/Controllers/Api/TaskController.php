@@ -12,6 +12,7 @@ use Throwable;
 use Illuminate\Http\Request;
 use App\Models\User;
 use Carbon\Carbon;
+use App\Services\FirebaseNotificationService;
 
 class TaskController extends Controller
 {
@@ -173,6 +174,65 @@ class TaskController extends Controller
                 return $task;
             });
 
+
+             /*
+        |--------------------------------------------------------------------------
+        | Firebase Push Notification
+        |--------------------------------------------------------------------------
+        */
+
+        $assignedUser = User::find($task->assigned_to);
+
+
+        if ($assignedUser && !empty($assignedUser->fcm_token)) {
+
+            try {
+
+                $firebaseService = app(
+                    FirebaseNotificationService::class
+                );
+
+
+                $firebaseService->sendToUser(
+                    $assignedUser,
+                    'Task Created',
+                    'A new task has been created and assigned to you: '
+                        . $task->title,
+                    [
+                        'type'    => 'task',
+                        'task_id' => (string) $task->id,
+                        'title'   => (string) $task->title,
+                    ]
+                );
+
+
+                \Log::info('Task FCM notification sent from API', [
+                    'task_id' => $task->id,
+                    'user_id' => $assignedUser->id,
+                ]);
+
+
+            } catch (Throwable $e) {
+
+                \Log::error('Task FCM notification failed from API', [
+                    'task_id' => $task->id,
+                    'user_id' => $assignedUser->id,
+                    'error'   => $e->getMessage(),
+                ]);
+
+            }
+
+        } else {
+
+            \Log::warning('Task FCM notification skipped', [
+                'task_id' => $task->id,
+                'assigned_to' => $task->assigned_to,
+                'reason' => $assignedUser
+                    ? 'FCM token missing'
+                    : 'Assigned user not found',
+            ]);
+
+        }
 
             /*
             |--------------------------------------------------------------------------
