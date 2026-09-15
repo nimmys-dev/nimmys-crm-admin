@@ -23,6 +23,8 @@ use App\Enums\LeadStatus;
 use App\Services\LeadService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Log;
+use App\Services\FirebaseNotificationService;
+
 
 class LeadController extends Controller
 {
@@ -618,6 +620,13 @@ class LeadController extends Controller
             ],
         ]);
 
+        $newAssignedTo = $validated['assigned_to'] ?? null;
+
+        $isReassigned = (int) ($oldAssignedTo ?? 0) !== (int) ($newAssignedTo ?? 0);
+
+        $assignedUser = $newAssignedTo
+            ? User::find($newAssignedTo)
+            : null;
 
         // =====================================================
         // UPDATE LEAD + QUOTATION
@@ -952,6 +961,92 @@ class LeadController extends Controller
                     $quotation?->fresh('items'),
             ];
         });
+
+        // =====================================================
+        // FIREBASE NOTIFICATION - REASSIGNMENT ONLY
+        // =====================================================
+
+        if (
+            $isReassigned &&
+            $assignedUser &&
+            !empty($assignedUser->fcm_token)
+        ) {
+
+            try {
+
+                $firebaseService =
+                    app(FirebaseNotificationService::class);
+
+                $firebaseService->sendToUser(
+                    $assignedUser,
+
+                    'Lead Assigned',
+
+                    'A lead has been assigned to you: '
+                    . $lead->reference,
+
+                    [
+                        'type' =>
+                            'lead_assigned',
+
+                        'lead_id' =>
+                            (string) $lead->id,
+
+                        'reference' =>
+                            (string) $lead->reference,
+                    ]
+                );
+
+
+                \Log::info(
+                    'Lead reassignment FCM notification sent',
+                    [
+                        'lead_id' =>
+                            $lead->id,
+
+                        'old_user_id' =>
+                            $oldAssignedTo,
+
+                        'new_user_id' =>
+                            $assignedUser->id,
+                    ]
+                );
+
+            } catch (\Throwable $e) {
+
+                \Log::error(
+                    'Lead reassignment FCM notification failed',
+                    [
+                        'lead_id' =>
+                            $lead->id,
+
+                        'assigned_to' =>
+                            $assignedUser->id,
+
+                        'error' =>
+                            $e->getMessage(),
+                    ]
+                );
+            }
+
+        } elseif ($isReassigned) {
+
+            \Log::warning(
+                'Lead reassignment FCM notification skipped',
+                [
+                    'lead_id' =>
+                        $lead->id,
+
+                    'assigned_to' =>
+                        $newAssignedTo,
+
+                    'reason' =>
+                        $assignedUser
+                            ? 'FCM token missing'
+                            : 'Assigned user not found',
+                ]
+            );
+        }
 
 
         // =====================================================

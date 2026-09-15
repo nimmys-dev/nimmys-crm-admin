@@ -298,4 +298,9 @@ class Lead extends Model
     {
         return $this->belongsTo(User::class, 'assigned_to');
     }
+
+    public function createdUser(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
 }

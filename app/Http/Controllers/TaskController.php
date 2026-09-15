@@ -939,27 +939,106 @@ public function update(
             ->with('success', 'Task deleted successfully.');
     }
 
-    public function complete(Request $request,Task $task): RedirectResponse {
+    // public function complete(Request $request,Task $task): RedirectResponse {
 
+    //     $request->validate([
+    //             'remarks' => [
+    //                 'required',
+    //                 'string',
+    //                 'max:1000',
+    //             ],
+    //         ]);
+
+    //         $task->update([
+    //             'status'  => 'completed',
+    //             'remarks' => $request->remarks,
+    //         ]);
+    //         if ($task->repeat_mode) {
+    //             $this->createNextRepeatedTask($task);
+    //         }
+    //         return back()->with(
+    //             'success',
+    //             'Task completed successfully.'
+    //         );
+    // }
+
+    public function complete(Request $request, Task $task): RedirectResponse
+    {
         $request->validate([
-                'remarks' => [
-                    'required',
-                    'string',
-                    'max:1000',
-                ],
-            ]);
+            'remarks' => [
+                'required',
+                'string',
+                'max:1000',
+            ],
+        ]);
 
-            $task->update([
-                'status'  => 'completed',
-                'remarks' => $request->remarks,
-            ]);
-            if ($task->repeat_mode) {
-                $this->createNextRepeatedTask($task);
+        $task->update([
+            'status'  => 'completed',
+            'remarks' => $request->remarks,
+        ]);
+
+        /*
+        |--------------------------------------------------------------------------
+        | Firebase Notification to Approver
+        |--------------------------------------------------------------------------
+        */
+
+        $approver = User::find($task->approved_by);
+
+        if ($approver && !empty($approver->fcm_token)) {
+            try {
+
+                $firebaseService = app(FirebaseNotificationService::class);
+
+                $firebaseService->sendToUser(
+                    $approver,
+                    'Task Pending Approval',
+                    'A completed task is waiting for your approval: ' . $task->title,
+                    [
+                        'type'    => 'task_approval',
+                        'task_id' => (string) $task->id,
+                        'title'   => (string) $task->title,
+                    ]
+                );
+
+                \Log::info('Task approval FCM notification sent', [
+                    'task_id'    => $task->id,
+                    'approved_by' => $approver->id,
+                ]);
+
+            } catch (\Throwable $e) {
+
+                \Log::error('Task approval FCM notification failed', [
+                    'task_id'    => $task->id,
+                    'approved_by' => $approver->id,
+                    'error'      => $e->getMessage(),
+                ]);
             }
-            return back()->with(
-                'success',
-                'Task completed successfully.'
-            );
+        } else {
+
+            \Log::warning('Task approval FCM notification skipped', [
+                'task_id'    => $task->id,
+                'approved_by' => $task->approved_by,
+                'reason'     => $approver
+                    ? 'FCM token missing'
+                    : 'Approver not found',
+            ]);
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Create Next Repeated Task
+        |--------------------------------------------------------------------------
+        */
+
+        if ($task->repeat_mode) {
+            $this->createNextRepeatedTask($task);
+        }
+
+        return back()->with(
+            'success',
+            'Task completed successfully.'
+        );
     }
 
     // private function createNextRepeatedTask(Task $task): Task
