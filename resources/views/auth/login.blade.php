@@ -111,6 +111,11 @@ async function fetchToken() {
         const messaging = getMessaging(app);
         const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
         const permission = await Notification.requestPermission();
+        addFirebaseNotification(
+        title,
+        body,
+        payload.data || {}
+        );
 
         if (permission === 'granted') {
             const token = await getToken(messaging, {

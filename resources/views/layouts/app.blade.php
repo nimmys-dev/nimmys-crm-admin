@@ -127,6 +127,11 @@ saveFcmToken().then(() => {
     const body =
         payload.notification?.body || '';
 
+    addFirebaseNotification(
+        title,
+        body,
+        payload.data || {}
+    );
 
     if (Notification.permission === 'granted') {
 
