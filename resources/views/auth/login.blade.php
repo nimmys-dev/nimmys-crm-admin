@@ -3,6 +3,12 @@
 @section('title', 'Log in')
 
 @section('content')
+<style>
+    #togglePassword {
+    top: 55%;
+    right: 12px;
+}
+</style>
 
     <h4 class="text-center font-medium mb-4">Log in</h4>
 
@@ -23,14 +29,27 @@
                 required
             />
 
-            <x-form.input
-                name="password"
-                type="password"
-                label="Password"
-                col="col-span-12"
-                autocomplete="current-password"
-                required
-            />
+        <div class="col-span-12 relative flex items-center">
+    <x-form.input 
+        name="password" 
+        type="password" 
+        label="Password" 
+        col="col-span-12 w-full" 
+        autocomplete="current-password" 
+        required 
+        id="password" 
+        class="pr-10" 
+    />
+
+    <button 
+        type="button" 
+        id="togglePassword"
+        class="absolute -translate-y-1/2 z-10 text-gray-500 hover:text-gray-700"
+        aria-label="Show password"
+    >
+        <i class="ti ti-eye text-lg" id="passwordEyeIcon"></i>
+    </button>
+</div>
         </div>
 
 
@@ -80,7 +99,7 @@ const firebaseConfig = {
     measurementId: "G-26Z7P09YDR"
 };
 
-const app = initializeApp(firebaseConfig);
+    const app = initializeApp(firebaseConfig);
 
 async function fetchToken() {
     if (!window.isSecureContext || !('serviceWorker' in navigator)) {
@@ -124,6 +143,27 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
         await fetchToken();
         this.submit(); // Token ലഭിച്ച ശേഷം submit ചെയ്യുന്നു
     }
+});
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const password = document.getElementById('password');
+    const toggle = document.getElementById('togglePassword');
+    const icon = document.getElementById('passwordEyeIcon');
+
+    toggle.addEventListener('click', function () {
+        if (password.type === 'password') {
+            password.type = 'text';
+
+            icon.classList.remove('ti-eye');
+            icon.classList.add('ti-eye-off');
+        } else {
+            password.type = 'password';
+
+            icon.classList.remove('ti-eye-off');
+            icon.classList.add('ti-eye');
+        }
+    });
 });
 </script>
 @endsection

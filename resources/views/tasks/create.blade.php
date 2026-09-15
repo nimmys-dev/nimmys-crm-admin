@@ -616,40 +616,40 @@
 
                 </div>
 
-{{-- Repeat Mode --}}
-<div class="col-md-6 mb-3">
-    <label class="form-label">
-        Repeat Mode
-    </label>
+                {{-- Repeat Mode --}}
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">
+                        Repeat Mode
+                    </label>
 
-    <div class="form-check form-switch mt-2">
-        <input
-            type="checkbox"
-            name="repeat_mode"
-            value="1"
-            id="repeat_mode"
-            class="form-check-input"
-            @checked(old('repeat_mode'))
-        >
+                    <div class="form-check form-switch mt-2">
+                        <input
+                            type="checkbox"
+                            name="repeat_mode"
+                            value="1"
+                            id="repeat_mode"
+                            class="form-check-input"
+                            @checked(old('repeat_mode'))
+                        >
 
-        <label
-            class="form-check-label"
-            for="repeat_mode"
-        >
-            Enable Repeat Mode
-        </label>
-    </div>
+                        <label
+                            class="form-check-label"
+                            for="repeat_mode"
+                        >
+                            Enable Repeat Mode
+                        </label>
+                    </div>
 
-    <small class="text-muted">
-        Automatically create the next task after completion.
-    </small>
+                    <small class="text-muted">
+                        Automatically create the next task after completion.
+                    </small>
 
-    @error('repeat_mode')
-        <div class="text-danger mt-1">
-            {{ $message }}
-        </div>
-    @enderror
-</div>
+                    @error('repeat_mode')
+                        <div class="text-danger mt-1">
+                            {{ $message }}
+                        </div>
+                    @enderror
+                </div>
 
                 {{-- ========================================================= --}}
                 {{-- DESCRIPTION --}}
@@ -1825,6 +1825,26 @@ document.getElementById('createTaskForm').addEventListener('submit', function (e
 });
 
 
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+    const dateInputs = [
+        document.getElementById('yearly_start_date'),
+        document.getElementById('yearly_end_date')
+    ];
+
+    dateInputs.forEach(function (input) {
+        if (input) {
+            input.addEventListener('click', function () {
+                if (this.showPicker) {
+                    this.showPicker();
+                }
+            });
+        }
+    });
+
+});
 </script>
 
 @push('styles')

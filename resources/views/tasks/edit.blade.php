@@ -2326,4 +2326,24 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 </style>
 @endpush
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+    const dateInputs = [
+        document.getElementById('yearly_start_date'),
+        document.getElementById('yearly_end_date')
+    ];
+
+    dateInputs.forEach(function (input) {
+        if (input) {
+            input.addEventListener('click', function () {
+                if (this.showPicker) {
+                    this.showPicker();
+                }
+            });
+        }
+    });
+
+});
+</script>
 @endsection

@@ -3,7 +3,62 @@
 @section('title', 'Profile')
 
 @section('content')
+<style>
+    #changePasswordModal > div {
+    background-color: #ffffff;
+    border: 1px solid #d1d5db;
+    border-radius: 10px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.20);
+    overflow: hidden;
+}
 
+/* Header */
+#changePasswordModal > div > div:first-child {
+    background-color: #f3f4f6;
+    border-bottom: 1px solid #d1d5db;
+}
+
+/* Form body */
+#changePasswordModal form > div:nth-child(2) {
+    background-color: #ffffff;
+}
+
+/* Footer */
+#changePasswordModal form > div:last-child {
+    background-color: #f3f4f6;
+    border-top: 1px solid #d1d5db;
+}
+</style>
+<style>
+    /* Login password eye button */
+    #togglePassword {
+        top: 55%;
+        right: 12px;
+    }
+
+    /* Change Password eye buttons */
+    .password-field {
+        position: relative;
+    }
+
+    .password-toggle {
+        position: absolute;
+        top: 70%;
+        right: 12px;
+        transform: translateY(-50%);
+        z-index: 20;
+        border: none;
+        background: transparent;
+        cursor: pointer;
+        color: #6b7280;
+        font-size: 18px;
+        padding: 0;
+    }
+
+    .password-toggle:hover {
+        color: #374151;
+    }
+</style>
     <div class="grid grid-cols-12 gap-x-6">
         <div class="col-span-12">
             <x-card title="My profile">
@@ -89,32 +144,65 @@
 
                                     <div class="px-5 py-4">
 
-                                        <div class="mb-3">
-                                            <x-form.input
-                                                type="password"
-                                                name="current_password"
-                                                label="Current Password"
-                                                placeholder="Enter current password"
-                                            />
-                                        </div>
+                                        <!-- Current Password -->
+<!-- Current Password -->
+<div class="mb-3 relative password-field">
+    <x-form.input 
+        type="password"
+        name="current_password"
+        label="Current Password"
+        placeholder="Enter current password"
+    />
 
-                                        <div class="mb-3">
-                                            <x-form.input
-                                                type="password"
-                                                name="password"
-                                                label="New Password"
-                                                placeholder="Enter new password"
-                                            />
-                                        </div>
+    <button
+        type="button"
+        class="password-toggle"
+        data-target="current_password"
+        aria-label="Show password"
+    >
+        <i class="ti ti-eye"></i>
+    </button>
+</div>
 
-                                        <div>
-                                            <x-form.input
-                                                type="password"
-                                                name="password_confirmation"
-                                                label="Confirm Password"
-                                                placeholder="Confirm new password"
-                                            />
-                                        </div>
+
+<!-- New Password -->
+<div class="mb-3 relative password-field">
+    <x-form.input 
+        type="password"
+        name="password"
+        label="New Password"
+        placeholder="Enter new password"
+    />
+
+    <button
+        type="button"
+        class="password-toggle"
+        data-target="password"
+        aria-label="Show password"
+    >
+        <i class="ti ti-eye"></i>
+    </button>
+</div>
+
+
+<!-- Confirm Password -->
+<div class="relative password-field">
+    <x-form.input 
+        type="password"
+        name="password_confirmation"
+        label="Confirm Password"
+        placeholder="Confirm new password"
+    />
+
+    <button
+        type="button"
+        class="password-toggle"
+        data-target="password_confirmation"
+        aria-label="Show password"
+    >
+        <i class="ti ti-eye"></i>
+    </button>
+</div>
 
                                     </div>
 
@@ -189,4 +277,48 @@
             closeChangePasswordModal();
         }
     });
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+    document.querySelectorAll('.password-toggle').forEach(function (button) {
+
+        button.addEventListener('click', function () {
+
+            const targetName = this.getAttribute('data-target');
+
+            const input = document.querySelector(
+                'input[name="' + targetName + '"]'
+            );
+
+            if (!input) {
+                console.log('Password input not found:', targetName);
+                return;
+            }
+
+            const icon = this.querySelector('i');
+
+            if (input.type === 'password') {
+
+                input.type = 'text';
+
+                icon.classList.remove('ti-eye');
+                icon.classList.add('ti-eye-off');
+
+                this.setAttribute('aria-label', 'Hide password');
+
+            } else {
+
+                input.type = 'password';
+
+                icon.classList.remove('ti-eye-off');
+                icon.classList.add('ti-eye');
+
+                this.setAttribute('aria-label', 'Show password');
+            }
+        });
+
+    });
+
+});
 </script>
