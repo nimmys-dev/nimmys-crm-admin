@@ -22,7 +22,7 @@
                     </a>
                 </li>
 
-                <li class="dropdown pc-h-item">
+                <!-- <li class="dropdown pc-h-item">
                     <a class="pc-head-link dropdown-toggle me-0" data-pc-toggle="dropdown" href="#" role="button"
                         aria-haspopup="true" aria-expanded="false" aria-label="Search">
                         <i class="ti ti-search"></i>
@@ -33,7 +33,7 @@
                                 class="form-control !border-0 !shadow-none" placeholder="Search…" aria-label="Search" />
                         </form>
                     </div>
-                </li>
+                </li> -->
 
             </ul>
         </div>
@@ -58,7 +58,7 @@
                 </li>
 
                 {{-- Notifications --}}
-                <li class="dropdown pc-h-item">
+                <!-- <li class="dropdown pc-h-item">
                     <a class="pc-head-link dropdown-toggle me-0" data-pc-toggle="dropdown" href="#" role="button"
                         aria-haspopup="true" aria-expanded="false" aria-label="Notifications">
                         <i class="ti ti-bell"></i>
@@ -75,7 +75,7 @@
                             </div>
                         </div>
                     </div>
-                </li>
+                </li> -->
 
                 {{-- Profile --}}
                 <li class="dropdown pc-h-item header-user-profile">
