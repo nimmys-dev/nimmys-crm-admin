@@ -91,12 +91,29 @@ return [
         'permission' => 'tasks.manage',
     ],
 
-    [
+   [
         'label'      => 'Reports',
         'icon'       => 'ti ti-chart-bar',
         'route'      => 'reports.index',
         'active'     => 'reports.*',
         'permission' => 'reports.view',
+
+        'children' => [
+            [
+                'label'      => 'Task Management Report',
+                'icon'       => 'ti ti-list-check',
+                'route'      => 'task-management-report.index',
+                'active'     => 'task-management-report.*',
+                'permission' => 'reports.view',
+            ],
+            [
+                'label'      => 'Lead Management Report',
+                'icon'       => 'ti ti-users',
+                'route'      => 'lead-management-report.index',
+                'active'     => 'lead-management-report.*',
+                'permission' => 'reports.view',
+            ],
+        ],
     ],
 
     [

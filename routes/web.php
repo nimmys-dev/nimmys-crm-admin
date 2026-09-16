@@ -95,6 +95,22 @@ Route::middleware(['auth', 'web.access'])->group(function () {
         Route::get('/staff/{member}/reset-password', [StaffController::class, 'resetPassword'])->name('staff.reset-password');
         Route::put('/staff/{member}/reset-password', [StaffController::class, 'updatePassword'])
         ->name('staff.update-password');
+          Route::get('/reports/task-management', [
+            ReportController::class,
+            'taskManagement'
+        ])->name('task-management-report.index');
+
+
+        Route::get('/reports/lead-management', [
+            ReportController::class,
+            'leadManagement'
+        ])->name('lead-management-report.index');
+
+Route::get('/reports/task-management/export/excel', [ReportController::class, 'exportExcel'])
+    ->name('task-management-report.export.excel');
+
+Route::get('/reports/task-management/export/pdf', [ReportController::class, 'exportPdf'])
+    ->name('task-management-report.export.pdf');
         });
 
     /*
