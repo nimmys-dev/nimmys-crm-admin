@@ -665,17 +665,20 @@ class LeadController extends Controller
             // QUOTATION
             // =================================================
 
+            // =====================================================
+            // QUOTATION
+            // =====================================================
+
             $quotation = $lead->quotation;
 
 
-            // =================================================
+            // =====================================================
             // IF QUOTATION IS PROVIDED
-            // =================================================
+            // =====================================================
 
             if (!empty($validated['quotation'])) {
 
-                $quotationData =
-                    $validated['quotation'];
+                $quotationData = $validated['quotation'];
 
 
                 // =============================================
@@ -684,48 +687,47 @@ class LeadController extends Controller
 
                 if (!$quotation) {
 
-                    $quotationReference =
-                        QuotationReference::withNext(
-                            function (
-                                string $reference
-                            ) use ($lead, $quotationData, $request) {
+                    $quotation = QuotationReference::withNext(
+                        function (string $reference) use (
+                            $lead,
+                            $quotationData,
+                            $request
+                        ) {
 
-                                return $lead->quotation()->create([
+                            return $lead->quotation()->create([
 
-                                    'reference' =>
-                                        $reference,
+                                'reference' =>
+                                    $reference,
 
-                                    'customer_name' =>
-                                        $quotationData['customer_name'],
+                                'customer_name' =>
+                                    $quotationData['customer_name'],
 
-                                    'customer_address' =>
-                                        $quotationData['customer_address']
-                                        ?? null,
+                                'customer_address' =>
+                                    $quotationData['customer_address'] ?? null,
 
-                                    'issue_date' =>
-                                        $quotationData['issue_date'],
+                                'issue_date' =>
+                                    $quotationData['issue_date'],
 
-                                    'terms' =>
-                                        $quotationData['terms']
-                                        ?? null,
+                                'terms' =>
+                                    $quotationData['terms'] ?? null,
 
-                                    'subtotal' =>
-                                        0,
+                                'subtotal' =>
+                                    0,
 
-                                    'discount_percent' =>
-                                        null,
+                                'discount_percent' =>
+                                    null,
 
-                                    'tax_percent' =>
-                                        null,
+                                'tax_percent' =>
+                                    null,
 
-                                    'total' =>
-                                        0,
+                                'total' =>
+                                    0,
 
-                                    'created_by' =>
-                                        $request->user()->id,
-                                ]);
-                            }
-                        );
+                                'created_by' =>
+                                    $request->user()->id,
+                            ]);
+                        }
+                    );
                 }
 
 
@@ -741,15 +743,13 @@ class LeadController extends Controller
                             $quotationData['customer_name'],
 
                         'customer_address' =>
-                            $quotationData['customer_address']
-                            ?? null,
+                            $quotationData['customer_address'] ?? null,
 
                         'issue_date' =>
                             $quotationData['issue_date'],
 
                         'terms' =>
-                            $quotationData['terms']
-                            ?? null,
+                            $quotationData['terms'] ?? null,
                     ]);
                 }
 
@@ -760,23 +760,16 @@ class LeadController extends Controller
 
                 $quotationSubtotal = 0;
 
-                foreach (
-                    $quotationData['items']
-                    as $item
-                ) {
+                foreach ($quotationData['items'] as $item) {
 
-                    $quantity =
-                        (float) $item['quantity'];
+                    $quantity = (float) $item['quantity'];
 
-                    $rate =
-                        (float) $item['rate'];
+                    $rate = (float) $item['rate'];
 
-                    $quotationSubtotal +=
-                        $quantity * $rate;
+                    $quotationSubtotal += $quantity * $rate;
                 }
 
-                $quotationSubtotal =
-                    round($quotationSubtotal, 2);
+                $quotationSubtotal = round($quotationSubtotal, 2);
 
 
                 // =============================================
@@ -790,21 +783,15 @@ class LeadController extends Controller
                 // CREATE NEW ITEMS
                 // =============================================
 
-                foreach (
-                    $quotationData['items']
-                    as $index => $item
-                ) {
+                foreach ($quotationData['items'] as $index => $item) {
 
-                    $quantity =
-                        (float) $item['quantity'];
+                    $quantity = (float) $item['quantity'];
 
-                    $rate =
-                        (float) $item['rate'];
+                    $rate = (float) $item['rate'];
 
-                    $taxPercent =
-                        isset($item['tax_percent'])
-                            ? (float) $item['tax_percent']
-                            : 18.0;
+                    $taxPercent = isset($item['tax_percent'])
+                        ? (float) $item['tax_percent']
+                        : 18.0;
 
 
                     // =========================================
@@ -813,8 +800,7 @@ class LeadController extends Controller
 
                     $basicRate = $taxPercent > 0
                         ? round(
-                            $rate /
-                            (1 + ($taxPercent / 100)),
+                            $rate / (1 + ($taxPercent / 100)),
                             2
                         )
                         : $rate;
@@ -907,10 +893,9 @@ class LeadController extends Controller
                 // CALCULATE TOTAL
                 // =============================================
 
-                $quotationTotal =
-                    $quotation
-                        ->items()
-                        ->sum('amount');
+                $quotationTotal = $quotation
+                    ->items()
+                    ->sum('amount');
 
 
                 // =============================================
@@ -943,6 +928,7 @@ class LeadController extends Controller
 
                 $quotation->load('items');
             }
+
 
 
             // =================================================
