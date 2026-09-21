@@ -78,7 +78,7 @@
                 </li> -->
 
 
-<li class="dropdown pc-h-item">
+<!-- <li class="dropdown pc-h-item">
     <a class="pc-head-link dropdown-toggle me-0 position-relative"
        data-pc-toggle="dropdown"
        href="#"
@@ -89,7 +89,6 @@
 
         <i class="ti ti-bell"></i>
 
-        <!-- Notification Count -->
         <span id="notificationCount"
               class="badge bg-danger rounded-pill"
               style="
@@ -110,7 +109,6 @@
     <div class="dropdown-menu dropdown-notification dropdown-menu-end pc-h-dropdown p-2"
          style="width:360px;">
 
-        <!-- Header -->
         <div class="dropdown-header flex items-center justify-between py-4 px-5">
 
             <h5 class="m-0">
@@ -125,17 +123,15 @@
 
         </div>
 
-        <!-- Notification Body -->
         <div id="notificationList"
              class="dropdown-body header-notification-scroll relative py-2 px-3"
              style="max-height:calc(100vh - 215px); overflow-y:auto;">
 
-            <!-- Notifications will be loaded here -->
 
         </div>
 
     </div>
-</li>
+</li> -->
 
 
 
