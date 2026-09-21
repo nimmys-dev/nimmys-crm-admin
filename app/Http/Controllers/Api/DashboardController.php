@@ -238,15 +238,48 @@ class DashboardController extends Controller
         |--------------------------------------------------------------------------
         */
 
+        // Task::query()
+        //     ->whereNotIn('status', [
+        //         'completed',
+        //         'approval_pending',
+        //         'approved',
+        //         'closed'
+        //     ])
+        //     ->get()
+        //     ->each(fn (Task $task) => $task->updateAutomaticStatus());
+        \Log::info('Dashboard status update started', [
+            'time' => now()->toDateTimeString(),
+            'timezone' => config('app.timezone'),
+            'server_timezone' => date_default_timezone_get(),
+        ]);
+
         Task::query()
-            ->whereNotIn('status', [
-                'completed',
-                'approval_pending',
-                'approved',
-                'closed'
-            ])
-            ->get()
-            ->each(fn (Task $task) => $task->updateAutomaticStatus());
+        ->whereNotIn('status', [
+            'completed',
+            'approval_pending',
+            'approved',
+            'closed'
+        ])
+        ->get()
+        ->each(function (Task $task) {
+
+            \Log::info('Before automatic status', [
+                'task_id' => $task->id,
+                'status' => $task->status,
+                'task_type' => $task->task_type,
+                'created_at' => $task->created_at,
+            ]);
+
+            $task->updateAutomaticStatus();
+
+            $task->refresh();
+
+            \Log::info('After automatic status', [
+                'task_id' => $task->id,
+                'status' => $task->status,
+            ]);
+        });
+
 
 
         /*
