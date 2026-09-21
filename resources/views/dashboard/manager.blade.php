@@ -215,7 +215,7 @@
     {{-- Reports Card --}}
     <div class="mt-6 bg-white rounded-xl border border-gray-200 shadow-sm p-5">
         {{-- Performance Action --}}
-        <a href="{{ route('reports.index') }}" class="performance-action">
+        <a href="{{ route('lead-management-report.index') }}" class="performance-action">
             <div class="performance-action-icon">
                 <i class="ti ti-chart-bar"></i>
             </div>
