@@ -4,7 +4,183 @@
 
 @section('content')
 
+<style>
+    .metrics-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 16px;
+        margin-bottom: 20px;
+    }
 
+    .metric-card {
+        background: #ffffff;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        padding: 16px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    }
+
+    .metric-title {
+        font-size: 13px;
+        font-weight: 500;
+        color: #6b7280;
+        margin-bottom: 8px;
+    }
+
+    .metric-value-container {
+        display: flex;
+        align-items: baseline;
+        gap: 8px;
+    }
+
+    .metric-value {
+        font-size: 24px;
+        font-weight: 700;
+        color: #111827;
+        line-height: 1;
+        margin: 0;
+    }
+
+    .metric-badge {
+        font-size: 12px;
+        font-weight: 600;
+        color: #6b7280;
+        background-color: #f3f4f6;
+        padding: 2px 6px;
+        border-radius: 4px;
+    }
+
+    .metric-badge.badge-danger {
+        color: #dc2626;
+        background-color: #fef2f2;
+    }
+
+    .text-danger {
+        color: #dc2626 !important;
+    }
+</style>
+<style>
+    /* Card Container */
+    .lead-card {
+        background: #ffffff;
+        border-radius: 12px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+        border: 1px solid #e2e8f0;
+        padding: 20px;
+        margin-bottom: 24px;
+    }
+
+    .lead-card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 16px;
+    }
+
+    .lead-card-title {
+        font-size: 16px;
+        font-weight: 700;
+        color: #0f172a;
+        margin: 0;
+    }
+
+    /* Table Styling */
+    .lead-table-wrapper {
+        overflow-x: auto;
+        border-radius: 8px;
+        border: 1px solid #f1f5f9;
+    }
+
+    .lead-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+        text-align: left;
+    }
+
+    .lead-table thead th {
+        background-color: #f8fafc;
+        color: #475569;
+        font-weight: 600;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        padding: 12px 16px;
+        border-bottom: 2px solid #e2e8f0;
+        white-space: nowrap;
+    }
+
+    .lead-table tbody tr {
+        border-bottom: 1px solid #f1f5f9;
+        transition: background-color 0.15s ease-in-out;
+    }
+
+    .lead-table tbody tr:last-child {
+        border-bottom: none;
+    }
+
+    .lead-table tbody tr:hover {
+        background-color: #f8fafc;
+    }
+
+    .lead-table td {
+        padding: 12px 16px;
+        color: #334155;
+        vertical-align: middle;
+        white-space: nowrap;
+    }
+
+    /* Badges & Status */
+    .status-badge {
+        display: inline-block;
+        padding: 3px 10px;
+        border-radius: 12px;
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: capitalize;
+    }
+
+    .status-new {
+        background-color: #e0f2fe;
+        color: #0284c7;
+    }
+
+    .status-closed {
+        background-color: #fee2e2;
+        color: #dc2626;
+    }
+
+    .status-default {
+        background-color: #f1f5f9;
+        color: #64748b;
+    }
+
+    .source-pill {
+        background-color: #f3f4f6;
+        color: #4b5563;
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-size: 12px;
+        font-weight: 500;
+        text-transform: capitalize;
+    }
+
+    .assigned-user {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        padding: 3px 8px;
+        border-radius: 6px;
+        font-size: 12px;
+        color: #334155;
+        font-weight: 500;
+    }
+</style>
 
 <div style="margin-bottom:20px;">
     <div style="display:flex; justify-content:space-between; align-items:center;">
@@ -47,25 +223,18 @@
             </div>
 
             <div>
-                <label style="font-size:12px; font-weight:600;">Branch</label>
-                <input
-                    type="text"
-                    name="branch_id"
-                    value="{{ request('branch_id') }}"
-                    class="form-control"
-                    placeholder="Branch ID"
-                >
-            </div>
+                <label style="font-size:12px; font-weight:600;">Staff</label>
 
-            <div>
-                <label style="font-size:12px; font-weight:600;">Salesman</label>
-                <input
-                    type="text"
-                    name="salesman_id"
-                    value="{{ request('salesman_id') }}"
-                    class="form-control"
-                    placeholder="Salesman ID"
-                >
+                <select name="salesman_id" class="form-control">
+                    <option value="">All Staff</option>
+
+                    @foreach($staff as $user)
+                        <option value="{{ $user->id }}"
+                            {{ request('salesman_id') == $user->id ? 'selected' : '' }}>
+                            {{ $user->name }}
+                        </option>
+                    @endforeach
+                </select>
             </div>
 
             <div>
@@ -83,190 +252,188 @@
 </div>
 
 {{-- Summary Cards --}}
-<div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:16px; margin-bottom:20px;">
-
-    <div class="card">
-        <p style="font-size:12px; color:var(--text-muted); margin-bottom:5px;">Total Leads</p>
-        <h2 style="font-size:24px; font-weight:700;">{{ $totalLeads }}</h2>
-    </div>
-
-    <div class="card">
-        <p style="font-size:12px; color:var(--text-muted); margin-bottom:5px;">Followed Up</p>
-        <h2 style="font-size:24px; font-weight:700;">{{ $followedUpLeads }}</h2>
-        <small>{{ $followUpRate }}%</small>
-    </div>
-
-    <div class="card">
-        <p style="font-size:12px; color:var(--text-muted); margin-bottom:5px;">Won Leads</p>
-        <h2 style="font-size:24px; font-weight:700;">{{ $closedWonLeads }}</h2>
-        <small>{{ $conversionRate }}%</small>
-    </div>
-
-    <div class="card">
-        <p style="font-size:12px; color:var(--text-muted); margin-bottom:5px;">Lost Leads</p>
-        <h2 style="font-size:24px; font-weight:700;">{{ $lostLeads }}</h2>
-        <small>{{ $lossRate }}%</small>
-    </div>
-
-    <div class="card">
-        <p style="font-size:12px; color:var(--text-muted); margin-bottom:5px;">Reassigned Leads</p>
-        <h2 style="font-size:24px; font-weight:700;">{{ $reassignedLeads }}</h2>
-    </div>
-
-</div>
-
-{{-- Lead Source --}}
-<div class="card" style="margin-bottom:20px;">
-    <h3 style="font-size:15px; font-weight:600; margin-bottom:16px;">
-        Lead Source Breakdown
-    </h3>
-
-    @forelse($leadSources as $source => $count)
-
-        <div style="display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid var(--border-color);">
-            <span>{{ $source ?: 'Unknown' }}</span>
-            <strong>{{ $count }}</strong>
+<div class="metrics-grid">
+    <div class="metric-card">
+        <span class="metric-title">Total Leads</span>
+        <div class="metric-value-container">
+            <h2 class="metric-value">{{ $totalLeads }}</h2>
         </div>
+    </div>
 
-    @empty
+    <div class="metric-card">
+        <span class="metric-title">Open Leads</span>
+        <div class="metric-value-container">
+            <h2 class="metric-value">{{ $openLeads }}</h2>
+        </div>
+    </div>
 
-        <p style="color:var(--text-muted); font-size:13px;">
-            No lead source data found.
-        </p>
+    <div class="metric-card">
+        <span class="metric-title">Closed Leads</span>
+        <div class="metric-value-container">
+            <h2 class="metric-value">{{ $closedLeads }}</h2>
+        </div>
+    </div>
 
-    @endforelse
+    <div class="metric-card">
+        <span class="metric-title">Overdue Leads</span>
+        <div class="metric-value-container">
+            <h2 class="metric-value text-danger">{{ $overdueLeads }}</h2>
+        </div>
+    </div>
 </div>
 
 {{-- Salesman Performance --}}
-<div class="card" style="margin-bottom:20px;">
+<div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-bottom: 20px; overflow: hidden;">
+    {{-- Card Header --}}
+    <div style="padding: 14px 20px; border-bottom: 1px solid #e2e8f0; background-color: #ffffff; display: flex; align-items: center; justify-content: space-between;">
+        <h3 style="font-size: 15px; font-weight: 600; color: #1e293b; margin: 0;">
+            Staff Performance
+        </h3>
+        <span style="font-size: 12px; color: #64748b; background-color: #f8fafc; border: 1px solid #e2e8f0; padding: 2px 8px; border-radius: 12px;">
+            Total Staff: {{ count($salesmenPerformance) }}
+        </span>
+    </div>
 
-    <h3 style="font-size:15px; font-weight:600; margin-bottom:16px;">
-        Salesman Performance
-    </h3>
-
-    <div style="overflow-x:auto;">
-        <table style="width:100%; border-collapse:collapse; font-size:13px;">
-
+    {{-- Table Container --}}
+    <div style="overflow-x: auto;">
+        <table style="width: 100%; border-collapse: collapse; font-size: 13px; text-align: left;">
             <thead>
-                <tr style="border-bottom:1px solid var(--border-color);">
-                    <th style="text-align:left; padding:10px;">Salesman ID</th>
-                    <th style="text-align:center; padding:10px;">Total Leads</th>
-                    <th style="text-align:center; padding:10px;">Won</th>
-                    <th style="text-align:center; padding:10px;">Lost</th>
+                <tr style="background-color: #f8fafc; border-bottom: 1px solid #e2e8f0; color: #475569; text-transform: uppercase; font-size: 11px; letter-spacing: 0.5px;">
+                    <th style="padding: 12px 20px; font-weight: 600;">Staff Name</th>
+                    <th style="padding: 12px 16px; font-weight: 600; text-align: center;">Total Leads</th>
+                    <th style="padding: 12px 16px; font-weight: 600; text-align: center;">Open Leads</th>
                 </tr>
             </thead>
-
-            <tbody>
-
+            <tbody style="color: #334155;">
                 @forelse($salesmenPerformance as $salesman)
-
-                    <tr style="border-bottom:1px solid var(--border-color);">
-
-                        <td style="padding:10px;">
-                            {{ $salesman->assigned_to }}
+                    <tr style="border-bottom: 1px solid #f1f5f9; transition: background-color 0.2s;">
+                        <td style="padding: 12px 20px; font-weight: 500; color: #0f172a;">
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <div style="width: 30px; height: 30px; border-radius: 50%; background-color: #e0f2fe; color: #0369a1; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 12px;">
+                                    {{ strtoupper(substr($salesman->salesman_name ?? 'S', 0, 1)) }}
+                                </div>
+                                <span>{{ $salesman->salesman_name }}</span>
+                            </div>
                         </td>
-
-                        <td style="text-align:center; padding:10px;">
-                            {{ $salesman->total_leads }}
+                        <td style="padding: 12px 16px; text-align: center;">
+                            <span style="display: inline-block; padding: 2px 10px; border-radius: 12px; background-color: #f1f5f9; color: #334155; font-weight: 600;">
+                                {{ $salesman->total_leads ?? 0 }}
+                            </span>
                         </td>
-
-                        <td style="text-align:center; padding:10px;">
-                            {{ $salesman->won_leads }}
+                        <td style="padding: 12px 16px; text-align: center;">
+                            <span style="display: inline-block; padding: 2px 10px; border-radius: 12px; background-color: #e0f2fe; color: #0369a1; font-weight: 600;">
+                                {{ $salesman->open_leads ?? 0 }}
+                            </span>
                         </td>
-
-                        <td style="text-align:center; padding:10px;">
-                            {{ $salesman->lost_leads }}
-                        </td>
-
                     </tr>
-
                 @empty
-
                     <tr>
-                        <td colspan="4" style="text-align:center; padding:20px; color:var(--text-muted);">
+                        <td colspan="3" style="text-align: center; padding: 24px; color: #94a3b8;">
                             No salesman data found.
                         </td>
                     </tr>
-
                 @endforelse
-
             </tbody>
-
         </table>
     </div>
-
 </div>
 
 {{-- Leads --}}
-<div class="card">
+<div class="lead-card">
+    <div class="lead-card-header">
+        <h3 class="lead-card-title">
+            Lead Details
+        </h3>
+    </div>
 
-    <h3 style="font-size:15px; font-weight:600; margin-bottom:16px;">
-        Lead Details
-    </h3>
-
-    <div style="overflow-x:auto;">
-
-        <table style="width:100%; border-collapse:collapse; font-size:13px;">
-
+    <div class="lead-table-wrapper">
+        <table class="lead-table">
             <thead>
-                <tr style="border-bottom:1px solid var(--border-color);">
-                    <th style="padding:10px; text-align:left;">Name</th>
-                    <th style="padding:10px; text-align:left;">Phone</th>
-                    <th style="padding:10px; text-align:left;">Source</th>
-                    <th style="padding:10px; text-align:left;">Status</th>
-                    <th style="padding:10px; text-align:left;">Assigned To</th>
-                    <th style="padding:10px; text-align:left;">Created</th>
+                <tr>
+                    <th>Name</th>
+                    <th>Phone</th>
+                    <th>Source</th>
+                    <th>Status</th>
+                    <th>Next Follow Up</th>
+                    <th>Assigned To</th>
+                    <th>Created</th>
                 </tr>
             </thead>
-
             <tbody>
-
                 @forelse($leads as $lead)
-
-                    <tr style="border-bottom:1px solid var(--border-color);">
-
-                        <td style="padding:10px;">
+                    <tr>
+                        <td style="font-weight: 600; color: #0f172a;">
                             {{ $lead->name ?? 'N/A' }}
                         </td>
-
-                        <td style="padding:10px;">
+                        <td style="color: #475569;">
                             {{ $lead->phone ?? 'N/A' }}
                         </td>
-
-                        <td style="padding:10px;">
-                            {{ $lead->source ?? 'N/A' }}
+                        <td>
+                            <span class="source-pill">
+                                {{ $lead->source ?? 'N/A' }}
+                            </span>
                         </td>
+                        <td>
+                            @php
+                                $rawStatus = $lead->status->value ?? $lead->status ?? '';
+                                $statusVal = strtolower($rawStatus);
+                            @endphp
 
-                        <td style="padding:10px;">
-                            {{ $lead->status ?? 'N/A' }}
+                            <span class="status-badge {{ in_array($statusVal, ['new', 'open']) ? 'status-new' : ($statusVal === 'closed' ? 'status-closed' : 'status-default') }}">
+                                {{ in_array($statusVal, ['new', 'open']) ? 'Open' : ($lead->status->label() ?? ucfirst($statusVal) ?: 'N/A') }}
+                            </span>
                         </td>
+                        <td style="color: #64748b;">
+                            @php
+                                // lead_call_details-ലെ തീയതി എടുക്കുന്നു, ഇല്ലെങ്കിൽ leads table-ലെ അടുത്ത തീയതി എടുക്കും
+                                $nextFollowup = $lead->latestCallDetail?->next_followup_date ?? $lead->next_follow_up_at;
+                            @endphp
 
-                        <td style="padding:10px;">
-                            {{ $lead->assigned_to ?? 'Unassigned' }}
+                            @if($nextFollowup)
+                                @php
+                                    $date = \Carbon\Carbon::parse($nextFollowup);
+                                    $today = \Carbon\Carbon::today();
+                                @endphp
+
+                                {{ $date->format('d M Y') }}
+
+                                @if($date->lt($today))
+                                    <span class="badge bg-danger ms-1">Overdue</span>
+                                @elseif($date->isToday())
+                                    <span class="badge bg-warning text-dark ms-1">Ongoing</span>
+                                @else
+                                    <span class="badge bg-info ms-1">Upcoming</span>
+                                @endif
+                            @else
+                                <span class="text-muted">N/A</span>
+                            @endif
                         </td>
-
-                        <td style="padding:10px;">
+                        <td>
+                            @if($lead->assigned_to)
+                                <span class="assigned-user">
+                                    {{ $lead->assignedUser->name ?? $lead->assigned_to }}
+                                </span>
+                            @else
+                                <span style="color: #94a3b8; font-style: italic;">Unassigned</span>
+                            @endif
+                        </td>
+                        <td style="color: #64748b;">
                             {{ $lead->created_at?->format('d M Y') }}
                         </td>
-
                     </tr>
-
                 @empty
-
                     <tr>
-                        <td colspan="6" style="text-align:center; padding:20px; color:var(--text-muted);">
+                        <td colspan="7" style="text-align:center; padding:24px; color:#94a3b8;">
                             No leads found.
                         </td>
                     </tr>
-
                 @endforelse
-
             </tbody>
-
         </table>
-
+        {{-- Pagination Links Container --}}
+        <div class="mt-3 d-flex justify-content-end">
+            {{ $leads->links() }}
+        </div>
     </div>
-
 </div>
-
 @endsection

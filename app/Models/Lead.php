@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Models\CallDetail; // <-- EE LINE ADD CHEYYUKA
 
 class Lead extends Model
 {
@@ -303,4 +304,10 @@ class Lead extends Model
     {
         return $this->belongsTo(User::class, 'created_by');
     }
+
+    public function latestCallDetail()
+    {
+        return $this->hasOne(CallDetail::class, 'lead_id')->latestOfMany();
+    }
+
 }

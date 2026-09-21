@@ -235,16 +235,16 @@
 
                             <div>
                                 <p class="text-muted mb-1">
-                                    In Progress
+                                    Ongoing
                                 </p>
 
                                 <h3 class="mb-0 fw-bold">
-                                    {{ $inProgressTasks ?? 10 }}
+                                    {{ $ongoingTasks ?? 10 }}
                                 </h3>
 
                                 @php
                                     $progressPercentage = ($totalTasks ?? 48) > 0
-                                        ? round((($inProgressTasks ?? 10) / ($totalTasks ?? 48)) * 100)
+                                        ? round((($ongoingTasks ?? 10) / ($totalTasks ?? 48)) * 100)
                                         : 0;
                                 @endphp
                             </div>
@@ -264,16 +264,16 @@
 
                             <div>
                                 <p class="text-muted mb-1">
-                                    Pending
+                                    Upcoming
                                 </p>
 
                                 <h3 class="mb-0 fw-bold">
-                                    {{ $pendingTasks ?? 6 }}
+                                    {{ $upcomingTasks ?? 6 }}
                                 </h3>
 
                                 @php
                                     $pendingPercentage = ($totalTasks ?? 48) > 0
-                                        ? round((($pendingTasks ?? 6) / ($totalTasks ?? 48)) * 100)
+                                        ? round((($upcomingTasks ?? 6) / ($totalTasks ?? 48)) * 100)
                                         : 0;
                                 @endphp
                             </div>

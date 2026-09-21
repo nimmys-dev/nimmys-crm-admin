@@ -7,6 +7,8 @@ use App\Models\Lead;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Enums\LeadStatus;
+
 class ReportController extends Controller
 {
     /**
@@ -155,6 +157,8 @@ class ReportController extends Controller
             ->latest('created_at')
             ->paginate(10)
             ->withQueryString();
+        $ongoingTasks   = (clone $query)->where('status', 'ongoing')->count();
+        $upcomingTasks  = (clone $query)->where('status', 'upcoming')->count();
 
 
         $staff = User::query()
@@ -171,7 +175,9 @@ class ReportController extends Controller
                 'totalTasks',
                 'completedTasks',
                 'inProgressTasks',
-                'pendingTasks'
+                'pendingTasks',
+                'ongoingTasks',
+                'upcomingTasks'
             )
         );
     }
@@ -220,48 +226,36 @@ public function leadManagement(Request $request)
     $branchId = $request->input('branch_id');
     $salesmanId = $request->input('salesman_id');
 
-    $leadQuery = Lead::whereBetween('created_at', [
+    $staff = User::orderBy('name')->get();
+
+    $leadQuery = Lead::whereBetween('leads.created_at', [
         $startDate . ' 00:00:00',
         $endDate . ' 23:59:59'
     ]);
 
     if ($branchId) {
-        $leadQuery->where('branch_id', $branchId);
+        $leadQuery->where('leads.shop_id', $branchId);
     }
 
     if ($salesmanId) {
-        $leadQuery->where('assigned_to', $salesmanId);
+        $leadQuery->where('leads.assigned_to', $salesmanId);
     }
 
+    // Counts Calculation
     $totalLeads = (clone $leadQuery)->count();
-
-    $followedUpLeads = (clone $leadQuery)
-        ->where('status', 'Followed Up')
+    $openLeads = (clone $leadQuery)->whereIn('status', ['open', 'new'])->count();
+    $closedLeads = (clone $leadQuery)->where('status', 'closed')->count();
+    
+    // Overdue Leads Check
+    $overdueLeads = (clone $leadQuery)
+        ->whereIn('status', ['open', 'new'])
+        ->whereNotNull('next_follow_up_at')
+        ->where('next_follow_up_at', '<', now()->startOfDay())
         ->count();
 
-    $closedWonLeads = (clone $leadQuery)
-        ->where('status', 'Won')
-        ->count();
-
-    $lostLeads = (clone $leadQuery)
-        ->where('status', 'Lost')
-        ->count();
-
-    $reassignedLeads = (clone $leadQuery)
-        ->whereNotNull('assigned_to')
-        ->count();
-
-    $followUpRate = $totalLeads > 0
-        ? round(($followedUpLeads / $totalLeads) * 100)
-        : 0;
-
-    $conversionRate = $totalLeads > 0
-        ? round(($closedWonLeads / $totalLeads) * 100)
-        : 0;
-
-    $lossRate = $totalLeads > 0
-        ? round(($lostLeads / $totalLeads) * 100)
-        : 0;
+    $openRate = $totalLeads > 0 ? round(($openLeads / $totalLeads) * 100) : 0;
+    $closedRate = $totalLeads > 0 ? round(($closedLeads / $totalLeads) * 100) : 0;
+    $overdueRate = $totalLeads > 0 ? round(($overdueLeads / $totalLeads) * 100) : 0;
 
     $leadSources = (clone $leadQuery)
         ->select('source', DB::raw('COUNT(*) as count'))
@@ -269,34 +263,31 @@ public function leadManagement(Request $request)
         ->pluck('count', 'source');
 
     $salesmenPerformance = (clone $leadQuery)
+        ->join('users', 'leads.assigned_to', '=', 'users.id')
         ->select(
-            'assigned_to',
+            'leads.assigned_to',
+            'users.name as salesman_name',
             DB::raw('COUNT(*) as total_leads'),
-            DB::raw("SUM(CASE WHEN status = 'Won' THEN 1 ELSE 0 END) as won_leads"),
-            DB::raw("SUM(CASE WHEN status = 'Lost' THEN 1 ELSE 0 END) as lost_leads")
+            DB::raw("SUM(CASE WHEN leads.status = 'closed' THEN 1 ELSE 0 END) as closed_leads"),
+            DB::raw("SUM(CASE WHEN leads.status IN ('open', 'new') THEN 1 ELSE 0 END) as open_leads")
         )
-        ->whereNotNull('assigned_to')
-        ->groupBy('assigned_to')
+        ->whereNotNull('leads.assigned_to')
+        ->groupBy('leads.assigned_to', 'users.name')
         ->get();
 
+    // PAGINATION & EAGER LOADING
     $leads = (clone $leadQuery)
-        ->latest()
-        ->get();
+        ->with(['assignedUser', 'latestCallDetail'])
+        ->latest('leads.created_at')
+        ->paginate(10)
+        ->withQueryString(); // Filter parameters retain ചെയ്യാൻ
 
     return view('reports.lead-management', compact(
-        'totalLeads',
-        'followedUpLeads',
-        'closedWonLeads',
-        'lostLeads',
-        'reassignedLeads',
-        'followUpRate',
-        'conversionRate',
-        'lossRate',
-        'leadSources',
-        'salesmenPerformance',
-        'startDate',
-        'endDate',
-        'leads'
+        'totalLeads', 'openLeads', 'closedLeads', 'overdueLeads',
+        'openRate', 'closedRate', 'overdueRate', 'leadSources',
+        'salesmenPerformance', 'startDate', 'endDate', 'leads',
+        'staff', 'branchId', 'salesmanId'
     ));
 }
+
 }

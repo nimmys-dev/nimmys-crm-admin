@@ -2354,4 +2354,79 @@ public function closedLeadList(Request $request): JsonResponse
         }
     }
 
+    public function reassign(Request $request, Lead $lead): JsonResponse
+    {
+        // 1. Validation
+        $request->validate([
+            'assigned_to' => [
+                'nullable',
+                'exists:users,id',
+            ],
+        ]);
+
+        $userId = $request->input('assigned_to');
+
+        // 2. Assign / Reassign lead
+        $this->service->assign(
+            $lead,
+            $userId ? (int) $userId : null
+        );
+
+        // 3. Get assigned user
+        $ownerUser = $userId ? User::find($userId) : null;
+        $owner = $ownerUser?->name;
+
+        // 4. Send FCM Notification
+        if ($ownerUser && !empty($ownerUser->fcm_token)) {
+            try {
+                $firebaseService = app(FirebaseNotificationService::class);
+
+                $firebaseService->sendToUser(
+                    $ownerUser,
+                    'Lead Reassigned',
+                    'A lead has been reassigned to you: ' . $lead->reference,
+                    [
+                        'type'      => 'lead_assigned',
+                        'lead_id'   => (string) $lead->id,
+                        'reference' => (string) $lead->reference,
+                    ]
+                );
+
+                Log::info('Lead assignment FCM notification sent', [
+                    'lead_id'     => $lead->id,
+                    'assigned_to' => $ownerUser->id,
+                ]);
+
+            } catch (\Throwable $e) {
+                Log::error('Lead assignment FCM notification failed', [
+                    'lead_id'     => $lead->id,
+                    'assigned_to' => $ownerUser->id,
+                    'error'       => $e->getMessage(),
+                ]);
+            }
+        } else {
+            Log::warning('Lead assignment FCM notification skipped', [
+                'lead_id'     => $lead->id,
+                'assigned_to' => $userId,
+                'reason'      => $ownerUser ? 'FCM token missing' : 'Lead unassigned',
+            ]);
+        }
+
+        // 5. JSON Response for API
+        return response()->json([
+            'success' => true,
+            'message' => $owner
+                ? "Lead {$lead->reference} was assigned to {$owner}."
+                : "Lead {$lead->reference} is now unassigned.",
+            'data'    => [
+                'lead_id'     => $lead->id,
+                'reference'   => $lead->reference,
+                'assigned_to' => $ownerUser ? [
+                    'id'   => $ownerUser->id,
+                    'name' => $ownerUser->name,
+                ] : null,
+            ]
+        ], 200);
+    }
+
 }
