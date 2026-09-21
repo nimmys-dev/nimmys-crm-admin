@@ -185,14 +185,13 @@
 
                             <td>
                                 <div class="table-actions">
-                                    @can('view', $lead)
+                                    
                                     <x-button
                                         variant="light" size="sm"
                                         :href="route('leads.show', $lead)"
                                         icon="ti ti-eye"
                                         aria-label="View {{ $lead->reference }}"
                                     />
-                                    @endcan
 
                                     @can('update', $lead)
                                         <x-button
