@@ -193,14 +193,14 @@
                                         aria-label="View {{ $lead->reference }}"
                                     />
 
-                                    @can('update', $lead)
+                                    <!-- @can('update', $lead) -->
                                         <x-button
                                             variant="light" size="sm"
                                             :href="route('leads.edit', $lead)"
                                             icon="ti ti-pencil"
                                             aria-label="Edit {{ $lead->reference }}"
                                         />
-                                    @endcan
+                                    <!-- @endcan -->
                                     <a href="https://wa.me/{{ $lead->phone }}"
                                         target="_blank"
                                         class="btn btn-success"

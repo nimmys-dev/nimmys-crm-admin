@@ -149,7 +149,7 @@ class LeadManagementTest extends TestCase
     }
 
     #[Test]
-    public function an_employee_may_view_and_update_only_their_own_lead(): void
+    public function an_employee_with_lead_access_may_view_and_update_every_lead(): void
     {
         $agent = $this->agent();
         $mine = Lead::factory()->assignedTo($agent->id)->create();
@@ -158,16 +158,19 @@ class LeadManagementTest extends TestCase
         $this->assertTrue($agent->can('view', $mine));
         $this->assertTrue($agent->can('update', $mine));
 
-        $this->assertFalse($agent->can('view', $theirs));
-        $this->assertFalse($agent->can('update', $theirs));
+        $this->assertTrue($agent->can('view', $theirs));
+        $this->assertTrue($agent->can('update', $theirs));
     }
 
     #[Test]
-    public function an_unassigned_lead_belongs_to_no_employee(): void
+    public function an_employee_with_lead_access_may_view_and_update_an_unassigned_lead(): void
     {
         $lead = Lead::factory()->create(['assigned_to' => null]);
 
-        $this->assertFalse($this->agent()->can('view', $lead));
+        $agent = $this->agent();
+
+        $this->assertTrue($agent->can('view', $lead));
+        $this->assertTrue($agent->can('update', $lead));
     }
 
     /*
@@ -525,11 +528,11 @@ class LeadManagementTest extends TestCase
     }
 
     #[Test]
-    public function an_employee_may_not_log_follow_ups_on_someone_elses_lead(): void
+    public function an_employee_with_lead_access_may_log_follow_ups_on_any_lead(): void
     {
         $lead = Lead::factory()->assignedTo($this->agent()->id)->create();
 
-        $this->assertFalse($this->agent()->can('addFollowUp', $lead));
+        $this->assertTrue($this->agent()->can('addFollowUp', $lead));
     }
 
     /*

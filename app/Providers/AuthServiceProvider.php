@@ -54,26 +54,16 @@ class AuthServiceProvider extends ServiceProvider
         Gate::define('leads.create', fn (User $user) => $user->canAccessLeadModule());
 
         /*
-         * Record-scoped abilities. $lead is null until the Lead model exists,
-         * in which case only the role-level answer is available. Once the
-         * model lands these move to a LeadPolicy, which receives the record
-         * and can compare ownership — the signature already allows for it.
+         * Any active user admitted to the Lead module may read and edit the
+         * full pipeline. Assignment and deletion remain separately restricted
+         * to users with leads.manage.
          */
         Gate::define('leads.view', function (User $user, mixed $lead = null) {
-            if (! $user->canAccessLeadModule()) {
-                return false;
-            }
-
-            // Employees see only their own leads.
-            return $user->can('leads.manage') || $lead === null || self::owns($user, $lead);
+            return $user->canAccessLeadModule();
         });
 
         Gate::define('leads.update', function (User $user, mixed $lead = null) {
-            if (! $user->canAccessLeadModule()) {
-                return false;
-            }
-
-            return $user->can('leads.manage') || $lead === null || self::owns($user, $lead);
+            return $user->canAccessLeadModule();
         });
 
         // Deleting, assigning and reassigning stay with leads.manage, so a

@@ -13,7 +13,7 @@ use App\Models\User;
  *
  *   Admin     everything.
  *   Manager   view, edit and delete calls on leads belonging to their shop.
- *   Employee  add calls and view history on leads assigned to them; edit
+ *   Employee  add calls and view history on any lead they can edit; edit
  *             only entries they logged themselves; never delete.
  *
  * Reachability of the lead is always checked first via LeadPolicy, so a user
@@ -86,8 +86,8 @@ class CallDetailPolicy
     /**
      * Manager reach is limited to their own shop.
      *
-     * Admins are unrestricted. Employees are already constrained by lead
-     * ownership, so shop is not applied to them a second time.
+     * Admins are unrestricted. Employees with Lead module access can work
+     * across the pipeline, so shop is not applied to them.
      *
      * A lead with no shop assigned stays reachable by every Manager —
      * otherwise unassigned leads would become permanently unmanageable.

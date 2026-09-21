@@ -13,9 +13,8 @@ use App\Models\User;
  * ($user->can('update', $lead), authorizeResource, API policies) without
  * restating the logic.
  *
- * The rule in one line: anyone with leads.manage handles the whole pipeline;
- * an Employee with lead_module_access handles only what is assigned to them,
- * and can never delete or reassign.
+ * The rule in one line: anyone with Lead module access can read and edit the
+ * whole pipeline; deleting and reassigning remain restricted to leads.manage.
  */
 class LeadPolicy
 {

@@ -495,14 +495,14 @@ class CallDetailTest extends TestCase
     }
 
     #[Test]
-    public function an_employee_cannot_touch_calls_on_someone_elses_lead(): void
+    public function an_employee_with_lead_access_may_add_and_view_calls_on_any_lead(): void
     {
         $lead = Lead::factory()->assignedTo($this->agent()->id)->create();
         $call = CallDetail::factory()->for($lead)->create();
         $intruder = $this->agent();
 
-        $this->assertFalse($intruder->can('create', [CallDetail::class, $lead]));
-        $this->assertFalse($intruder->can('view', $call));
+        $this->assertTrue($intruder->can('create', [CallDetail::class, $lead]));
+        $this->assertTrue($intruder->can('view', $call));
         $this->assertFalse($intruder->can('update', $call));
         $this->assertFalse($intruder->can('delete', $call));
     }
