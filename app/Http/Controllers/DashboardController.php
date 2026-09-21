@@ -9,6 +9,7 @@ use Illuminate\Contracts\View\View;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use App\Models\Task;
+use App\Models\LeadActivity;
 
 
 /**
@@ -70,7 +71,7 @@ class DashboardController extends Controller
         $taskCounts = $this->getTaskDashboardCounts($user);
 
         $adminTaskCounts = $this->getAdminAssignedTaskCounts($user);
-
+        $recentActivities = LeadActivity::latest()->take(5)->get();
         return view('dashboard.admin', [
             'pageTitle' => 'Dashboard',
             'breadcrumbs' => [['label' => 'Dashboard']],
@@ -98,6 +99,7 @@ class DashboardController extends Controller
             'adminUpcomingTaskCount' => $adminTaskCounts['upcoming'],
             'adminApprovalPendingTaskCount' => $adminTaskCounts['approval_pending'],
             'adminSendingPendingTaskCount' => $adminTaskCounts['sending_approval'],
+            'recentActivities' => $recentActivities,
         ]);
     }
 
