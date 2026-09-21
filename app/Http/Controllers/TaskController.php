@@ -1463,7 +1463,7 @@ public function update(
             $query->where('approved_by', $user->id);
         }elseif ($request->boolean('my_tasks')) { 
             // Admin → My Tasks only 
-            $query->where('assigned_to', $user->id);
+            $query->where('approved_by', $user->id);
         }
         if ($request->filled('title')) {
             $query->where('title', 'like', '%' . $request->title . '%');

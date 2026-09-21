@@ -227,9 +227,10 @@ class DashboardController extends Controller
             'sending_approval' => (clone $query)
                 ->where('status', 'completed')
                 ->count(),
-            'approval_pending' => (clone $query)
-                ->where('status', 'completed')
-                ->count(),
+            'approval_pending' => Task::query()
+            ->where('approved_by', $user->id)
+            ->where('status', 'completed')
+            ->count(),
         ];
     }
     private function managerDashboard(User $user): View
