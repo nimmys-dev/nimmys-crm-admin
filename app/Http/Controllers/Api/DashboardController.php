@@ -218,354 +218,354 @@ class DashboardController extends Controller
     // }
 
     public function dashboardCounts(Request $request): JsonResponse
-{
-    $user = auth()->user();
-
-    // Request Inputs
-    $filter  = $request->input('filter');
-    $scope   = $request->input('scope', 'my_tasks'); // my_tasks | all_tasks
-    $search  = trim($request->input('search', ''));
-    $perPage = min((int) $request->input('per_page', 10), 100);
-
-    $role = is_object($user->role)
-        ? ($user->role->value ?? null)
-        : $user->role;
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | 1. UPDATE AUTOMATIC TASK STATUSES
-    |--------------------------------------------------------------------------
-    */
-
-    Task::query()
-        ->whereNotIn('status', [
-            'completed',
-            'approval_pending',
-            'approved',
-            'closed'
-        ])
-        ->get()
-        ->each(fn (Task $task) => $task->updateAutomaticStatus());
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | 2. SEARCH FUNCTION
-    |--------------------------------------------------------------------------
-    |
-    | One "search" parameter searches:
-    | - Task title
-    | - Assigned user name/email
-    | - Approved user name/email
-    |
-    */
-
-    $applySearch = function ($query) use ($search) {
-
-        if ($search === '') {
-            return $query;
-        }
-
-        $query->where(function ($q) use ($search) {
-
-            // Task title
-            $q->where('title', 'like', '%' . $search . '%')
-
-                // Assigned user
-                ->orWhereHas('assignedUser', function ($userQuery) use ($search) {
-
-                    $userQuery
-                        ->where('name', 'like', '%' . $search . '%')
-                        ->orWhere('email', 'like', '%' . $search . '%');
-
-                })
-
-                // Approved user
-                ->orWhereHas('approvedBy', function ($userQuery) use ($search) {
-
-                    $userQuery
-                        ->where('name', 'like', '%' . $search . '%')
-                        ->orWhere('email', 'like', '%' . $search . '%');
-
-                });
-
-        });
-
-        return $query;
-    };
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | 3. MY TASKS COUNTS
-    |--------------------------------------------------------------------------
-    */
-
-    $myBaseQuery = Task::query()
-        ->where('assigned_to', $user->id);
-
-    // Apply search to my tasks
-    $mySearchQuery = $applySearch(clone $myBaseQuery);
-
-
-    $myTaskCounts = [
-
-        'todayDuty' => (clone $mySearchQuery)
-            ->where('status', 'ongoing')
-            ->count(),
-
-        'overdueDuty' => (clone $mySearchQuery)
-            ->where('status', 'overdue')
-            ->count(),
-
-        'upcomingDuty' => (clone $mySearchQuery)
-            ->where('status', 'upcoming')
-            ->count(),
-
-        'approvalPending' => (clone $mySearchQuery)
-            ->where('status', 'completed')
-            ->where('approved_by', $user->id)
-            ->count(),
-
-        'sendingApproval' => (clone $mySearchQuery)
-            ->where('status', 'completed')
-            ->count(),
-    ];
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | 4. ALL TASKS COUNTS
-    |--------------------------------------------------------------------------
-    */
-
-    $allBaseQuery = Task::query();
-
-    // Apply search to all tasks
-    $allSearchQuery = $applySearch(clone $allBaseQuery);
-
-
-    $allTaskCounts = [
-
-        'todayDuty' => (clone $allSearchQuery)
-            ->where('status', 'ongoing')
-            ->count(),
-
-        'overdueDuty' => (clone $allSearchQuery)
-            ->where('status', 'overdue')
-            ->count(),
-
-        'upcomingDuty' => (clone $allSearchQuery)
-            ->where('status', 'upcoming')
-            ->count(),
-
-        'approvalPending' => (clone $allSearchQuery)
-            ->where('status', 'completed')
-            ->count(),
-    ];
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | 5. CARD CLICK FILTERING LOGIC
-    |--------------------------------------------------------------------------
-    */
-
-    $filteredQuery = null;
-
-    if ($filter) {
-
-        switch ($filter) {
-
-            /*
-            |--------------------------------------------------------------------------
-            | TODAY DUTY
-            |--------------------------------------------------------------------------
-            */
-
-            case 'todayDuty':
-            case 'today_duty':
-
-                $filteredQuery = Task::query()
-                    ->where('status', 'ongoing');
-
-                if ($scope === 'my_tasks') {
-                    $filteredQuery->where('assigned_to', $user->id);
-                }
-
-                $filteredQuery = $applySearch($filteredQuery);
-
-                break;
-
-
-            /*
-            |--------------------------------------------------------------------------
-            | OVERDUE DUTY
-            |--------------------------------------------------------------------------
-            */
-
-            case 'overdueDuty':
-            case 'overdue_duty':
-
-                $filteredQuery = Task::query()
-                    ->where('status', 'overdue');
-
-                if ($scope === 'my_tasks') {
-                    $filteredQuery->where('assigned_to', $user->id);
-                }
-
-                $filteredQuery = $applySearch($filteredQuery);
-
-                break;
-
-
-            /*
-            |--------------------------------------------------------------------------
-            | UPCOMING DUTY
-            |--------------------------------------------------------------------------
-            */
-
-            case 'upcomingDuty':
-            case 'upcoming_duty':
-
-                $filteredQuery = Task::query()
-                    ->where('status', 'upcoming');
-
-                if ($scope === 'my_tasks') {
-                    $filteredQuery->where('assigned_to', $user->id);
-                }
-
-                $filteredQuery = $applySearch($filteredQuery);
-
-                break;
-
-
-            /*
-            |--------------------------------------------------------------------------
-            | APPROVAL PENDING
-            |--------------------------------------------------------------------------
-            */
-
-            case 'approvalPending':
-            case 'approval_pending':
-
-                $filteredQuery = Task::query()
-                    ->where('status', 'completed');
-
-                if ($scope === 'my_tasks') {
-
-                    $filteredQuery
-                        ->where('assigned_to', $user->id)
-                        ->where('approved_by', $user->id);
-                }
-
-                $filteredQuery = $applySearch($filteredQuery);
-
-                break;
-
-
-            /*
-            |--------------------------------------------------------------------------
-            | SENDING APPROVAL
-            |--------------------------------------------------------------------------
-            */
-
-            case 'sendingApproval':
-            case 'sending_approval':
-
-                $filteredQuery = Task::query()
-                    ->where('status', 'completed')
-                    ->where('assigned_to', $user->id);
-
-                $filteredQuery = $applySearch($filteredQuery);
-
-                break;
-        }
-    }
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | 6. FETCH PAGINATED RESULTS
-    |--------------------------------------------------------------------------
-    */
-
-    $tasks = null;
-
-    if ($filteredQuery) {
-
-        $tasks = $filteredQuery
-            ->with([
-                'assignedUser:id,name,email',
-                'approvedBy:id,name,email',
-                'quarters:id,task_id,quarter,start_date,end_date',
-            ])
-            ->latest('id')
-            ->paginate($perPage)
-            ->withQueryString();
+    {
+        $user = auth()->user();
+
+        // Request Inputs
+        $filter  = $request->input('filter');
+        $scope   = $request->input('scope', 'my_tasks'); // my_tasks | all_tasks
+        $search  = trim($request->input('search', ''));
+        $perPage = min((int) $request->input('per_page', 10), 100);
+
+        $role = is_object($user->role)
+            ? ($user->role->value ?? null)
+            : $user->role;
 
 
         /*
         |--------------------------------------------------------------------------
-        | Add assigned_to_name
+        | 1. UPDATE AUTOMATIC TASK STATUSES
         |--------------------------------------------------------------------------
         */
 
-        $tasks->getCollection()->transform(function ($task) {
+        Task::query()
+            ->whereNotIn('status', [
+                'completed',
+                'approval_pending',
+                'approved',
+                'closed'
+            ])
+            ->get()
+            ->each(fn (Task $task) => $task->updateAutomaticStatus());
 
-            $task->assigned_to_name = $task->assignedUser?->name;
 
-            return $task;
-        });
-    }
+        /*
+        |--------------------------------------------------------------------------
+        | 2. SEARCH FUNCTION
+        |--------------------------------------------------------------------------
+        |
+        | One "search" parameter searches:
+        | - Task title
+        | - Assigned user name/email
+        | - Approved user name/email
+        |
+        */
+
+        $applySearch = function ($query) use ($search) {
+
+            if ($search === '') {
+                return $query;
+            }
+
+            $query->where(function ($q) use ($search) {
+
+                // Task title
+                $q->where('title', 'like', '%' . $search . '%')
+
+                    // Assigned user
+                    ->orWhereHas('assignedUser', function ($userQuery) use ($search) {
+
+                        $userQuery
+                            ->where('name', 'like', '%' . $search . '%')
+                            ->orWhere('email', 'like', '%' . $search . '%');
+
+                    })
+
+                    // Approved user
+                    ->orWhereHas('approvedBy', function ($userQuery) use ($search) {
+
+                        $userQuery
+                            ->where('name', 'like', '%' . $search . '%')
+                            ->orWhere('email', 'like', '%' . $search . '%');
+
+                    });
+
+            });
+
+            return $query;
+        };
 
 
-    /*
-    |--------------------------------------------------------------------------
-    | 7. RETURN RESPONSE
-    |--------------------------------------------------------------------------
-    */
+        /*
+        |--------------------------------------------------------------------------
+        | 3. MY TASKS COUNTS
+        |--------------------------------------------------------------------------
+        */
 
-    return response()->json([
+        $myBaseQuery = Task::query()
+            ->where('assigned_to', $user->id);
 
-        'status'      => true,
-        'status_code' => 200,
-        'message'     => 'Task dashboard counts retrieved successfully.',
+        // Apply search to my tasks
+        $mySearchQuery = $applySearch(clone $myBaseQuery);
 
-        'data' => [
 
-            'filter' => $filter,
+        $myTaskCounts = [
 
-            'scope' => $scope,
+            'todayDuty' => (clone $mySearchQuery)
+                ->where('status', 'ongoing')
+                ->count(),
 
-            'search' => $search,
+            'overdueDuty' => (clone $mySearchQuery)
+                ->where('status', 'overdue')
+                ->count(),
 
-            'counts' => [
+            'upcomingDuty' => (clone $mySearchQuery)
+                ->where('status', 'upcoming')
+                ->count(),
 
-                'myTasks' => $myTaskCounts,
+            'approvalPending' => (clone $mySearchQuery)
+                ->where('status', 'completed')
+                ->where('approved_by', $user->id)
+                ->count(),
 
-                'allTasks' => $allTaskCounts,
+            'sendingApproval' => (clone $mySearchQuery)
+                ->where('status', 'completed')
+                ->count(),
+        ];
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | 4. ALL TASKS COUNTS
+        |--------------------------------------------------------------------------
+        */
+
+        $allBaseQuery = Task::query();
+
+        // Apply search to all tasks
+        $allSearchQuery = $applySearch(clone $allBaseQuery);
+
+
+        $allTaskCounts = [
+
+            'todayDuty' => (clone $allSearchQuery)
+                ->where('status', 'ongoing')
+                ->count(),
+
+            'overdueDuty' => (clone $allSearchQuery)
+                ->where('status', 'overdue')
+                ->count(),
+
+            'upcomingDuty' => (clone $allSearchQuery)
+                ->where('status', 'upcoming')
+                ->count(),
+
+            'approvalPending' => (clone $allSearchQuery)
+                ->where('status', 'completed')
+                ->count(),
+        ];
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | 5. CARD CLICK FILTERING LOGIC
+        |--------------------------------------------------------------------------
+        */
+
+        $filteredQuery = null;
+
+        if ($filter) {
+
+            switch ($filter) {
+
+                /*
+                |--------------------------------------------------------------------------
+                | TODAY DUTY
+                |--------------------------------------------------------------------------
+                */
+
+                case 'todayDuty':
+                case 'today_duty':
+
+                    $filteredQuery = Task::query()
+                        ->where('status', 'ongoing');
+
+                    if ($scope === 'my_tasks') {
+                        $filteredQuery->where('assigned_to', $user->id);
+                    }
+
+                    $filteredQuery = $applySearch($filteredQuery);
+
+                    break;
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | OVERDUE DUTY
+                |--------------------------------------------------------------------------
+                */
+
+                case 'overdueDuty':
+                case 'overdue_duty':
+
+                    $filteredQuery = Task::query()
+                        ->where('status', 'overdue');
+
+                    if ($scope === 'my_tasks') {
+                        $filteredQuery->where('assigned_to', $user->id);
+                    }
+
+                    $filteredQuery = $applySearch($filteredQuery);
+
+                    break;
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | UPCOMING DUTY
+                |--------------------------------------------------------------------------
+                */
+
+                case 'upcomingDuty':
+                case 'upcoming_duty':
+
+                    $filteredQuery = Task::query()
+                        ->where('status', 'upcoming');
+
+                    if ($scope === 'my_tasks') {
+                        $filteredQuery->where('assigned_to', $user->id);
+                    }
+
+                    $filteredQuery = $applySearch($filteredQuery);
+
+                    break;
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | APPROVAL PENDING
+                |--------------------------------------------------------------------------
+                */
+
+                case 'approvalPending':
+                case 'approval_pending':
+
+                    $filteredQuery = Task::query()
+                        ->where('status', 'completed');
+
+                    if ($scope === 'my_tasks') {
+
+                        $filteredQuery
+                            ->where('assigned_to', $user->id)
+                            ->where('approved_by', $user->id);
+                    }
+
+                    $filteredQuery = $applySearch($filteredQuery);
+
+                    break;
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | SENDING APPROVAL
+                |--------------------------------------------------------------------------
+                */
+
+                case 'sendingApproval':
+                case 'sending_approval':
+
+                    $filteredQuery = Task::query()
+                        ->where('status', 'completed')
+                        ->where('assigned_to', $user->id);
+
+                    $filteredQuery = $applySearch($filteredQuery);
+
+                    break;
+            }
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | 6. FETCH PAGINATED RESULTS
+        |--------------------------------------------------------------------------
+        */
+
+        $tasks = null;
+
+        if ($filteredQuery) {
+
+            $tasks = $filteredQuery
+                ->with([
+                    'assignedUser:id,name,email',
+                    'approvedBy:id,name,email',
+                    'quarters:id,task_id,quarter,start_date,end_date',
+                ])
+                ->latest('id')
+                ->paginate($perPage)
+                ->withQueryString();
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Add assigned_to_name
+            |--------------------------------------------------------------------------
+            */
+
+            $tasks->getCollection()->transform(function ($task) {
+
+                $task->assigned_to_name = $task->assignedUser?->name;
+
+                return $task;
+            });
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | 7. RETURN RESPONSE
+        |--------------------------------------------------------------------------
+        */
+
+        return response()->json([
+
+            'status'      => true,
+            'status_code' => 200,
+            'message'     => 'Task dashboard counts retrieved successfully.',
+
+            'data' => [
+
+                'filter' => $filter,
+
+                'scope' => $scope,
+
+                'search' => $search,
+
+                'counts' => [
+
+                    'myTasks' => $myTaskCounts,
+
+                    'allTasks' => $allTaskCounts,
+                ],
+
+                'tasks' => $tasks
+                    ? $tasks->items()
+                    : [],
+
+                'pagination' => $tasks
+                    ? [
+                        'current_page' => $tasks->currentPage(),
+                        'per_page'     => $tasks->perPage(),
+                        'total'        => $tasks->total(),
+                        'last_page'    => $tasks->lastPage(),
+                        'from'         => $tasks->firstItem(),
+                        'to'           => $tasks->lastItem(),
+                    ]
+                    : null,
             ],
 
-            'tasks' => $tasks
-                ? $tasks->items()
-                : [],
-
-            'pagination' => $tasks
-                ? [
-                    'current_page' => $tasks->currentPage(),
-                    'per_page'     => $tasks->perPage(),
-                    'total'        => $tasks->total(),
-                    'last_page'    => $tasks->lastPage(),
-                    'from'         => $tasks->firstItem(),
-                    'to'           => $tasks->lastItem(),
-                ]
-                : null,
-        ],
-
-    ], 200);
-}
+        ], 200);
+    }
 
 //   public function getDashboardLeadStatistics(Request $request): JsonResponse
 // {
