@@ -54,9 +54,9 @@ class AuthServiceProvider extends ServiceProvider
         Gate::define('leads.create', fn (User $user) => $user->canAccessLeadModule());
 
         /*
-         * Any active user admitted to the Lead module may read and edit the
-         * full pipeline. Assignment and deletion remain separately restricted
-         * to users with leads.manage.
+         * Any active user admitted to the Lead module may read, edit and
+         * assign leads in the full pipeline. Deletion remains restricted to
+         * users with leads.manage.
          */
         Gate::define('leads.view', function (User $user, mixed $lead = null) {
             return $user->canAccessLeadModule();
@@ -66,10 +66,10 @@ class AuthServiceProvider extends ServiceProvider
             return $user->canAccessLeadModule();
         });
 
-        // Deleting, assigning and reassigning stay with leads.manage, so a
-        // flagged Employee never gets them.
+        // Deletion stays with leads.manage. Assignment is available to every
+        // user who has been granted Lead module access.
         Gate::define('leads.delete', fn (User $user) => $user->can('leads.manage'));
-        Gate::define('leads.assign', fn (User $user) => $user->can('leads.manage'));
+        Gate::define('leads.assign', fn (User $user) => $user->canAccessLeadModule());
         Gate::define('leads.changeOwner', fn (User $user) => $user->can('leads.manage'));
     }
 

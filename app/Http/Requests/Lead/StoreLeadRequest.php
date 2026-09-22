@@ -5,6 +5,7 @@ namespace App\Http\Requests\Lead;
 use App\Enums\LeadPriority;
 use App\Enums\LeadSource;
 use App\Enums\LeadStatus;
+use App\Enums\UserRole;
 use App\Models\Lead;
 use App\Support\HtmlSanitiser;
 use Illuminate\Foundation\Http\FormRequest;
@@ -40,9 +41,19 @@ class StoreLeadRequest extends FormRequest
 
             'shop_id' => ['nullable', Rule::exists('shops', 'id')->whereNull('deleted_at')],
 
-            // Only someone with leads.assign may name an owner; stripped
-            // otherwise in leadAttributes().
-            'assigned_to' => ['nullable', Rule::exists('users', 'id')->whereNull('deleted_at')],
+            'assigned_to' => [
+                'nullable',
+                Rule::exists('users', 'id')->where(function ($query) {
+                    $query->whereNull('deleted_at')
+                        ->where('status', 'active')
+                        ->where(function ($roles) {
+                            $roles->whereIn('role', [UserRole::Admin->value, UserRole::Manager->value])
+                                ->orWhere(fn ($employees) => $employees
+                                    ->where('role', UserRole::Employee->value)
+                                    ->where('lead_module_access', true));
+                        });
+                }),
+            ],
 
             // TinyMCE output. Length is generous but bounded so a paste of a
             // whole document cannot exhaust the column.
@@ -108,10 +119,8 @@ class StoreLeadRequest extends FormRequest
 
     /**
      * Validated attributes with owner assignment stripped for users who may
-     * not choose one.
-     *
-     * Enforced server-side, not just by hiding the input: an Employee could
-     * otherwise post assigned_to and hand themselves someone else's lead.
+     * not choose one. The Lead module assignment gate remains the server-side
+     * authority; hiding the input is never relied on for protection.
      *
      * @return array<string, mixed>
      */

@@ -42,8 +42,7 @@
         </button>
 
         {{-- Reassign --}}
-        <!-- permission @can('assign', $lead) @endcan-->
-
+        @can('assign', $lead)
             <button
                 type="button"
                 class="btn btn-primary"
@@ -53,6 +52,7 @@
                 <i class="ti ti-user-check me-1"></i>
                 Reassign
             </button>
+        @endcan
          {{-- Quotation --}}
         @if ($lead->quotation || Auth::user()->can('update', $lead))
 
@@ -283,6 +283,7 @@
                                             :selected="$lead->assigned_to"
                                             placeholder="Unassigned"
                                             col="col-span-12"
+                                            data-user-select
                                         />
 
                                     </div>
@@ -612,9 +613,10 @@
 
     {{-- Activity Log Modal --}}
     @include('leads.partials.activity-log-modal')
+    @include('leads.partials.user-select-assets')
 
 @endsection
-
+@push('scripts')
 <script>
     function openModal(id) {
         const modal = document.getElementById(id);
@@ -651,19 +653,4 @@
         }
     });
 </script>
-<link href="https://cdn.jsdelivr.net/npm/tom-select@2.4.3/dist/css/tom-select.css" rel="stylesheet">
-
-<script src="https://cdn.jsdelivr.net/npm/tom-select@2.4.3/dist/js/tom-select.complete.min.js"></script>
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-        new TomSelect('select[name="assigned_to"]', {
-        create: false,
-        allowEmptyOption: true,
-        placeholder: 'Unassigned',
-        searchField: ['text'],
-        maxOptions: null
-    });
-
-});
-</script>
-
+@endpush

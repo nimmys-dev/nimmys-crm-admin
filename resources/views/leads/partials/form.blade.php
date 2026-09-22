@@ -22,6 +22,7 @@
             name="assigned_to" label="Assign To" :options="$assignableUsers"
             :selected="$lead->assigned_to ?? Auth::id()" placeholder="Unassigned"
             hint="Only active users with Lead access can be given leads."
+            data-user-select
         />
     @else
         {{-- Employees own what they create; the field is not theirs to set. --}}
@@ -54,3 +55,5 @@
     />
 
 </div>
+
+@include('leads.partials.user-select-assets')

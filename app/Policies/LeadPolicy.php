@@ -13,8 +13,8 @@ use App\Models\User;
  * ($user->can('update', $lead), authorizeResource, API policies) without
  * restating the logic.
  *
- * The rule in one line: anyone with Lead module access can read and edit the
- * whole pipeline; deleting and reassigning remain restricted to leads.manage.
+ * The rule in one line: anyone with Lead module access can read, edit and
+ * assign the whole pipeline; deleting remains restricted to leads.manage.
  */
 class LeadPolicy
 {
@@ -38,10 +38,7 @@ class LeadPolicy
         return $user->can('leads.update', $lead);
     }
 
-    /**
-     * Deleting is reserved for leads.manage — an Employee must not be able to
-     * erase pipeline history, even for their own lead.
-     */
+    /** Deleting is reserved for leads.manage. */
     public function delete(User $user, Lead $lead): bool
     {
         return $user->can('leads.delete');

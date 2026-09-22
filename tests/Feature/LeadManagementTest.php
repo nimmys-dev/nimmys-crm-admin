@@ -180,13 +180,13 @@ class LeadManagementTest extends TestCase
     */
 
     #[Test]
-    public function an_employee_cannot_delete_or_reassign_even_their_own_lead(): void
+    public function an_employee_with_lead_access_can_reassign_but_not_delete_a_lead(): void
     {
         $agent = $this->agent();
         $mine = Lead::factory()->assignedTo($agent->id)->create();
 
         $this->assertFalse($agent->can('delete', $mine), 'Employees must not erase pipeline history.');
-        $this->assertFalse($agent->can('assign', $mine), 'Employees must not move ownership.');
+        $this->assertTrue($agent->can('assign', $mine));
     }
 
     #[Test]
@@ -215,17 +215,14 @@ class LeadManagementTest extends TestCase
     }
 
     #[Test]
-    public function an_employee_cannot_hand_a_lead_to_someone_else_on_create(): void
+    public function an_employee_with_lead_access_can_choose_an_owner_on_create(): void
     {
-        // assigned_to is stripped for anyone without leads.assign, so the
-        // service never sees it and falls back to the creator.
         $agent = $this->agent();
-        $victim = $this->agent();
+        $owner = $this->agent();
 
-        $lead = app(LeadService::class)->create($this->payload(), $agent);
+        $lead = app(LeadService::class)->create($this->payload(['assigned_to' => $owner->id]), $agent);
 
-        $this->assertNotSame($victim->id, $lead->assigned_to);
-        $this->assertSame($agent->id, $lead->assigned_to);
+        $this->assertSame($owner->id, $lead->assigned_to);
     }
 
     #[Test]
