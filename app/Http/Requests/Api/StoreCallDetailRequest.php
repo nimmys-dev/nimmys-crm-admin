@@ -62,7 +62,6 @@ class StoreCallDetailRequest extends FormRequest
             |--------------------------------------------------------------------------
             */
             'remarks' => [
-                'required',
                 'string',
                 'max:5000',
             ],
@@ -261,8 +260,8 @@ class StoreCallDetailRequest extends FormRequest
             'called_time.date_format' =>
                 'Call time must be in HH:MM format.',
 
-            'remarks.required' =>
-                'Remarks are required.',
+            // 'remarks.required' =>
+            //     'Remarks are required.',
 
             'interest.required' =>
                 'Please specify whether the customer is interested.',

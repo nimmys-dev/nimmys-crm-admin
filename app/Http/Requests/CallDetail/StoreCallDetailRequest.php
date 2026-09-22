@@ -35,7 +35,7 @@ class StoreCallDetailRequest extends FormRequest
             'call_status' => ['required', new Enum(CallStatus::class)],
 
             // Mandatory across all decision branches
-            'remarks' => ['required', 'string', 'max:5000'],
+            'remarks' => [ 'max:5000'],
 
             'called_by' => ['nullable'],
             'called_date' => ['nullable', 'date', 'before_or_equal:today'],
@@ -136,7 +136,7 @@ class StoreCallDetailRequest extends FormRequest
             'is_item_sold.required' => 'Please specify whether the item was sold.',
             'invoice_number.required' => 'Invoice number is required when an item is sold.',
             // 'invoice_file.required' => 'Invoice file upload is required when an item is sold.',
-            'remarks.required' => 'Remarks are mandatory.',
+            // 'remarks.required' => 'Remarks are mandatory.',
         ];
     }
 

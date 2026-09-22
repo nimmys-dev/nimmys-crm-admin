@@ -563,20 +563,43 @@ public function index(LeadIndexRequest $request): View
     |--------------------------------------------------------------------------
     */
 
-    if ($request->filled('q')) {
+    // if ($request->filled('q')) {
 
+    //     $search = $request->q;
+
+    //     $query->where(function ($q) use ($search) {
+
+    //         $q->where('name', 'like', "%{$search}%")
+    //             ->orWhere('company', 'like', "%{$search}%")
+    //             ->orWhere('email', 'like', "%{$search}%")
+    //             ->orWhere('phone', 'like', "%{$search}%")
+    //             ->orWhere('reference', 'like', "%{$search}%");
+
+    //     });
+    // }
+
+     if ($request->filled('q')) {
         $search = $request->q;
 
         $query->where(function ($q) use ($search) {
-
+            
+            // 1. Lead table fields search
             $q->where('name', 'like', "%{$search}%")
-                ->orWhere('company', 'like', "%{$search}%")
-                ->orWhere('email', 'like', "%{$search}%")
-                ->orWhere('phone', 'like', "%{$search}%")
-                ->orWhere('reference', 'like', "%{$search}%");
+            ->orWhere('company', 'like', "%{$search}%")
+            ->orWhere('email', 'like', "%{$search}%")
+            ->orWhere('phone', 'like', "%{$search}%")
 
+            // 2. Use your custom relationship name here
+            ->orWhereHas('leadQuotation', function ($quotationQuery) use ($search) {
+                $quotationQuery->where('reference', 'like', "%{$search}%")
+                                ->orWhereHas('Quitems', function ($itemQuery) use ($search) {
+                                    $itemQuery->where('name', 'like', "%{$search}%")
+                                            ->orWhere('description', 'like', "%{$search}%");
+                                });
+            });
         });
     }
+
 
 
     /*

@@ -310,4 +310,10 @@ class Lead extends Model
         return $this->hasOne(CallDetail::class, 'lead_id')->latestOfMany();
     }
 
+    // In app/Models/Lead.php
+public function leadQuotation()
+{
+    return $this->hasOne(Quotation::class, 'lead_id');
+}
+
 }

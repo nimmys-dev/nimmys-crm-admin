@@ -151,4 +151,9 @@ class Quotation extends Model
     {
         return round((float) $this->items->sum(fn ($item) => (float) $item->tax_amount), 2);
     }
+    
+    public function Quitems()
+    {
+        return $this->hasMany(QuotationItem::class, 'quotation_id'); // Model name mathri matuka
+    }
 }
