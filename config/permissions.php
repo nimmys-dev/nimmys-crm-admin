@@ -42,6 +42,8 @@ return [
             'leads.manage',
             'tasks.manage',
             'profile.view',
+            'reports.view',
+            'settings.manage',
 
             /*
              * To let Managers read the staff directory without being able to

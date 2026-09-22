@@ -50,7 +50,7 @@ class DashboardController extends Controller
         // $leadStats = $user->canAccessLeadModule() ? $this->dashboard->getLeadStatistics($user) : null;
         $dueFollowUps = $user->canAccessLeadModule() ? $this->dashboard->getDueFollowUps($user) : collect();
          $taskCounts = $this->getTaskDashboardCounts($user);
-
+        $recentActivities = LeadActivity::latest()->take(5)->get();
         return view('dashboard.employee', [
             'pageTitle' => 'Dashboard',
             'breadcrumbs' => [['label' => 'Dashboard']],
@@ -63,6 +63,7 @@ class DashboardController extends Controller
             'upcomingDuty' => $taskCounts['upcomingDuty'],
             'approvalPending' => $taskCounts['approvalPending'],
             'sendingApproval' => $taskCounts['sendingApproval'],
+             'recentActivities' => $recentActivities,
         ]);
     }
 
@@ -240,6 +241,8 @@ class DashboardController extends Controller
         $stats = $this->dashboard->getManagerStatistics($user);
         $shopId = $stats['shop']?->id;
         $taskCounts = $this->getTaskDashboardCounts($user);
+        $adminTaskCounts = $this->getAdminAssignedTaskCounts($user);
+        $recentActivities = LeadActivity::latest()->take(5)->get();
 
         return view('dashboard.manager', [
             'pageTitle' => 'Dashboard',
@@ -259,14 +262,23 @@ class DashboardController extends Controller
             // Lead figures are scoped by the repository, not by shop — a
             // Manager works the whole pipeline they can see.
             'leadStats' => $this->dashboard->getLeadStatistics($user),
+            'statistics' => $this->dashboard->getDashboardAllLeadStatistics($user),
             'dueFollowUps' => $this->dashboard->getDueFollowUps($user),
             'leadStats' => $this->dashboard->getDashboardLeadStatistics($user),
-            // Task dashboard counts
-        'todayDuty' => $taskCounts['todayDuty'],
-        'overdueDuty' => $taskCounts['overdueDuty'],
-        'upcomingDuty' => $taskCounts['upcomingDuty'],
-        'approvalPending' => $taskCounts['approvalPending'],
-        'sendingApproval' => $taskCounts['sendingApproval'],
+                // Task dashboard counts
+            'todayDuty' => $taskCounts['todayDuty'],
+            'overdueDuty' => $taskCounts['overdueDuty'],
+            'upcomingDuty' => $taskCounts['upcomingDuty'],
+            'approvalPending' => $taskCounts['approvalPending'],
+            'sendingApproval' => $taskCounts['sendingApproval'],
+            'adminAssignedTaskCount' => $adminTaskCounts['total'],
+            'adminOngoingTaskCount' => $adminTaskCounts['ongoing'],
+            'adminOverdueTaskCount' => $adminTaskCounts['overdue'],
+            'adminUpcomingTaskCount' => $adminTaskCounts['upcoming'],
+            'adminApprovalPendingTaskCount' => $adminTaskCounts['approval_pending'],
+            'adminSendingPendingTaskCount' => $adminTaskCounts['sending_approval'],
+            'recentActivities' => $recentActivities,
         ]);
     }
+
 }

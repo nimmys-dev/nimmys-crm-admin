@@ -238,10 +238,12 @@
         text-decoration: none;
         font-weight: 600;
         font-size: 13px;
+        
     }
+    
 </style>
 
-<div class="dashboard-layout">
+<div class="dashboard-layout mt-5">
     
     {{-- LEFT CONTENT COLUMN --}}
     <div class="main-dashboard-content">
@@ -353,14 +355,14 @@
             </a>
 
             <a href="{{ route('leads.index', ['filter' => 'my_today_followup']) }}" class="dash-card theme-today">
-                <div class="dash-card-icon"><i class="ti ti-clock"></i></div>
+                <div class="dash-card-icon"><i class="ti ti-calendar-event"></i></div>
                 <h3 class="dash-card-value">{{ $leadStats['today_followup'] ?? 0 }}</h3>
                 <span class="dash-card-label">Today's Follow Up</span>
                 <div class="dash-card-arrow"><i class="ti ti-arrow-right"></i></div>
             </a>
 
             <a href="{{ route('leads.index', ['filter' => 'my_upcoming_followup']) }}" class="dash-card theme-upcoming">
-                <div class="dash-card-icon"><i class="ti ti-users-group"></i></div>
+                <div class="dash-card-icon"><i class="ti ti-clock"></i></div>
                 <h3 class="dash-card-value">{{ $leadStats['upcoming_followup'] ?? 0 }}</h3>
                 <span class="dash-card-label">Upcoming Follow Up</span>
                 <div class="dash-card-arrow"><i class="ti ti-arrow-right"></i></div>
@@ -389,14 +391,14 @@
             </a>
 
             <a href="{{ route('leads.index', ['filter' => 'all_today_followup']) }}" class="dash-card theme-today">
-                <div class="dash-card-icon"><i class="ti ti-clock"></i></div>
+                <div class="dash-card-icon"><i class="ti ti-calendar-event"></i></div>
                 <h3 class="dash-card-value">{{ $statistics['today_followup'] ?? 0 }}</h3>
                 <span class="dash-card-label">Today's Follow Up</span>
                 <div class="dash-card-arrow"><i class="ti ti-arrow-right"></i></div>
             </a>
 
             <a href="{{ route('leads.index', ['filter' => 'all_upcoming_followup']) }}" class="dash-card theme-upcoming">
-                <div class="dash-card-icon"><i class="ti ti-users-group"></i></div>
+                <div class="dash-card-icon"><i class="ti ti-clock"></i></div>
                 <h3 class="dash-card-value">{{ $statistics['upcoming_followup'] ?? 0 }}</h3>
                 <span class="dash-card-label">Upcoming Follow Up</span>
                 <div class="dash-card-arrow"><i class="ti ti-arrow-right"></i></div>
@@ -460,7 +462,10 @@
         <div class="sidebar-widget d-flex align-items-center justify-content-between" style="background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);">
             <div>
                 <h5 class="fw-bold text-dark mb-1" style="font-size: 16px;">Welcome Back!</h5>
-                <h6 class="fw-bold text-dark mb-2" style="font-size: 14px;">Admin</h6>
+                <h6 class="fw-bold text-dark mb-2" style="font-size: 14px;">
+                    {{ auth()->user()->name ?? 'Admin' }}
+                </h6>
+
                 <p class="text-muted m-0" style="font-size: 11px; line-height: 1.4;">Let's make today productive<br>and grow your business.</p>
             </div>
             <div style="width: 60px; height: 60px; background: #eff6ff; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #2563eb; font-size: 32px;">
