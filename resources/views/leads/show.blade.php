@@ -105,7 +105,7 @@
                                 'Source' => $lead->source?->label(),
                                 'Assign to' => $lead->owner?->name,
                                 'Created by' => $lead->creator?->name,
-                                'Created at' => $lead->created_at->format('d/m/Y'),
+                                'Created at' => $lead->created_at->format('d/m/Y h:i A'),
                             ];
                         @endphp
 
@@ -151,7 +151,7 @@
 
 
                         {{-- Latest Status (4 Columns) --}}
-                        <div class="col-span-12 md:col-span-4 lg:col-span-4">
+                        <!-- <div class="col-span-12 md:col-span-4 lg:col-span-4">
                             <div
                                 class="lead-detail-item"
                                 style="
@@ -202,7 +202,7 @@
                                     @endif
                                 </dd>
                             </div>
-                        </div>
+                        </div> -->
 
                         {{-- Description (Full Remaining 8 Columns) --}}
                         @if ($lead->description)
