@@ -1299,7 +1299,7 @@ class LeadController extends Controller
         */
         if (!empty($status)) {
             if (in_array($status, ['today', 'overdue', 'upcoming'])) {
-                // ഫോളോ-അപ്പ് സ്റ്റാറ്റസ് ഫിൽട്ടറുകൾ ('new' സ്റ്റാറ്റസ് ഉള്ളവ മാത്രം)
+                
                 $query->where('status', 'new')
                     ->whereHas('latestCall', function ($q) use ($status) {
                         $q->whereNotNull('next_followup_date');
@@ -1313,7 +1313,6 @@ class LeadController extends Controller
                         }
                     });
             } else {
-                // സാദാ സ്റ്റാറ്റസ് ഫിൽട്ടർ (API "open" => DB "new")
                 $dbStatus = $status === 'open' ? 'new' : $status;
                 $query->where('status', $dbStatus);
             }
@@ -1839,7 +1838,7 @@ public function quotationPdfDetails(
     ], 200);
 }
 
-    // Controller-ൽ Lead $lead എന്നതിന് പകരം $id വെച്ച് ചെയ്യാം
+
 // public function addCall(StoreCallDetailRequest $request, Lead $lead): JsonResponse
 // {
 //     try {

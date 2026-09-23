@@ -63,7 +63,7 @@
 .task-summary-row {
     display: flex;
     flex-wrap: nowrap;
-    gap: 16px; /* boxes തമ്മിലുള്ള space */
+    gap: 16px; 
 }
 
 .task-summary-col {

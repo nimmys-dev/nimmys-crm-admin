@@ -286,7 +286,6 @@ class StaffController extends Controller
 
     public function resetPassword(Request $request, $id): JsonResponse
     {
-        // 1. User ഉണ്ടോ എന്ന് ചെക്ക് ചെയ്യുന്നു
         $member = User::find($id);
 
         if (!$member) {
@@ -296,7 +295,6 @@ class StaffController extends Controller
             ], 404);
         }
 
-        // 2. Manual Validation (500 Error വരാതിരിക്കാൻ)
         $validator = Validator::make($request->all(), [
             'password' => [
                 'required',

@@ -27,9 +27,7 @@ class FirebaseNotificationService
         $this->credentialsPath = $credentials;
     }
 
-    /**
-     * Google Access Token ഉണ്ടാക്കാൻ (OAuth2)
-     */
+    
     private function getAccessToken(): ?string
     {
         $credentialsPath = $this->credentialsPath;
@@ -39,7 +37,6 @@ class FirebaseNotificationService
             return null;
         }
 
-        // പാത്ത് ഒരു Directory ആണോ അതോ ഫയൽ ആണോ എന്ന് ചെക്ക് ചെയ്യുന്നു
         if (is_dir($credentialsPath)) {
             Log::error('FCM Error: Given path is a directory, not a file: ' . $credentialsPath);
             return null;
@@ -156,7 +153,7 @@ class FirebaseNotificationService
                             'title' => $title,
                             'body' => $body,
                         ],
-                        'data' => array_map('strval', $data), // Data values string ആയിരിക്കണം
+                        'data' => array_map('strval', $data), 
                     ],
                 ]);
 

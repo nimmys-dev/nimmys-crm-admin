@@ -111,59 +111,6 @@ class DashboardService
     // }
 
 
-// public function getDashboardLeadStatistics(User $user): array
-// {
-//     // Role check controller-ൽ ഉള്ളതുപോലെ തന്നെ uniform ആക്കുക
-//     // $isAdmin = (isset($user->role->value) && $user->role->value === 'admin') || $user->isAdmin();
-
-//     // $query = Lead::query();
-
-//     // if (!$isAdmin) {
-//     //     $query->where('assigned_to', $user->id);
-//     // }
-
-//     $query = Lead::query()
-//         ->where('assigned_to', $user->id)
-//         ->where('status', '!=', 'closed');
-
-
-//     return [
-//         'unattended' => (clone $query)
-//             ->whereDoesntHave('callDetails')
-//             ->count(),
-
-//         // callDetails ന് പകരം latestCall ഉപയോഗിക്കുക
-//         'today_followup' => (clone $query)
-//             ->whereHas('latestCall', function ($q) {
-//                 $q->whereNotNull('next_followup_date')
-//                   ->whereDate('next_followup_date', today());
-//             })
-//             ->count(),
-
-//         'overdue_followup' => (clone $query)
-//             ->whereHas('latestCall', function ($q) {
-//                 $q->whereNotNull('next_followup_date')
-//                   ->whereDate('next_followup_date', '<', today());
-//             })
-//             ->count(),
-
-//         'upcoming_followup' => (clone $query)
-//             ->whereHas('latestCall', function ($q) {
-//                 $q->whereNotNull('next_followup_date')
-//                   ->whereDate('next_followup_date', '>', today());
-//             })
-//             ->count(),
-
-//         'your_leads' => Lead::query()
-//             ->where('assigned_to', $user->id)
-//             ->where('status', '!=', 'closed')
-//             ->count(),
-
-//         // 'total_leads' => Lead::query()->count(),
-//         'total_leads' => Lead::query() ->where('status', '!=', 'closed') ->count(),
-//     ];
-// }
-
 // public function getDashboardAllLeadStatistics(User $user): array
 // {
 //     $query = Lead::query()
@@ -219,12 +166,10 @@ public function getDashboardLeadStatistics(User $user): array
     */
     return [
 
-        // Assigned leads മാത്രം
         'unattended' => (clone $query)
             ->whereDoesntHave('callDetails')
             ->count(),
 
-        // Assigned leads മാത്രം
         'today_followup' => (clone $query)
             ->whereHas('latestCall', function ($q) {
                 $q->whereNotNull('next_followup_date')
@@ -232,7 +177,6 @@ public function getDashboardLeadStatistics(User $user): array
             })
             ->count(),
 
-        // Assigned leads മാത്രം
         'overdue_followup' => (clone $query)
             ->whereHas('latestCall', function ($q) {
                 $q->whereNotNull('next_followup_date')
@@ -240,7 +184,6 @@ public function getDashboardLeadStatistics(User $user): array
             })
             ->count(),
 
-        // Assigned leads മാത്രം
         'upcoming_followup' => (clone $query)
             ->whereHas('latestCall', function ($q) {
                 $q->whereNotNull('next_followup_date')
@@ -248,13 +191,9 @@ public function getDashboardLeadStatistics(User $user): array
             })
             ->count(),
 
-        // Current user-ന് assign ചെയ്ത leads മാത്രം
         'your_leads' => (clone $query)
             ->count(),
 
-        // ALL users-ന്റെയും leads
-        // closed + lost ഒഴിവാക്കും
-        // SoftDeletes ഉണ്ടെങ്കിൽ deleted records automatically ഒഴിവാകും
         'total_leads' => Lead::query()
             ->whereNotIn('status', ['closed', 'lost','won'])
             ->count(),

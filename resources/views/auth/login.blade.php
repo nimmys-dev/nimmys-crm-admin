@@ -135,18 +135,17 @@ async function fetchToken() {
     return null;
 }
 
-// Page load ചെയ്യുമ്പോൾ തനിയെ Token Fetch ചെയ്യുന്നു
+
 fetchToken();
 
-// Form Submit ചെയ്യുമ്പോൾ Token നിർബന്ധമായും ഉറപ്പുവരുത്തുന്നു
+
 document.getElementById('loginForm').addEventListener('submit', async function(e) {
     const tokenInput = document.getElementById('fcm_token');
     
-    // ടോക്കൺ വന്നിട്ടില്ലെങ്കിൽ ഒരു തവണ കൂടി എടുക്കാൻ ശ്രമിക്കും
     if (!tokenInput.value) {
-        e.preventDefault(); // Submit തടയുന്നു
+        e.preventDefault(); 
         await fetchToken();
-        this.submit(); // Token ലഭിച്ച ശേഷം submit ചെയ്യുന്നു
+        this.submit(); 
     }
 });
 </script>

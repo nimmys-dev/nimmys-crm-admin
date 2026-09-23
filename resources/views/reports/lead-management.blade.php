@@ -385,7 +385,6 @@
                         </td>
                         <td style="color: #64748b;">
                             @php
-                                // lead_call_details-ലെ തീയതി എടുക്കുന്നു, ഇല്ലെങ്കിൽ leads table-ലെ അടുത്ത തീയതി എടുക്കും
                                 $nextFollowup = $lead->latestCallDetail?->next_followup_date ?? $lead->next_follow_up_at;
                             @endphp
 

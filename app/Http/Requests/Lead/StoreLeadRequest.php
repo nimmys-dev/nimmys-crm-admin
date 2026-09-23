@@ -72,7 +72,7 @@ class StoreLeadRequest extends FormRequest
             $status = $this->input('status');
 
             if ($status === LeadStatus::Closed->value) {
-                // closed related validation മാത്രം ഇവിടെ വേണമെങ്കിൽ വെക്കാം
+                
             }
         });
     }

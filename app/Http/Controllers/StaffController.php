@@ -232,13 +232,10 @@ class StaffController extends Controller
             ],
         ]);
 
-        // Hash::make ഉപയോഗിച്ച് പാസ്‌വേഡ് ഹാഷ് ചെയ്യുന്നു
         $member->password = Hash::make($request->password);
 
-        // Explicit ആയി updated_at അപ്ഡേറ്റ് ആകാൻ
         $member->updated_at = now(); 
 
-        // ഡാറ്റാബേസിൽ സേവ് ചെയ്യുന്നു
         $member->save();
 
         return redirect()

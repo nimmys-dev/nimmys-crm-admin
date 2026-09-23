@@ -526,7 +526,6 @@
             <div class="d-flex flex-column gap-3">
                 @forelse($recentActivities as $activity)
                     @php
-                        // activity_type ഫീൽഡ് അനുസരിച്ച് Icon-ഉം Colors-ഉം മാറ്റുന്നു
                         $type = strtolower($activity->activity_type ?? '');
 
                         if ($type === 'reassigned') {

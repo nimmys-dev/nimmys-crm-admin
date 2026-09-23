@@ -667,7 +667,6 @@ class TaskController extends Controller
                 $assignedUser = User::find($task->assigned_to);
 
                 if ($assignedUser) {
-                    // app() വഴി Service ഇൻസ്റ്റൻസ് ഉണ്ടാക്കുന്നു
                     $firebaseService = app(FirebaseNotificationService::class);
 
                     $firebaseService->sendToUser(
