@@ -1803,25 +1803,33 @@ document.addEventListener('DOMContentLoaded', function () {
 
 <script>
 
-document.getElementById('createTaskForm').addEventListener('submit', function (e) {
-
+document.addEventListener('DOMContentLoaded', function () {
+    const form = document.getElementById('createTaskForm');
     const button = document.getElementById('createTaskBtn');
 
-    // Already submitted - prevent duplicate submission
-    if (this.dataset.submitted === 'true') {
-        e.preventDefault();
-        return false;
-    }
+    if (!form || !button) return;
 
-    // Mark form as submitted immediately
-    this.dataset.submitted = 'true';
+    button.addEventListener('click', function (e) {
+        // 1. HTML5 validation check (required fields miss ayal browser error kaanikkum)
+        if (!form.checkValidity()) {
+            form.reportValidity();
+            return;
+        }
 
-    // Disable button
-    button.disabled = true;
+        // 2. Already submitted anel block cheyyuka
+        if (form.dataset.submitted === 'true') {
+            e.preventDefault();
+            return;
+        }
 
-    // Hide button immediately
-    button.style.display = 'none';
+        // 3. Submit aayennu mark cheyyuka
+        form.dataset.submitted = 'true';
+        button.disabled = true;
+        button.innerText = 'Creating Task...';
 
+        // 4. Form submit cheyyuka
+        form.submit();
+    });
 });
 
 
