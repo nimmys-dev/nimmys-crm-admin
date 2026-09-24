@@ -45,12 +45,58 @@
     justify-content: center;
     flex: 0 0 auto;
 }
+.custom-breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    margin-top: -8px;
+    margin-bottom: 15px;
+
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.custom-breadcrumb a {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    color: #64748b;
+    text-decoration: none;
+}
+
+.custom-breadcrumb a:hover {
+    color: #2563eb;
+}
+
+.custom-breadcrumb .separator {
+    color: #cbd5e1;
+    font-size: 13px;
+}
+
+.custom-breadcrumb span {
+    font-weight: 600;
+}
+
 </style>
+<x-page-header :title="'Task Management'">
+    @yield('page-actions')
+</x-page-header>
+
+<div class="custom-breadcrumb">
+    <a href="/">
+        Home
+    </a>
+
+    <i class="ti ti-chevron-right separator"></i>
+
+    <span>Task</span>
+</div>
+
 <div class="grid grid-cols-12 gap-x-6">
 
     <div class="col-span-12">
         <a href="{{ route('tasks.create') }}"
-            class="btn btn-primary">
+            class="btn btn-primary mb-4">
             <i class="ti ti-plus"></i>
             Add Task
         </a>
@@ -128,6 +174,7 @@
 
         <thead>
             <tr>
+                <th>SL No</th>
                 <th>Title</th>
                 <th>Assigned To</th>
                 <th>Approved By</th>
@@ -144,11 +191,17 @@
             @forelse($tasks as $task)
 
                 <tr>
-
+                    <td>
+                        <a href="{{ route('tasks.show', $task) }}"
+                            class="font-medium text-primary">
+                                {{ $tasks->firstItem() + $loop->index }}
+                        </a>
+                    </td>
                     <td class="task-title">
-                        <span class="task-name">
+                        <a href="{{ route('tasks.show', $task) }}"
+                        class="task-name">
                             {{ $task->title }}
-                        </span>
+                        </a>
                     </td>
 
                     <td>

@@ -51,6 +51,7 @@
 
                 <x-datatable
                     :headers="[
+                        'SL No',
                         ['label' => 'Code', 'sort' => 'employee_code'],
                         ['label' => 'Name', 'sort' => 'name'],
                         ['label' => 'Role', 'sort' => 'role'],
@@ -71,6 +72,12 @@
                 >
                     @foreach ($staff as $member)
                         <tr>
+                             <td>
+                                <a href="{{ route('staff.show', $member) }}"
+                                class="font-medium text-primary">
+                                    {{ $staff->firstItem() + $loop->index }}
+                                </a>
+                            </td>
                             <td>
                                 <!-- <span class="text-muted">{{ $member->employee_code ?? '—' }}</span></td> -->
                             <a href="{{ route('staff.show', $member) }}" class="text-primary" style="color:#2171B5">

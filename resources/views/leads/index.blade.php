@@ -79,6 +79,7 @@
 
                 <x-datatable
                     :headers="[
+                        'SL No',
                         ['label' => 'Lead', 'sort' => 'name'],
                         'Phone',
                         'Assign To',
@@ -98,6 +99,12 @@
                 >
                     @foreach ($leads as $lead)
                         <tr>
+                            <td>
+                                <a href="{{ route('leads.show', $lead) }}"
+                                class="font-medium text-primary">
+                                    {{ $leads->firstItem() + $loop->index }}
+                                </a>
+                            </td>
                             <td>
                                 <a href="{{ route('leads.show', $lead) }}" class="font-medium">{{ $lead->name }}</a>
                                 @if ($lead->company)

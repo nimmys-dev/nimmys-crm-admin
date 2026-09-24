@@ -459,7 +459,7 @@
     <div class="sidebar-column">
 
         {{-- Welcome Widget --}}
-        <div class="sidebar-widget d-flex align-items-center justify-content-between" style="background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);">
+        <!-- <div class="sidebar-widget d-flex align-items-center justify-content-between" style="background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);">
             <div>
                 <h5 class="fw-bold text-dark mb-1" style="font-size: 16px;">Welcome Back!</h5>
                 <h6 class="fw-bold text-dark mb-2" style="font-size: 14px;">
@@ -471,7 +471,7 @@
             <div style="width: 60px; height: 60px; background: #eff6ff; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #2563eb; font-size: 32px;">
                 <i class="ti ti-target"></i>
             </div>
-        </div>
+        </div> -->
 
         {{-- Quick Actions --}}
         <div class="sidebar-widget">

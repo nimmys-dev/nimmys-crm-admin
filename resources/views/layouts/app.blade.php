@@ -20,10 +20,11 @@
 
     <div class="pc-container">
         <div class="pc-content">
-
+            @if(!request()->routeIs('dashboard*'))
             <x-page-header :title="$pageTitle ?? null" :breadcrumbs="$breadcrumbs ?? []">
                 @yield('page-actions')
             </x-page-header>
+            @endif
 
             <x-alerts />
 
