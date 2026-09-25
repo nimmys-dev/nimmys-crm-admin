@@ -299,8 +299,8 @@
         }
 
         .seal-img {
-            max-width: 60px;
-            max-height: 60px;
+            max-width: 50px;
+            max-height: 50px;
             display: block;
             margin: -35px auto 5px auto;
         }
