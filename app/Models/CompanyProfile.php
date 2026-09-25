@@ -29,6 +29,8 @@ class CompanyProfile extends Model
         'phone',
         'email',
         'logo_path',
+        'signature_path',
+        'seal_path',
     ];
 
     /**

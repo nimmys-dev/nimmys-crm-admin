@@ -187,7 +187,7 @@
     /* Total Leads Strip */
     .leads-summary-row {
         display: grid;
-        grid-template-columns: 1fr 1fr;
+        grid-template-columns: repeat(3, 1fr);
         gap: 16px;
         margin-top: 16px;
     }
@@ -348,6 +348,28 @@
             </div>
             <i class="ti ti-chevron-right" style="color: #16a34a;"></i>
         </a>
+        <a href="{{ route('leads.index', ['filter' => 'all_overdue_followup']) }}"
+            class="summary-strip-card"
+            style="background-color: #fef2f2;">
+
+            <div class="d-flex align-items-center gap-3">
+                <div style="width: 40px; height: 40px; background: #fecaca; border-radius: 10px; display:flex; align-items:center; justify-content:center; color: #dc2626; font-size: 20px;">
+                    <i class="ti ti-alert-circle"></i>
+                </div>
+
+                <div>
+                    <span style="font-size: 12px; color: #991b1b; font-weight: 500;">
+                        All Overdue
+                    </span>
+
+                    <h4 style="margin: 0; font-weight: 700; color: #7f1d1d;">
+                        {{ $statistics['overdue_followup'] ?? 0 }}
+                    </h4>
+                </div>
+            </div>
+
+            <i class="ti ti-chevron-right" style="color: #dc2626;"></i>
+        </a>
     </div>
 
 
@@ -401,13 +423,13 @@
             @endif
 
             {{-- Add Task: Protected by tasks policy/management --}}
-            @can('tasks.manage') {{-- Or use @can('create', App\Models\Task::class) if using policies --}}
+            <!-- @can('tasks.manage') {{-- Or use @can('create', App\Models\Task::class) if using policies --}}
                 <div class="col-6">
                     <a href="{{ route('tasks.create') }}" class="quick-action-btn" style="background: #eff6ff; color: #2563eb;">
                         <i class="ti ti-check"></i> Add Task
                     </a>
                 </div>
-            @endcan
+            @endcan -->
 
             {{-- View Reports: Inside the 'can:staff.manage' middleware group in your web.php --}}
             @can('staff.manage')

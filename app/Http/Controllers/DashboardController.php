@@ -64,6 +64,7 @@ class DashboardController extends Controller
             'approvalPending' => $taskCounts['approvalPending'],
             'sendingApproval' => $taskCounts['sendingApproval'],
              'recentActivities' => $recentActivities,
+            'statistics' => $this->dashboard->getDashboardAllLeadStatistics($user),
         ]);
     }
 

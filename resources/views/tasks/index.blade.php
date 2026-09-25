@@ -95,347 +95,349 @@
 <div class="grid grid-cols-12 gap-x-6">
 
     <div class="col-span-12">
-        <a href="{{ route('tasks.create') }}"
+        @if(auth()->user()->role->value !== 'employee')
+            <a href="{{ route('tasks.create') }}"
             class="btn btn-primary mb-4">
-            <i class="ti ti-plus"></i>
-            Add Task
-        </a>
+                <i class="ti ti-plus"></i>
+                Add Task
+            </a>
+        @endif
         <x-card title="Tasks">
 
-    {{-- Filters --}}
-    <form method="GET" action="{{ route('tasks.index') }}" class="mb-4">
-        <div class="row g-3 align-items-end">
+            {{-- Filters --}}
+            <form method="GET" action="{{ route('tasks.index') }}" class="mb-4">
+                <div class="row g-3 align-items-end">
 
-            {{-- Title Search --}}
-            <div class="col-md-3">
-                <label class="form-label">Search</label>
-                <input
-                    type="text"
-                    name="title"
-                    class="form-control"
-                    placeholder="Search task title..."
-                    value="{{ request('title') }}"
-                >
-            </div>
+                    {{-- Title Search --}}
+                    <div class="col-md-3">
+                        <label class="form-label">Search</label>
+                        <input
+                            type="text"
+                            name="title"
+                            class="form-control"
+                            placeholder="Search task title..."
+                            value="{{ request('title') }}"
+                        >
+                    </div>
 
-            {{-- Assigned To --}}
-            <div class="col-md-2">
-                <label class="form-label">Assigned To</label>
-                <select name="assigned_to" class="form-select">
-                    <option value="">All</option>
+                    {{-- Assigned To --}}
+                    <div class="col-md-2">
+                        <label class="form-label">Assigned To</label>
+                        <select name="assigned_to" class="form-select">
+                            <option value="">All</option>
 
-                    @foreach($users as $user)
-                        <option value="{{ $user->id }}"
-                            {{ request('assigned_to') == $user->id ? 'selected' : '' }}>
-                            {{ $user->name }}
-                        </option>
-                    @endforeach
-                </select>
-            </div>
-
-            {{-- Approved By --}}
-            <div class="col-md-2">
-                <label class="form-label">Approved By</label>
-                <select name="approved_by" class="form-select">
-                    <option value="">All</option>
-
-                    @foreach($users as $user)
-                        <option value="{{ $user->id }}"
-                            {{ request('approved_by') == $user->id ? 'selected' : '' }}>
-                            {{ $user->name }}
-                        </option>
-                    @endforeach
-                </select>
-            </div>
-
-            {{-- Buttons --}}
-            <div class="col-md-3 d-flex gap-2 mt-3">
-
-                <button type="submit" class="btn btn-primary">
-                    <i class="ti ti-search"></i>
-                    Search
-                </button>
-
-                <a href="{{ route('tasks.index') }}" class="btn btn-light">
-                    <i class="ti ti-refresh"></i>
-                    Reset
-                </a>
-
-            </div>
-
-        </div>
-    </form>
-
-
-    {{-- Task Table --}}
-    <div class="task-datatable-wrapper">
-
-    <table class="table table-bordered table-hover task-datatable">
-
-        <thead>
-            <tr>
-                <th>SL No</th>
-                <th>Title</th>
-                <th>Assigned To</th>
-                <th>Approved By</th>
-                <th>Type</th>
-                <th>Schedule</th>
-                <th>Status</th>
-                <th>Created At</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-
-        <tbody>
-
-            @forelse($tasks as $task)
-
-                <tr>
-                    <td>
-                        <a href="{{ route('tasks.show', $task) }}"
-                            class="font-medium text-primary">
-                                {{ $tasks->firstItem() + $loop->index }}
-                        </a>
-                    </td>
-                    <td class="task-title">
-                        <a href="{{ route('tasks.show', $task) }}"
-                        class="task-name">
-                            {{ $task->title }}
-                        </a>
-                    </td>
-
-                    <td>
-                        {{ $task->assignedUser?->name ?? '-' }}
-                    </td>
-
-                    <td>
-                        {{ $task->approvedBy?->name ?? '-' }}
-                    </td>
-
-                    {{-- Type --}}
-                    <td>
-                        @php
-                            $typeClass = match($task->task_type) {
-                                'daily' => 'task-type daily',
-                                'weekly' => 'task-type weekly',
-                                'monthly' => 'task-type monthly',
-                                'quarterly' => 'task-type quarterly',
-                                'yearly' => 'task-type yearly',
-                                default => 'task-type',
-                            };
-                        @endphp
-
-                        <span class="{{ $typeClass }}">
-                            {{ ucfirst($task->task_type) }}
-                        </span>
-                    </td>
-
-                    {{-- Schedule --}}
-                    <td class="task-schedule">
-
-                        @if($task->task_type === 'daily')
-
-                            {{ \Carbon\Carbon::parse($task->start_time)->format('h:i A') }}
-                            -
-                            {{ \Carbon\Carbon::parse($task->end_time)->format('h:i A') }}
-
-                        @elseif($task->task_type === 'weekly')
-
-                            {{ ucfirst($task->week_start_day) }}
-                            -
-                            {{ ucfirst($task->week_end_day) }}
-
-                        @elseif($task->task_type === 'monthly')
-
-                            {{ $task->monthly_start_date?->format('d M Y') }}
-                            -
-                            {{ $task->monthly_end_date?->format('d M Y') }}
-
-                        @elseif($task->task_type === 'quarterly')
-
-                            @foreach($task->quarters as $quarter)
-
-                                <div class="mb-2">
-                                    <strong>
-                                        {{ strtoupper($quarter->quarter) }}
-                                    </strong>
-
-                                    <div class="schedule-sub">
-                                        {{ $quarter->start_date?->format('d M Y') }}
-                                        -
-                                        {{ $quarter->end_date?->format('d M Y') }}
-                                    </div>
-                                </div>
-
+                            @foreach($users as $user)
+                                <option value="{{ $user->id }}"
+                                    {{ request('assigned_to') == $user->id ? 'selected' : '' }}>
+                                    {{ $user->name }}
+                                </option>
                             @endforeach
-
-                        @elseif($task->task_type === 'yearly')
-
-                            {{ $task->yearly_start_date
-                                ? \Carbon\Carbon::parse($task->yearly_start_date)->format('d M Y')
-                                : '-' }}
-
-                            -
-
-                            {{ $task->yearly_end_date
-                                ? \Carbon\Carbon::parse($task->yearly_end_date)->format('d M Y')
-                                : '-' }}
-
-                        @endif
-
-                    </td>
-
-                    {{-- Status --}}
-                    <td>
-
-                        @php
-                            $statusClass = match($task->status) {
-                                'pending' => 'task-status pending',
-                                'overdue' => 'task-status overdue',
-                                'upcoming' => 'task-status upcoming',
-                                'ongoing' => 'task-status ongoing',
-                                'completed' => 'task-status completed',
-                                'approved' => 'task-status approved',
-                                'closed' => 'task-status closed',
-                                default => 'task-status',
-                            };
-                             $statusLabel = match ($task->status) {
-                                'completed' => 'Approval Pending',
-                                default => ucfirst(str_replace('_', ' ', $task->status)),
-                            };
-                        @endphp
-
-                        <span class="badge {{ $statusClass }}">
-                            {{ $statusLabel }}
-                        </span>
-
-                    </td>
-
-                    {{-- Created At --}}
-                    <td>
-                        {{ $task->created_at?->format('d-m-Y h:i A') ?? '-' }}
-                    </td>
-
-                    {{-- Actions --}}
-                    <td>
-
-                        <div class="task-actions">
-
-                            {{-- View --}}
-                            <a href="{{ route('tasks.show', $task) }}"
-                               class="task-action-btn"
-                               title="View">
-                                <i class="ti ti-eye"></i>
-                            </a>
-
-                            {{-- Edit/Delete --}}
-                            @if(in_array(auth()->user()->role->value, ['admin', 'manager']))
-
-                                <a href="{{ route('tasks.edit', $task) }}"
-                                   class="task-action-btn"
-                                   title="Edit">
-                                    <i class="ti ti-edit"></i>
-                                </a>
-
-                                <form action="{{ route('tasks.destroy', $task) }}"
-                                      method="POST"
-                                      class="delete-form"
-                                      onsubmit="return confirm('Are you sure you want to delete this task?');">
-
-                                    @csrf
-                                    @method('DELETE')
-
-                                    <button type="submit"
-                                            class="task-action-btn delete"
-                                            title="Delete">
-                                        <i class="ti ti-trash"></i>
-                                    </button>
-
-                                </form>
-
-                            @endif
-
-                            {{-- Complete --}}
-                            @if($task->status !== 'completed' && $task->status !== 'approved')
-
-                                <button type="button"
-                                        class="task-action-btn complete-btn"
-                                        title="Complete Task"
-                                        data-id="{{ $task->id }}"
-                                        data-title="{{ $task->title }}"
-                                        data-remarks="{{ $task->remarks ?? '' }}">
-
-                                    <i class="ti ti-circle-check"></i>
-
-                                </button>
-
-                            @endif
-
-                        </div>
-
-                    </td>
-
-                </tr>
-
-            @empty
-
-                <tr>
-                    <td colspan="8" class="text-center py-5 text-muted">
-                        No tasks found.
-                    </td>
-                </tr>
-
-            @endforelse
-
-        </tbody>
-
-    </table>
-
-</div>
-
-    <!-- Modal Overlay (Moved OUTSIDE the loop for clean layout & better performance) -->
-    <div class="custom-modal-overlay" id="customModal">
-        <div class="custom-modal-dialog">
-            <div class="custom-modal-content">
-                
-                <form id="completeTaskForm" action="" method="POST">
-                    @csrf
-                    @method('PATCH')
-
-                    <div class="custom-modal-header">
-                        <h5 class="custom-modal-title">
-                            <i class="ti ti-circle-check text-success"></i> Complete Task: <span id="modalTaskTitle"></span>
-                        </h5>
-                        <button type="button" class="custom-modal-close" id="closeModalX">&times;</button>
+                        </select>
                     </div>
 
-                    <div class="custom-modal-body">
-                        <div class="modal-field">
-                            <label for="modalRemarks"><strong>Completion Remarks / Notes:</strong></label>
-                            <textarea id="modalRemarks" name="remarks" class="form-remarks" rows="4" placeholder="Enter any completion notes or remarks..."></textarea>
-                        </div>
+                    {{-- Approved By --}}
+                    <div class="col-md-2">
+                        <label class="form-label">Approved By</label>
+                        <select name="approved_by" class="form-select">
+                            <option value="">All</option>
+
+                            @foreach($users as $user)
+                                <option value="{{ $user->id }}"
+                                    {{ request('approved_by') == $user->id ? 'selected' : '' }}>
+                                    {{ $user->name }}
+                                </option>
+                            @endforeach
+                        </select>
                     </div>
 
-                    <div class="custom-modal-footer">
-                        <button type="button" class="btn-cancel" id="closeModalBtn">Cancel</button>
-                        <button type="submit" class="btn-save" id="saveRemarksBtn">
-                            <i class="ti ti-check"></i> Complete & Save
+                    {{-- Buttons --}}
+                    <div class="col-md-3 d-flex gap-2 mt-3">
+
+                        <button type="submit" class="btn btn-primary">
+                            <i class="ti ti-search"></i>
+                            Search
                         </button>
+
+                        <a href="{{ route('tasks.index') }}" class="btn btn-light">
+                            <i class="ti ti-refresh"></i>
+                            Reset
+                        </a>
+
                     </div>
-                </form>
+
+                </div>
+            </form>
+
+
+            {{-- Task Table --}}
+            <div class="task-datatable-wrapper">
+
+                <table class="table table-bordered table-hover task-datatable">
+
+                    <thead>
+                        <tr>
+                            <th>SL No</th>
+                            <th>Title</th>
+                            <th>Assigned To</th>
+                            <th>Approved By</th>
+                            <th>Type</th>
+                            <th>Schedule</th>
+                            <th>Status</th>
+                            <th>Created At</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                        @forelse($tasks as $task)
+
+                            <tr>
+                                <td>
+                                    <a href="{{ route('tasks.show', $task) }}"
+                                        class="font-medium text-primary">
+                                            {{ $tasks->firstItem() + $loop->index }}
+                                    </a>
+                                </td>
+                                <td class="task-title">
+                                    <a href="{{ route('tasks.show', $task) }}"
+                                    class="task-name">
+                                        {{ $task->title }}
+                                    </a>
+                                </td>
+
+                                <td>
+                                    {{ $task->assignedUser?->name ?? '-' }}
+                                </td>
+
+                                <td>
+                                    {{ $task->approvedBy?->name ?? '-' }}
+                                </td>
+
+                                {{-- Type --}}
+                                <td>
+                                    @php
+                                        $typeClass = match($task->task_type) {
+                                            'daily' => 'task-type daily',
+                                            'weekly' => 'task-type weekly',
+                                            'monthly' => 'task-type monthly',
+                                            'quarterly' => 'task-type quarterly',
+                                            'yearly' => 'task-type yearly',
+                                            default => 'task-type',
+                                        };
+                                    @endphp
+
+                                    <span class="{{ $typeClass }}">
+                                        {{ ucfirst($task->task_type) }}
+                                    </span>
+                                </td>
+
+                                {{-- Schedule --}}
+                                <td class="task-schedule">
+
+                                    @if($task->task_type === 'daily')
+
+                                        {{ \Carbon\Carbon::parse($task->start_time)->format('h:i A') }}
+                                        -
+                                        {{ \Carbon\Carbon::parse($task->end_time)->format('h:i A') }}
+
+                                    @elseif($task->task_type === 'weekly')
+
+                                        {{ ucfirst($task->week_start_day) }}
+                                        -
+                                        {{ ucfirst($task->week_end_day) }}
+
+                                    @elseif($task->task_type === 'monthly')
+
+                                        {{ $task->monthly_start_date?->format('d M Y') }}
+                                        -
+                                        {{ $task->monthly_end_date?->format('d M Y') }}
+
+                                    @elseif($task->task_type === 'quarterly')
+
+                                        @foreach($task->quarters as $quarter)
+
+                                            <div class="mb-2">
+                                                <strong>
+                                                    {{ strtoupper($quarter->quarter) }}
+                                                </strong>
+
+                                                <div class="schedule-sub">
+                                                    {{ $quarter->start_date?->format('d M Y') }}
+                                                    -
+                                                    {{ $quarter->end_date?->format('d M Y') }}
+                                                </div>
+                                            </div>
+
+                                        @endforeach
+
+                                    @elseif($task->task_type === 'yearly')
+
+                                        {{ $task->yearly_start_date
+                                            ? \Carbon\Carbon::parse($task->yearly_start_date)->format('d M Y')
+                                            : '-' }}
+
+                                        -
+
+                                        {{ $task->yearly_end_date
+                                            ? \Carbon\Carbon::parse($task->yearly_end_date)->format('d M Y')
+                                            : '-' }}
+
+                                    @endif
+
+                                </td>
+
+                                {{-- Status --}}
+                                <td>
+
+                                    @php
+                                        $statusClass = match($task->status) {
+                                            'pending' => 'task-status pending',
+                                            'overdue' => 'task-status overdue',
+                                            'upcoming' => 'task-status upcoming',
+                                            'ongoing' => 'task-status ongoing',
+                                            'completed' => 'task-status completed',
+                                            'approved' => 'task-status approved',
+                                            'closed' => 'task-status closed',
+                                            default => 'task-status',
+                                        };
+                                        $statusLabel = match ($task->status) {
+                                            'completed' => 'Approval Pending',
+                                            default => ucfirst(str_replace('_', ' ', $task->status)),
+                                        };
+                                    @endphp
+
+                                    <span class="badge {{ $statusClass }}">
+                                        {{ $statusLabel }}
+                                    </span>
+
+                                </td>
+
+                                {{-- Created At --}}
+                                <td>
+                                    {{ $task->created_at?->format('d-m-Y h:i A') ?? '-' }}
+                                </td>
+
+                                {{-- Actions --}}
+                                <td>
+
+                                    <div class="task-actions">
+
+                                        {{-- View --}}
+                                        <a href="{{ route('tasks.show', $task) }}"
+                                        class="task-action-btn"
+                                        title="View">
+                                            <i class="ti ti-eye"></i>
+                                        </a>
+
+                                        {{-- Edit/Delete --}}
+                                        @if(in_array(auth()->user()->role->value, ['admin', 'manager']))
+
+                                            <a href="{{ route('tasks.edit', $task) }}"
+                                            class="task-action-btn"
+                                            title="Edit">
+                                                <i class="ti ti-edit"></i>
+                                            </a>
+
+                                            <form action="{{ route('tasks.destroy', $task) }}"
+                                                method="POST"
+                                                class="delete-form"
+                                                onsubmit="return confirm('Are you sure you want to delete this task?');">
+
+                                                @csrf
+                                                @method('DELETE')
+
+                                                <button type="submit"
+                                                        class="task-action-btn delete"
+                                                        title="Delete">
+                                                    <i class="ti ti-trash"></i>
+                                                </button>
+
+                                            </form>
+
+                                        @endif
+
+                                        {{-- Complete --}}
+                                        @if($task->status !== 'completed' && $task->status !== 'approved')
+
+                                            <button type="button"
+                                                    class="task-action-btn complete-btn"
+                                                    title="Complete Task"
+                                                    data-id="{{ $task->id }}"
+                                                    data-title="{{ $task->title }}"
+                                                    data-remarks="{{ $task->remarks ?? '' }}">
+
+                                                <i class="ti ti-circle-check"></i>
+
+                                            </button>
+
+                                        @endif
+
+                                    </div>
+
+                                </td>
+
+                            </tr>
+
+                        @empty
+
+                            <tr>
+                                <td colspan="8" class="text-center py-5 text-muted">
+                                    No tasks found.
+                                </td>
+                            </tr>
+
+                        @endforelse
+
+                    </tbody>
+
+                </table>
 
             </div>
-        </div>
-    </div>
 
-    {{-- Pagination --}}
-    @if($tasks->hasPages())
-        <div class="mt-4">
-            {{ $tasks->links() }}
-        </div>
-    @endif
+            <!-- Modal Overlay (Moved OUTSIDE the loop for clean layout & better performance) -->
+            <div class="custom-modal-overlay" id="customModal">
+                <div class="custom-modal-dialog">
+                    <div class="custom-modal-content">
+                        
+                        <form id="completeTaskForm" action="" method="POST">
+                            @csrf
+                            @method('PATCH')
 
-</x-card>
+                            <div class="custom-modal-header">
+                                <h5 class="custom-modal-title">
+                                    <i class="ti ti-circle-check text-success"></i> Complete Task: <span id="modalTaskTitle"></span>
+                                </h5>
+                                <button type="button" class="custom-modal-close" id="closeModalX">&times;</button>
+                            </div>
+
+                            <div class="custom-modal-body">
+                                <div class="modal-field">
+                                    <label for="modalRemarks"><strong>Completion Remarks / Notes:</strong></label>
+                                    <textarea id="modalRemarks" name="remarks" class="form-remarks" rows="4" placeholder="Enter any completion notes or remarks..."></textarea>
+                                </div>
+                            </div>
+
+                            <div class="custom-modal-footer">
+                                <button type="button" class="btn-cancel" id="closeModalBtn">Cancel</button>
+                                <button type="submit" class="btn-save" id="saveRemarksBtn">
+                                    <i class="ti ti-check"></i> Complete & Save
+                                </button>
+                            </div>
+                        </form>
+
+                    </div>
+                </div>
+            </div>
+
+            {{-- Pagination --}}
+            @if($tasks->hasPages())
+                <div class="mt-4">
+                    {{ $tasks->links() }}
+                </div>
+            @endif
+
+        </x-card>
 
     </div>
 
@@ -709,42 +711,6 @@
 </style>
 
 @endpush
-<!-- <script>
-    document.addEventListener('DOMContentLoaded', () => {
-  const modal = document.getElementById('customModal');
-  const openBtn = document.getElementById('openModalBtn');
-  const closeBtn = document.getElementById('closeModalBtn');
-  const closeX = document.getElementById('closeModalX');
-
-  // Open modal
-  openBtn.addEventListener('click', () => {
-    modal.classList.add('show');
-  });
-
-  // Close modal helper function
-  const closeModal = () => {
-    modal.classList.remove('show');
-  };
-
-  // Close triggers
-  closeBtn.addEventListener('click', closeModal);
-  closeX.addEventListener('click', closeModal);
-
-  // Close on backdrop click
-  modal.addEventListener('click', (e) => {
-    if (e.target === modal) {
-      closeModal();
-    }
-  });
-
-  // Close on ESC key
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && modal.classList.contains('show')) {
-      closeModal();
-    }
-  });
-});
-</script> -->
 
 <script>
   document.addEventListener('DOMContentLoaded', () => {

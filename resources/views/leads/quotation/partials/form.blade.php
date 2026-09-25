@@ -8,7 +8,7 @@
     $rows = old('items', $items);
 @endphp
 
-<x-card title="Customer">
+<x-card title="Customer" style="color:#000">
     <div class="grid grid-cols-12 gap-4">
         <x-form.input
             name="customer_name" label="Customer name"

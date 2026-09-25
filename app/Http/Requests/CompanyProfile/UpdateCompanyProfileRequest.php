@@ -30,6 +30,8 @@ class UpdateCompanyProfileRequest extends FormRequest
             // Kept modest: this is a logo printed at document-header size,
             // not a photo asset.
             'logo' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
+            'signature' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
+            'seal' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
         ];
     }
 

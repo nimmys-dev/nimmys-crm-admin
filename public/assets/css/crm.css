@@ -981,6 +981,7 @@ body.modal-open {
     gap: 0.75rem 1rem;
     padding: 1rem 0;
     border-bottom: 1px solid var(--crm-border);
+    color:#000;
 }
 
 .quotation-item-row:first-child {
@@ -1019,6 +1020,7 @@ body.modal-open {
 }
 .quotation-item-input {
     background-color: #f3f4f6 !important;
+    color:#000;
 }
 
 [data-pc-theme="dark"] .quotation-item-input {

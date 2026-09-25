@@ -156,6 +156,15 @@ class LeadQuotationController extends Controller
             'lead' => $lead,
             'company' => $company,
             'logoDataUri' => $this->logoDataUri($company),
+            // Company signature
+            'signatureDataUri' => $this->companyImageDataUri(
+                $company->signature_path
+            ),
+
+            // Company seal
+            'sealDataUri' => $this->companyImageDataUri(
+                $company->seal_path
+            ),
         ])->setPaper('a4');
 
         $actor = $request->user();
@@ -190,4 +199,24 @@ class LeadQuotationController extends Controller
 
         return 'data:'.$mime.';base64,'.base64_encode(file_get_contents($path));
     }
+
+    private function companyImageDataUri(?string $path): ?string
+    {
+        if (!$path) {
+            return null;
+        }
+
+        $fullPath = storage_path('app/public/' . $path);
+
+        if (!is_file($fullPath)) {
+            return null;
+        }
+
+        $mime = mime_content_type($fullPath);
+
+        return 'data:' . $mime . ';base64,' . base64_encode(
+            file_get_contents($fullPath)
+        );
+    }
+
 }

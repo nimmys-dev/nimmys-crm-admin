@@ -280,6 +280,40 @@
             border-radius: 40px 40px 0 0;
             letter-spacing: 0.3px;
         }
+        .signatory-box {
+            text-align: center;
+            padding-top: 10px;
+        }
+
+        .signatory-company {
+            font-size: 10px;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        .signature-img {
+            max-width: 120px;
+            max-height: 50px;
+            display: block;
+            margin: 0 auto 3px auto;
+        }
+
+        .seal-img {
+            max-width: 75px;
+            max-height: 75px;
+            display: block;
+            margin: -35px auto 5px auto;
+        }
+
+        .signatory-line {
+            font-size: 9.5px;
+            font-weight: bold;
+            border-top: 1px solid #000;
+            padding-top: 2px;
+            display: inline-block;
+            min-width: 140px;
+        }
+
     </style>
 </head>
 <body>
@@ -436,11 +470,40 @@
             </td>
 
             <td style="width: 38%; padding-left: 20px;">
-                <div class="signatory-box">
+                <!-- <div class="signatory-box">
                     <div class="signatory-company">For Nimmys Camera Centre</div>
                     <div class="signatory-sd">Sd/-</div>
                     <div class="signatory-line">Authorized Signatory</div>
+                </div> -->
+                <div class="signatory-box">
+                    <div class="signatory-company">
+                        For Nimmys Camera Centre
+                    </div>
+
+                    {{-- Signature --}}
+                    @if (!empty($signatureDataUri))
+                        <img
+                            src="{{ $signatureDataUri }}"
+                            class="signature-img"
+                            alt="Authorized Signature"
+                        />
+                    @endif
+
+                    {{-- Seal --}}
+                    @if (!empty($sealDataUri))
+                        <img
+                            src="{{ $sealDataUri }}"
+                            class="seal-img"
+                            alt="Company Seal"
+                        />
+                    @endif
+
+                    <div class="signatory-line">
+                        Authorized Signatory
+                    </div>
                 </div>
+
+
             </td>
         </tr>
     </table>

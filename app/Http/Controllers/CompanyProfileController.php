@@ -31,18 +31,39 @@ class CompanyProfileController extends Controller
             ],
             'company' => $company,
             'logoUrl' => $this->logos->url($company->logo_path),
+            'signatureUrl' => $this->logos->url($company->signature_path),
+            'sealUrl' => $this->logos->url($company->seal_path),
         ]);
     }
 
     public function update(UpdateCompanyProfileRequest $request): RedirectResponse
     {
         $company = CompanyProfile::current();
-        $data = $request->safe()->except('logo');
+        $data = $request->safe()->except([
+            'logo',
+            'signature',
+            'seal',
+        ]);
 
         if ($request->hasFile('logo')) {
             $data['logo_path'] = $this->logos->store($request->file('logo'), $company->logo_path);
         }
 
+        if ($request->hasFile('signature')) {
+            $data['signature_path'] = $this->logos->store(
+                $request->file('signature'),
+                $company->signature_path,
+                'company-signature'
+            );
+        }
+
+        if ($request->hasFile('seal')) {
+            $data['seal_path'] = $this->logos->store(
+                $request->file('seal'),
+                $company->seal_path,
+                'company-seal'
+            );
+        }
         $company->update($data);
 
         return back()->with('success', 'Company profile updated.');

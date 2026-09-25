@@ -37,6 +37,22 @@
                             hint="JPG, PNG or WebP. Max 2 MB. Printed at document-header size."
                             col="col-span-12 md:col-span-6"
                         />
+                        <x-form.file
+                            name="signature"
+                            label="Authorized Signature"
+                            :current-url="$signatureUrl"
+                            hint="JPG, PNG or WebP. Max 2 MB."
+                            col="col-span-12 md:col-span-6"
+                        />
+
+                        <x-form.file
+                            name="seal"
+                            label="Company Seal"
+                            :current-url="$sealUrl"
+                            hint="JPG, PNG or WebP. Max 2 MB."
+                            col="col-span-12 md:col-span-6"
+                        />
+
                     </div>
 
                     <div class="mt-6 flex justify-end">
