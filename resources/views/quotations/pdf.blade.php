@@ -293,7 +293,7 @@
 
         .signature-img {
             max-width: 120px;
-            max-height: 50px;
+            max-height: 40px;
             display: block;
             margin: 0 auto 3px auto;
         }
