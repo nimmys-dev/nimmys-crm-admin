@@ -288,19 +288,19 @@
         .signatory-company {
             font-size: 10px;
             font-weight: bold;
-            margin-bottom: 8px;
+            margin-bottom: 15px;
         }
 
         .signature-img {
             max-width: 120px;
-            max-height: 40px;
+            max-height: 50px;
             display: block;
             margin: 0 auto 3px auto;
         }
 
         .seal-img {
-            max-width: 50px;
-            max-height: 50px;
+            max-width: 60px;
+            max-height: 60px;
             display: block;
             margin: -35px auto 5px auto;
         }
