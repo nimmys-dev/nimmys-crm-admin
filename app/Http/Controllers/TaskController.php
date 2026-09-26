@@ -329,15 +329,12 @@ class TaskController extends Controller
             |--------------------------------------------------------------------------
             */
 
-            ->when(!$user->hasRole('admin'), function ($query) use ($user) {
+            ->when($user->role->value === 'employee', function ($query) use ($user) {
 
-                $query->where(function ($query) use ($user) {
-
-                    $query->where('assigned_to', $user->id);
-
-                });
+                $query->where('assigned_to', $user->id);
 
             })
+
 
 
             /*
@@ -1457,10 +1454,10 @@ public function update(
         ->where('status', 'completed');
 
         // Admin → all completed tasks pending for approval
-        if ($user->role->value !== 'admin') {
-            // Manager / Employee → only tasks assigned to them for approval
+        if ($user->role->value === 'employee') {
+            // Employee → only their approval tasks
             $query->where('approved_by', $user->id);
-        }elseif ($request->boolean('my_tasks')) { 
+        } elseif ($request->boolean('my_tasks')) { 
             // Admin → My Tasks only 
             $query->where('approved_by', $user->id);
         }
@@ -1533,10 +1530,19 @@ public function update(
             'quarters:id,task_id,quarter,start_date,end_date',
         ])
             // Current user completed tasks
-            ->where('assigned_to', $user->id)
+            // ->where('assigned_to', $user->id)
 
             // Completed = waiting for approver
-            ->whereIn('status', ['completed'])
+            // ->whereIn('status', ['completed'])
+            // Admin + Manager → all sending approval tasks
+            // Employee → only their sending approval tasks
+            ->when($user->role->value === 'employee', function ($query) use ($user) {
+                $query->where('assigned_to', $user->id);
+            })
+
+            // Completed = waiting for approver
+            ->where('status', 'completed')
+
             ->latest('id')
             ->paginate(10)
             ->withQueryString();

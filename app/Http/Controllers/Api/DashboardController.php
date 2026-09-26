@@ -405,117 +405,175 @@ class DashboardController extends Controller
         |--------------------------------------------------------------------------
         */
 
-        $filteredQuery = null;
+        // $filteredQuery = null;
 
+        // if ($filter) {
+
+        //     switch ($filter) {
+
+        //         /*
+        //         |--------------------------------------------------------------------------
+        //         | TODAY DUTY
+        //         |--------------------------------------------------------------------------
+        //         */
+
+        //         case 'todayDuty':
+        //         case 'today_duty':
+
+        //             $filteredQuery = Task::query()
+        //                 ->where('status', 'ongoing');
+
+        //             if ($scope === 'my_tasks') {
+        //                 $filteredQuery->where('assigned_to', $user->id);
+        //             }
+
+        //             $filteredQuery = $applySearch($filteredQuery);
+
+        //             break;
+
+
+        //         /*
+        //         |--------------------------------------------------------------------------
+        //         | OVERDUE DUTY
+        //         |--------------------------------------------------------------------------
+        //         */
+
+        //         case 'overdueDuty':
+        //         case 'overdue_duty':
+
+        //             $filteredQuery = Task::query()
+        //                 ->where('status', 'overdue');
+
+        //             if ($scope === 'my_tasks') {
+        //                 $filteredQuery->where('assigned_to', $user->id);
+        //             }
+
+        //             $filteredQuery = $applySearch($filteredQuery);
+
+        //             break;
+
+
+        //         /*
+        //         |--------------------------------------------------------------------------
+        //         | UPCOMING DUTY
+        //         |--------------------------------------------------------------------------
+        //         */
+
+        //         case 'upcomingDuty':
+        //         case 'upcoming_duty':
+
+        //             $filteredQuery = Task::query()
+        //                 ->where('status', 'upcoming');
+
+        //             if ($scope === 'my_tasks') {
+        //                 $filteredQuery->where('assigned_to', $user->id);
+        //             }
+
+        //             $filteredQuery = $applySearch($filteredQuery);
+
+        //             break;
+
+
+        //         /*
+        //         |--------------------------------------------------------------------------
+        //         | APPROVAL PENDING
+        //         |--------------------------------------------------------------------------
+        //         */
+
+        //         case 'approvalPending':
+        //         case 'approval_pending':
+
+        //             $filteredQuery = Task::query()
+        //                 ->where('status', 'completed');
+
+        //             if ($scope === 'my_tasks') {
+
+        //                 $filteredQuery
+        //                     ->where('assigned_to', $user->id)
+        //                     ->where('approved_by', $user->id);
+        //             }
+
+        //             $filteredQuery = $applySearch($filteredQuery);
+
+        //             break;
+
+
+        //         /*
+        //         |--------------------------------------------------------------------------
+        //         | SENDING APPROVAL
+        //         |--------------------------------------------------------------------------
+        //         */
+
+        //         case 'sendingApproval':
+        //         case 'sending_approval':
+
+        //             $filteredQuery = Task::query()
+        //                 ->where('status', 'completed')
+        //                 ->where('assigned_to', $user->id);
+
+        //             $filteredQuery = $applySearch($filteredQuery);
+
+        //             break;
+        //     }
+        // }
+
+
+        $filteredQuery = Task::query();
+
+        /*
+        |--------------------------------------------------------------------------
+        | Scope
+        |--------------------------------------------------------------------------
+        | all_tasks → all tasks
+        | my_tasks  → current user's tasks
+        |--------------------------------------------------------------------------
+        */
+        if ($scope === 'my_tasks') {
+            $filteredQuery->where('assigned_to', $user->id);
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Filter
+        |--------------------------------------------------------------------------
+        */
         if ($filter) {
 
             switch ($filter) {
 
-                /*
-                |--------------------------------------------------------------------------
-                | TODAY DUTY
-                |--------------------------------------------------------------------------
-                */
-
                 case 'todayDuty':
                 case 'today_duty':
-
-                    $filteredQuery = Task::query()
-                        ->where('status', 'ongoing');
-
-                    if ($scope === 'my_tasks') {
-                        $filteredQuery->where('assigned_to', $user->id);
-                    }
-
-                    $filteredQuery = $applySearch($filteredQuery);
-
+                    $filteredQuery->where('status', 'ongoing');
                     break;
-
-
-                /*
-                |--------------------------------------------------------------------------
-                | OVERDUE DUTY
-                |--------------------------------------------------------------------------
-                */
 
                 case 'overdueDuty':
                 case 'overdue_duty':
-
-                    $filteredQuery = Task::query()
-                        ->where('status', 'overdue');
-
-                    if ($scope === 'my_tasks') {
-                        $filteredQuery->where('assigned_to', $user->id);
-                    }
-
-                    $filteredQuery = $applySearch($filteredQuery);
-
+                    $filteredQuery->where('status', 'overdue');
                     break;
-
-
-                /*
-                |--------------------------------------------------------------------------
-                | UPCOMING DUTY
-                |--------------------------------------------------------------------------
-                */
 
                 case 'upcomingDuty':
                 case 'upcoming_duty':
-
-                    $filteredQuery = Task::query()
-                        ->where('status', 'upcoming');
-
-                    if ($scope === 'my_tasks') {
-                        $filteredQuery->where('assigned_to', $user->id);
-                    }
-
-                    $filteredQuery = $applySearch($filteredQuery);
-
+                    $filteredQuery->where('status', 'upcoming');
                     break;
-
-
-                /*
-                |--------------------------------------------------------------------------
-                | APPROVAL PENDING
-                |--------------------------------------------------------------------------
-                */
 
                 case 'approvalPending':
                 case 'approval_pending':
-
-                    $filteredQuery = Task::query()
-                        ->where('status', 'completed');
+                    $filteredQuery->where('status', 'completed');
 
                     if ($scope === 'my_tasks') {
-
-                        $filteredQuery
-                            ->where('assigned_to', $user->id)
-                            ->where('approved_by', $user->id);
+                        $filteredQuery->where('approved_by', $user->id);
                     }
 
-                    $filteredQuery = $applySearch($filteredQuery);
-
                     break;
-
-
-                /*
-                |--------------------------------------------------------------------------
-                | SENDING APPROVAL
-                |--------------------------------------------------------------------------
-                */
 
                 case 'sendingApproval':
                 case 'sending_approval':
-
-                    $filteredQuery = Task::query()
-                        ->where('status', 'completed')
-                        ->where('assigned_to', $user->id);
-
-                    $filteredQuery = $applySearch($filteredQuery);
-
+                    $filteredQuery->where('status', 'completed');
                     break;
             }
         }
+
+        $filteredQuery = $applySearch($filteredQuery);
 
 
         /*

@@ -171,9 +171,13 @@ class DashboardController extends Controller
 
         // Admin → all tasks
         // Manager / Employee → assigned tasks
-        if ($user->role->value !== 'admin') {
+        // if ($user->role->value !== 'admin') {
+        //     $query->where('assigned_to', $user->id);
+        // }
+        if ($user->role->value === 'employee') {
             $query->where('assigned_to', $user->id);
         }
+
 
         /*
         |--------------------------------------------------------------------------
@@ -184,12 +188,21 @@ class DashboardController extends Controller
             ->where('status', 'completed');
 
         // Manager / Employee → only tasks assigned to them for approval
-        if ($user->role->value !== 'admin') {
+        // if ($user->role->value !== 'admin') {
+        //     $approvalPendingQuery->where('approved_by', $user->id);
+        // }
+        if ($user->role->value === 'employee') {
             $approvalPendingQuery->where('approved_by', $user->id);
         }
-         $sendingApprovalQuery = Task::query()
-        ->where('assigned_to', $user->id)
-        ->where('status', 'completed');
+        //  $sendingApprovalQuery = Task::query()
+        // ->where('assigned_to', $user->id)
+        // ->where('status', 'completed');
+        $sendingApprovalQuery = Task::query()
+            ->where('status', 'completed');
+
+        if ($user->role->value === 'employee') {
+            $sendingApprovalQuery->where('assigned_to', $user->id);
+        }
 
         return [
             'todayDuty' => (clone $query)
