@@ -76,6 +76,53 @@
 .custom-breadcrumb span {
     font-weight: 600;
 }
+.task-search-form {
+    background: #f5f6f8;
+    padding: 16px 18px;
+    border-radius: 10px;
+    border: 1px solid #e5e7eb;
+}
+
+.task-search-form .row {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: flex-end;
+    gap: 12px;
+}
+
+.task-search-form .search-field {
+    flex: 0 0 280px;
+}
+
+.task-search-form .filter-field {
+    flex: 0 0 200px;
+}
+
+.task-search-form .button-field {
+    flex: 0 0 auto;
+    display: flex;
+    gap: 8px;
+}
+
+.task-search-form .form-label {
+    display: block;
+    margin-bottom: 5px;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.task-search-form .form-control,
+.task-search-form .form-select {
+    height: 38px;
+    font-size: 14px;
+}
+
+.task-search-form .btn {
+    height: 38px;
+    padding: 0 14px;
+    white-space: nowrap;
+}
+
 
 </style>
 <x-page-header :title="'Task Management'">
@@ -105,7 +152,7 @@
         <x-card title="Tasks">
 
             {{-- Filters --}}
-            <form method="GET" action="{{ route('tasks.index') }}" class="mb-4">
+            <!-- <form method="GET" action="{{ route('tasks.index') }}" class="mb-4">
                 <div class="row g-3 align-items-end">
 
                     {{-- Title Search --}}
@@ -166,7 +213,63 @@
                     </div>
 
                 </div>
-            </form>
+            </form> -->
+            <form method="GET"
+      action="{{ route('tasks.index') }}"
+      class="mb-4 task-search-form">
+
+    <div class="row">
+
+        <div class="search-field">
+            <label class="form-label">Search</label>
+            <input
+                type="text"
+                name="title"
+                class="form-control"
+                placeholder="Search task title..."
+                value="{{ request('title') }}"
+            >
+        </div>
+
+        <div class="filter-field">
+            <label class="form-label">Assigned To</label>
+            <select name="assigned_to" class="form-select">
+                <option value="">All</option>
+                @foreach($users as $user)
+                    <option value="{{ $user->id }}"
+                        {{ request('assigned_to') == $user->id ? 'selected' : '' }}>
+                        {{ $user->name }}
+                    </option>
+                @endforeach
+            </select>
+        </div>
+
+        <div class="filter-field">
+            <label class="form-label">Approved By</label>
+            <select name="approved_by" class="form-select">
+                <option value="">All</option>
+                @foreach($users as $user)
+                    <option value="{{ $user->id }}"
+                        {{ request('approved_by') == $user->id ? 'selected' : '' }}>
+                        {{ $user->name }}
+                    </option>
+                @endforeach
+            </select>
+        </div>
+
+        <div class="button-field">
+            <button type="submit" class="btn btn-primary">
+                <i class="ti ti-search"></i> Search
+            </button>
+
+            <a href="{{ route('tasks.index') }}" class="btn btn-light">
+                <i class="ti ti-refresh"></i> Reset
+            </a>
+        </div>
+
+    </div>
+</form>
+
 
 
             {{-- Task Table --}}

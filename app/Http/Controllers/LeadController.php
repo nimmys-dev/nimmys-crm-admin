@@ -429,7 +429,12 @@ public function index(LeadIndexRequest $request): View
             ->orWhere('email', 'like', "%{$search}%")
             ->orWhere('phone', 'like', "%{$search}%")
             ->orWhere('description', 'like', "%{$search}%")
-
+            ->orWhere('description', 'like', "%{$search}%")
+            // Assigned user name / email
+            ->orWhereHas('assignedUser', function ($userQuery) use ($search) {
+                $userQuery->where('name', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%");
+            })
             // 2. Use your custom relationship name here
             ->orWhereHas('leadQuotation', function ($quotationQuery) use ($search) {
                 $quotationQuery->where('reference', 'like', "%{$search}%")

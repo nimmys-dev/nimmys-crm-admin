@@ -31,6 +31,95 @@ class LeadQuotationController extends Controller
 
     public const DEFAULT_TERMS = "1. All Values are inclusive of all Taxes\n2. The Supply of Materials subject to the Availability\n3. We reserve the right to vary Prices in the event of changes in the price rise made by companies\n4. Material delivered after 7 days of Quotation Confirmation\n5. Shipping charges extra";
 
+    // public function create(Request $request, Lead $lead): View|RedirectResponse
+    // {
+    //     $this->authorize('update', $lead);
+
+    //     if ($lead->quotation) {
+    //         return redirect()->route('leads.quotation.edit', $lead);
+    //     }
+
+    //     return view('leads.quotation.create', [
+    //         'pageTitle' => "Quotation — {$lead->reference}",
+    //         'breadcrumbs' => [
+    //             ['label' => 'Leads', 'route' => 'leads.index'],
+    //             ['label' => $lead->reference, 'route' => null],
+    //             ['label' => 'Quotation'],
+    //         ],
+    //         'lead' => $lead,
+    //         'quotation' => $lead->quotation()->make([
+    //             'customer_name' => $lead->name,
+    //             'customer_address' => $lead->city,
+    //             'issue_date' => today(),
+    //             'terms' => self::DEFAULT_TERMS,
+    //         ]),
+    //         'items' => [['description' => '', 'quantity' => '1', 'rate' => '', 'tax_percent' => '18.00']],
+    //     ]);
+    // }
+
+    // public function store(StoreQuotationRequest $request, Lead $lead): RedirectResponse
+    // {
+    //     // A stale "create" tab submitted after a quotation already exists —
+    //     // route it to update instead of raising a duplicate-key error.
+    //     if ($lead->quotation) {
+    //         return redirect()->route('leads.quotation.edit', $lead);
+    //     }
+
+    //     $this->service->create($lead, $request->quotationAttributes(), $request->items(), $request->user());
+
+    //     return redirect()
+    //         ->route('leads.show', $lead)
+    //         ->with('success', "Quotation prepared for {$lead->reference}.");
+    // }
+
+    // public function edit(Request $request, Lead $lead): View|RedirectResponse
+    // {
+    //     $this->authorize('update', $lead);
+
+    //     $quotation = $lead->quotation;
+
+    //     if (! $quotation) {
+    //         return redirect()->route('leads.quotation.create', $lead);
+    //     }
+
+    //     $quotation->load('items');
+
+    //     return view('leads.quotation.edit', [
+    //         'pageTitle' => "Quotation — {$lead->reference}",
+    //         'breadcrumbs' => [
+    //             ['label' => 'Leads', 'route' => 'leads.index'],
+    //             ['label' => $lead->reference, 'route' => null],
+    //             ['label' => 'Quotation'],
+    //         ],
+    //         'lead' => $lead,
+    //         'quotation' => $quotation,
+    //         'items' => $quotation->items->map(fn ($item) => [
+    //             'description' => $item->description,
+    //             'quantity' => (string) $item->quantity,
+    //             'rate' => (string) $item->rate,
+    //             'tax_percent' => (string) ($item->tax_percent ?? '18.00'),
+    //             'basic_rate' => (string) ($item->basic_rate ?? ''),
+    //             'tax_amount' => (string) ($item->tax_amount ?? ''),
+    //             'amount' => (string) ($item->amount ?? ''),
+    //         ])->all(),
+    //     ]);
+    // }
+
+    // public function update(UpdateQuotationRequest $request, Lead $lead): RedirectResponse
+    // {
+    //     $quotation = $lead->quotation;
+
+    //     if (! $quotation) {
+    //         return redirect()->route('leads.quotation.create', $lead);
+    //     }
+
+    //     $this->service->update($quotation, $request->quotationAttributes(), $request->items());
+
+    //     return redirect()
+    //         ->route('leads.show', $lead)
+    //         ->with('success', "Quotation updated for {$lead->reference}.");
+    // }
+
     public function create(Request $request, Lead $lead): View|RedirectResponse
     {
         $this->authorize('update', $lead);
@@ -41,84 +130,189 @@ class LeadQuotationController extends Controller
 
         return view('leads.quotation.create', [
             'pageTitle' => "Quotation — {$lead->reference}",
+
             'breadcrumbs' => [
                 ['label' => 'Leads', 'route' => 'leads.index'],
                 ['label' => $lead->reference, 'route' => null],
                 ['label' => 'Quotation'],
             ],
+
             'lead' => $lead,
+
             'quotation' => $lead->quotation()->make([
                 'customer_name' => $lead->name,
                 'customer_address' => $lead->city,
                 'issue_date' => today(),
                 'terms' => self::DEFAULT_TERMS,
             ]),
-            'items' => [['description' => '', 'quantity' => '1', 'rate' => '', 'tax_percent' => '18.00']],
+
+            'items' => [
+                [
+                    'description' => '',
+                    'quantity' => '1',
+                    'rate' => '',
+                    'tax_percent' => '18.00',
+                ],
+            ],
         ]);
     }
 
-    public function store(StoreQuotationRequest $request, Lead $lead): RedirectResponse
+
+    public function store(StoreQuotationRequest $request,Lead $lead): RedirectResponse 
     {
-        // A stale "create" tab submitted after a quotation already exists —
-        // route it to update instead of raising a duplicate-key error.
+
+        // If quotation already exists, go to edit page
         if ($lead->quotation) {
             return redirect()->route('leads.quotation.edit', $lead);
         }
 
-        $this->service->create($lead, $request->quotationAttributes(), $request->items(), $request->user());
+        /*
+        |--------------------------------------------------------------------------
+        | Create quotation
+        |--------------------------------------------------------------------------
+        |
+        | customer_name
+        | customer_address
+        | issue_date
+        | valid_until
+        | discount_percent
+        | tax_percent
+        | terms
+        |
+        | are passed through quotationAttributes().
+        |
+        */
+
+        $this->service->create(
+            $lead,
+            $request->quotationAttributes(),
+            $request->items(),
+            $request->user()
+        );
 
         return redirect()
             ->route('leads.show', $lead)
-            ->with('success', "Quotation prepared for {$lead->reference}.");
+            ->with(
+                'success',
+                "Quotation prepared for {$lead->reference}."
+            );
     }
 
-    public function edit(Request $request, Lead $lead): View|RedirectResponse
+
+    public function edit(Request $request, Lead $lead): View|RedirectResponse 
     {
+
         $this->authorize('update', $lead);
 
         $quotation = $lead->quotation;
 
         if (! $quotation) {
-            return redirect()->route('leads.quotation.create', $lead);
+            return redirect()->route(
+                'leads.quotation.create',
+                $lead
+            );
         }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Load quotation items
+        |--------------------------------------------------------------------------
+        */
 
         $quotation->load('items');
 
         return view('leads.quotation.edit', [
             'pageTitle' => "Quotation — {$lead->reference}",
+
             'breadcrumbs' => [
                 ['label' => 'Leads', 'route' => 'leads.index'],
                 ['label' => $lead->reference, 'route' => null],
                 ['label' => 'Quotation'],
             ],
+
             'lead' => $lead,
+
+            /*
+            |--------------------------------------------------------------------------
+            | Existing quotation
+            |--------------------------------------------------------------------------
+            |
+            | customer_name
+            | customer_address
+            | issue_date
+            |
+            | will automatically be available in the edit form.
+            |
+            */
+
             'quotation' => $quotation,
-            'items' => $quotation->items->map(fn ($item) => [
-                'description' => $item->description,
-                'quantity' => (string) $item->quantity,
-                'rate' => (string) $item->rate,
-                'tax_percent' => (string) ($item->tax_percent ?? '18.00'),
-                'basic_rate' => (string) ($item->basic_rate ?? ''),
-                'tax_amount' => (string) ($item->tax_amount ?? ''),
-                'amount' => (string) ($item->amount ?? ''),
-            ])->all(),
+
+            'items' => $quotation->items->map(
+                fn ($item) => [
+                    'description' => $item->description,
+                    'quantity' => (string) $item->quantity,
+                    'rate' => (string) $item->rate,
+                    'tax_percent' => (string) (
+                        $item->tax_percent ?? '18.00'
+                    ),
+                    'basic_rate' => (string) (
+                        $item->basic_rate ?? ''
+                    ),
+                    'tax_amount' => (string) (
+                        $item->tax_amount ?? ''
+                    ),
+                    'amount' => (string) (
+                        $item->amount ?? ''
+                    ),
+                ]
+            )->all(),
         ]);
     }
 
-    public function update(UpdateQuotationRequest $request, Lead $lead): RedirectResponse
+
+    public function update(UpdateQuotationRequest $request,Lead $lead): RedirectResponse 
     {
+
         $quotation = $lead->quotation;
 
         if (! $quotation) {
-            return redirect()->route('leads.quotation.create', $lead);
+            return redirect()->route(
+                'leads.quotation.create',
+                $lead
+            );
         }
 
-        $this->service->update($quotation, $request->quotationAttributes(), $request->items());
+        /*
+        |--------------------------------------------------------------------------
+        | Update quotation
+        |--------------------------------------------------------------------------
+        |
+        | quotationAttributes() must contain:
+        |
+        | customer_name
+        | customer_address
+        | issue_date
+        | valid_until
+        | discount_percent
+        | tax_percent
+        | terms
+        |
+        */
+
+        $this->service->update(
+            $quotation,
+            $request->quotationAttributes(),
+            $request->items()
+        );
 
         return redirect()
             ->route('leads.show', $lead)
-            ->with('success', "Quotation updated for {$lead->reference}.");
+            ->with(
+                'success',
+                "Quotation updated for {$lead->reference}."
+            );
     }
+
 
     public function destroy(Request $request, Lead $lead): RedirectResponse
     {
