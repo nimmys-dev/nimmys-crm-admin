@@ -321,7 +321,8 @@ class TaskController extends Controller
         |--------------------------------------------------------------------------
         */
 
-        $tasks = Task::query()
+            $tasks = Task::query()
+            ->where('status', '!=', 'approved')
 
             /*
             |--------------------------------------------------------------------------
@@ -360,14 +361,23 @@ class TaskController extends Controller
             |--------------------------------------------------------------------------
             */
 
+            // ->when($request->filled('title'), function ($query) use ($request) {
+
+            //     $query->where(
+            //         'title',
+            //         'like',
+            //         '%' . $request->title . '%'
+            //     );
+
+            // })
+
             ->when($request->filled('title'), function ($query) use ($request) {
-
-                $query->where(
-                    'title',
-                    'like',
-                    '%' . $request->title . '%'
-                );
-
+                $search = $request->title;
+                
+                $query->where(function ($q) use ($search) {
+                    $q->where('title', 'like', '%' . $search . '%')
+                    ->orWhere('status', 'like', '%' . $search . '%');
+                });
             })
 
 
@@ -1556,5 +1566,58 @@ public function update(
             'tasks' => $tasks,
         ]);
     }
+
+    public function approvedIndex(Request $request): View
+    {
+    $user = auth()->user();
+
+    $tasks = Task::query()
+
+        // Approved tasks only
+        ->where('status', 'approved')
+
+        // Employee: own tasks only
+        ->when($user->role->value === 'employee', function ($query) use ($user) {
+            $query->where('assigned_to', $user->id);
+        })
+
+        // Title filter
+        ->when($request->filled('title'), function ($query) use ($request) {
+            $query->where(
+                'title',
+                'like',
+                '%' . $request->title . '%'
+            );
+        })
+
+        // Assigned To filter
+        ->when($request->filled('assigned_to'), function ($query) use ($request) {
+            $query->where(
+                'assigned_to',
+                $request->assigned_to
+            );
+        })
+
+        // Relationships
+        ->with([
+            'assignedUser:id,name',
+            'approvedBy:id,name',
+            'quarters',
+        ])
+
+        ->orderBy('id', 'desc')
+        ->paginate(5)
+        ->withQueryString();
+
+    $users = User::select('id', 'name')
+        ->orderBy('name')
+        ->get();
+
+    return view(
+        'tasks.approved',
+        compact('tasks', 'users')
+    );
+    }
+
 
 }

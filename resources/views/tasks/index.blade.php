@@ -148,7 +148,12 @@
                 <i class="ti ti-plus"></i>
                 Add Task
             </a>
+            
         @endif
+        <a href="{{ route('tasks.approved') }}"
+        class="btn btn-primary mb-4">
+            Approved Task
+        </a>
         <x-card title="Tasks">
 
             {{-- Filters --}}
@@ -215,60 +220,60 @@
                 </div>
             </form> -->
             <form method="GET"
-      action="{{ route('tasks.index') }}"
-      class="mb-4 task-search-form">
+                action="{{ route('tasks.index') }}"
+                class="mb-4 task-search-form">
 
-    <div class="row">
+                <div class="row">
 
-        <div class="search-field">
-            <label class="form-label">Search</label>
-            <input
-                type="text"
-                name="title"
-                class="form-control"
-                placeholder="Search task title..."
-                value="{{ request('title') }}"
-            >
-        </div>
+                    <div class="search-field">
+                        <label class="form-label">Search</label>
+                        <input
+                            type="text"
+                            name="title"
+                            class="form-control"
+                            placeholder="Search task title..."
+                            value="{{ request('title') }}"
+                        >
+                    </div>
 
-        <div class="filter-field">
-            <label class="form-label">Assigned To</label>
-            <select name="assigned_to" class="form-select">
-                <option value="">All</option>
-                @foreach($users as $user)
-                    <option value="{{ $user->id }}"
-                        {{ request('assigned_to') == $user->id ? 'selected' : '' }}>
-                        {{ $user->name }}
-                    </option>
-                @endforeach
-            </select>
-        </div>
+                    <div class="filter-field">
+                        <label class="form-label">Assigned To</label>
+                        <select name="assigned_to" class="form-select">
+                            <option value="">All</option>
+                            @foreach($users as $user)
+                                <option value="{{ $user->id }}"
+                                    {{ request('assigned_to') == $user->id ? 'selected' : '' }}>
+                                    {{ $user->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
 
-        <div class="filter-field">
-            <label class="form-label">Approved By</label>
-            <select name="approved_by" class="form-select">
-                <option value="">All</option>
-                @foreach($users as $user)
-                    <option value="{{ $user->id }}"
-                        {{ request('approved_by') == $user->id ? 'selected' : '' }}>
-                        {{ $user->name }}
-                    </option>
-                @endforeach
-            </select>
-        </div>
+                    <div class="filter-field">
+                        <label class="form-label">Approved By</label>
+                        <select name="approved_by" class="form-select">
+                            <option value="">All</option>
+                            @foreach($users as $user)
+                                <option value="{{ $user->id }}"
+                                    {{ request('approved_by') == $user->id ? 'selected' : '' }}>
+                                    {{ $user->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
 
-        <div class="button-field">
-            <button type="submit" class="btn btn-primary">
-                <i class="ti ti-search"></i> Search
-            </button>
+                    <div class="button-field">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="ti ti-search"></i> Search
+                        </button>
 
-            <a href="{{ route('tasks.index') }}" class="btn btn-light">
-                <i class="ti ti-refresh"></i> Reset
-            </a>
-        </div>
+                        <a href="{{ route('tasks.index') }}" class="btn btn-light">
+                            <i class="ti ti-refresh"></i> Reset
+                        </a>
+                    </div>
 
-    </div>
-</form>
+                </div>
+            </form>
 
 
 

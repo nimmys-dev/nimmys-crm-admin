@@ -185,6 +185,7 @@ Route::middleware(['auth', 'web.access'])->group(function () {
     Route::get('tasks', [TaskController::class, 'index'])
         ->middleware('can:tasks.manage')
         ->name('tasks.index');
+    Route::get('tasks/approved', [TaskController::class, 'approvedIndex'])->name('tasks.approved');
 
     Route::get('reports', [ReportController::class, 'index'])
         ->middleware('can:reports.view')
