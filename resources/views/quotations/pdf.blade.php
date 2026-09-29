@@ -291,7 +291,7 @@
             margin-bottom: 15px;
         }
 
-        .signature-img {
+        /* .signature-img {
             max-width: 120px;
             max-height: 70px;
             display: block;
@@ -303,7 +303,23 @@
             max-height: 80px;
             display: block;
             margin: -35px auto 5px auto;
-        }
+        } */
+
+            .signature-img {
+                width: 180px;
+                height: 100px;
+                object-fit: contain;
+                display: block;
+                margin: 0 auto 3px auto;
+            }
+
+            .seal-img {
+                width: 90px;
+                height: 130px;
+                object-fit: contain;
+                display: block;
+                margin: -35px auto 5px auto;
+            }
 
         .signatory-line {
             font-size: 9.5px;

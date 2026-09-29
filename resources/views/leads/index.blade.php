@@ -187,7 +187,7 @@
                             ">
                                 {{ html_entity_decode(strip_tags($lead->description)) }}
                             </td>
-                            <td>{{ $lead->created_at->format('j M Y') }}</td>
+                            <td>{{ $lead->created_at->format('j M Y, h:i A') }}</td>
                             
 
                             <td>
