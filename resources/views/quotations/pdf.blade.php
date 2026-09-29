@@ -314,7 +314,7 @@
             }
 
             .seal-img {
-                width: 90px;
+                width: 120px;
                 height: 130px;
                 object-fit: contain;
                 display: block;
