@@ -293,14 +293,14 @@
 
         .signature-img {
             max-width: 120px;
-            max-height: 60px;
+            max-height: 70px;
             display: block;
             margin: 0 auto 3px auto;
         }
 
         .seal-img {
             max-width: 60px;
-            max-height: 65px;
+            max-height: 80px;
             display: block;
             margin: -35px auto 5px auto;
         }
