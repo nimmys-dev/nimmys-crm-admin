@@ -306,20 +306,19 @@
         } */
 
             .signature-img {
-                width: 180px;
-                height: 100px;
-                object-fit: contain;
-                display: block;
-                margin: 0 auto 3px auto;
-            }
+            max-width: 180px;  /* Size kootiyirikkunnu */
+            max-height: 100px; /* Size kootiyirikkunnu */
+            display: block;
+            margin: 0 auto 5px auto;
+        }
 
-            .seal-img {
-                width: 120px;
-                height: 130px;
-                object-fit: contain;
-                display: block;
-                margin: -35px auto 5px auto;
-            }
+        .seal-img {
+            max-width: 100px;  /* Size kootiyirikkunnu */
+            max-height: 120px; /* Size kootiyirikkunnu */
+            display: block;
+            /* Negative margin adjust cheyth, signature-um seal-um over-lap aakathirikkunnathezhuthi */
+            margin: -50px auto 5px auto; 
+        }
 
         .signatory-line {
             font-size: 9.5px;
