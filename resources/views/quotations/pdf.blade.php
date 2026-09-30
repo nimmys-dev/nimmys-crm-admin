@@ -243,28 +243,28 @@
         .signatory-company {
             font-size: 10px;
             font-weight: bold;
-            margin-bottom: 35px; /* Company name-um signature/seal-um thammilulla space kooti */
+            margin-bottom: 35px; 
         }
 
         .sig-seal-row {
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 1px; /* Signature-um seal-um thammilulla idavela (space) kooti */
+            gap: -2px; 
             margin-bottom: 5px;
         }
 
         .signature-img {
             max-width: 120px; 
-            max-height: 140px; 
+            max-height: 150px !important; 
             display: block;
         }
 
         .seal-img {
-            max-width: 130px;  /* Seal-inte size kooti */
-            max-height: 130px; /* Seal-inte size kooti */
+            max-width: 130px;  
+            max-height: 130px; 
             display: block;
-            margin-top: -10px; /* Seal-inte mukalilekulla space/position adjust cheyyan */
+            margin-top: -10px; 
             opacity: 0.9;
         }
 
