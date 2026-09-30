@@ -12,7 +12,7 @@ class SendDueTaskNotifications extends Command
 {
     protected $signature = 'tasks:send-notifications';
 
-    protected $description = 'Send Firebase notifications for due tasks exactly at start time once per occurrence';
+    protected $description = 'Send Firebase notifications for due tasks exactly at start time once per occurrence to the assigned user';
 
     public function handle(
         FirebaseNotificationService $firebaseService
@@ -28,6 +28,7 @@ class SendDueTaskNotifications extends Command
 
                 foreach ($tasks as $task) {
 
+                    // 1. Check if task is due at this exact minute
                     if (!$this->isDue($task, $now)) {
                         continue;
                     }
@@ -53,6 +54,7 @@ class SendDueTaskNotifications extends Command
                         }
                     }
 
+                    // 2. Ensure assigned user exists
                     $user = $task->assignedUser;
 
                     if (!$user) {
@@ -61,7 +63,7 @@ class SendDueTaskNotifications extends Command
 
                     /*
                     |--------------------------------------------------------------------------
-                    | Firebase Notification
+                    | Send Firebase Notification ONLY to the Assigned User
                     |--------------------------------------------------------------------------
                     */
 
@@ -77,9 +79,10 @@ class SendDueTaskNotifications extends Command
                             ]
                         );
 
-                        \Log::info('Cron task FCM notification sent', [
+                        \Log::info('Cron task FCM notification sent to assigned user', [
                             'task_id' => $task->id,
                             'user_id' => $user->id,
+                            'email'   => $user->email,
                         ]);
                     } catch (\Throwable $e) {
                         \Log::error('Cron task FCM notification failed', [
