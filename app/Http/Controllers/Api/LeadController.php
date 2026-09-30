@@ -387,6 +387,86 @@ class LeadController extends Controller
         ], 201);
     }
 
+    // public function viewLead($id): JsonResponse
+    // {
+    //     $lead = Lead::with([
+    //         'owner:id,name',
+    //         'creator:id,name',
+    //         'quotation.items',
+    //     ])->find($id);
+
+    //     if (!$lead) {
+    //         return response()->json([
+    //             'status' => false,
+    //             'status_code' => 404,
+    //             'message' => 'Lead not found',
+    //         ], 404);
+    //     }
+
+    //     $quotation = $lead->quotation;
+
+    //     // DB: new → API: open
+    //     $leadStatus = $lead->status?->value ?? $lead->status;
+
+    //     if ($leadStatus === 'new') {
+    //         $leadStatus = 'open';
+    //     }
+
+    //     return response()->json([
+    //         'status' => true,
+    //         'status_code' => 200,
+    //         'message' => 'Lead details retrieved successfully',
+
+    //         'data' => [
+    //             'id' => $lead->id,
+    //             'reference' => $lead->reference,
+    //             'name' => $lead->name,
+    //             'phone' => $lead->phone,
+    //             'source' => $lead->source?->value ?? $lead->source,
+
+    //             // new → open, closed → closed
+    //             'status' => $leadStatus,
+
+    //             'assigned_to' => $lead->owner?->name,
+    //             'created_by' => $lead->creator?->name,
+    //             'description' => $lead->description,
+    //             'has_quotation' => (bool) $lead->has_quotation,
+
+    //             'quotation' => $quotation ? [
+    //                 'id' => $quotation->id,
+    //                 'reference' => $quotation->reference,
+    //                 'customer_name' => $quotation->customer_name,
+    //                 'customer_address' => $quotation->customer_address,
+    //                 'issue_date' => $quotation->issue_date,
+    //                 'terms' => $quotation->terms,
+    //                 'subtotal' => $quotation->subtotal,
+    //                 'discount_percent' => $quotation->discount_percent,
+    //                 'tax_percent' => $quotation->tax_percent,
+    //                 'total' => $quotation->total,
+
+    //                 'items' => $quotation->items
+    //                     ->map(function ($item) {
+    //                         return [
+    //                             'id' => $item->id,
+    //                             'description' => $item->description,
+    //                             'quantity' => $item->quantity,
+    //                             'rate' => $item->rate,
+    //                             'basic_rate' => $item->basic_rate,
+    //                             'tax_percent' => $item->tax_percent,
+    //                             'tax_amount' => $item->tax_amount,
+    //                             'amount' => $item->amount,
+    //                             'sort_order' => $item->sort_order,
+    //                         ];
+    //                     })
+    //                     ->values()
+    //                     ->toArray(),
+
+    //             ] : null,
+    //         ],
+
+    //     ], 200);
+    // }
+
     public function viewLead($id): JsonResponse
     {
         $lead = Lead::with([
@@ -429,7 +509,10 @@ class LeadController extends Controller
 
                 'assigned_to' => $lead->owner?->name,
                 'created_by' => $lead->creator?->name,
-                'description' => $lead->description,
+                
+                // Stripping HTML tags here:
+                'description' => $lead->description ? strip_tags($lead->description) : null,
+                
                 'has_quotation' => (bool) $lead->has_quotation,
 
                 'quotation' => $quotation ? [

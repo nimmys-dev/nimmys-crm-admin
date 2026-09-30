@@ -653,28 +653,77 @@ public function index(LeadIndexRequest $request): View
     }
 
 
-public function closed(): View
-{
-    $leads = Lead::query()
-        ->with([
-            'owner',
-            'latestCall',
-        ])
-        ->whereIn('status', [
-            'closed',
-            'lost',
-            'won',
-        ])
-        ->paginate(10);
+// public function closed(): View
+// {
+//     $leads = Lead::query()
+//         ->with([
+//             'owner',
+//             'latestCall',
+//         ])
+//         ->whereIn('status', [
+//             'closed',
+//             'lost',
+//             'won',
+//         ])
+//         ->paginate(10);
 
-    return view('leads.closed', [
-        'pageTitle' => 'Closed / Lost / Won Leads',
-        'breadcrumbs' => [
-            ['label' => 'Leads'],
-            ['label' => 'Closed / Lost / Won Leads'],
-        ],
-        'leads' => $leads,
-    ]);
-}
+//     return view('leads.closed', [
+//         'pageTitle' => 'Closed / Lost / Won Leads',
+//         'breadcrumbs' => [
+//             ['label' => 'Leads'],
+//             ['label' => 'Closed / Lost / Won Leads'],
+//         ],
+//         'leads' => $leads,
+//     ]);
+// }
+
+    public function closed(Request $request): View
+    {
+        $search = trim($request->input('search', ''));
+
+        $leads = Lead::query()
+            ->with([
+                'owner',
+                'latestCall',
+            ])
+            ->whereIn('status', [
+                'closed',
+                'lost',
+                'won',
+            ])
+            ->when($search !== '', function ($query) use ($search) {
+
+                $query->where(function ($q) use ($search) {
+
+                    // Lead name
+                    $q->where('name', 'like', '%' . $search . '%')
+
+                        // Assigned user name
+                        ->orWhereHas('owner', function ($ownerQuery) use ($search) {
+                            $ownerQuery->where(
+                                'name',
+                                'like',
+                                '%' . $search . '%'
+                            );
+                        });
+                });
+            })
+            ->latest()
+            ->paginate(10)
+            ->withQueryString();
+
+        return view('leads.closed', [
+            'pageTitle' => 'Closed / Lost / Won Leads',
+
+            'breadcrumbs' => [
+                ['label' => 'Leads'],
+                ['label' => 'Closed / Lost / Won Leads'],
+            ],
+
+            'leads' => $leads,
+
+            'search' => $search,
+        ]);
+    }
 
 }
