@@ -256,13 +256,13 @@
 
         .signature-img {
             max-width: 120px; 
-            max-height: 70px; 
+            max-height: 100px; 
             display: block;
         }
 
         .seal-img {
-            max-width: 120px;  /* Seal-inte size kooti */
-            max-height: 120px; /* Seal-inte size kooti */
+            max-width: 130px;  /* Seal-inte size kooti */
+            max-height: 130px; /* Seal-inte size kooti */
             display: block;
             margin-top: -10px; /* Seal-inte mukalilekulla space/position adjust cheyyan */
             opacity: 0.9;
