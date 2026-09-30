@@ -278,7 +278,7 @@
 
                             {{-- Remarks --}}
                             <td>
-                                {{ $lead->description ?? '—' }}
+                                {{ html_entity_decode(strip_tags($lead->description ?? '—')) }}
                             </td>
 
 
