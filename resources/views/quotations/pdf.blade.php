@@ -235,47 +235,51 @@
             padding: 1px 0;
         }
 
-       .signatory-box {
-            text-align: center;
-            padding-top: 10px;
-        }
+     .signatory-box {
+    text-align: center;
+    padding-top: 10px;
+}
 
-        .signatory-company {
-            font-size: 10px;
-            font-weight: bold;
-            margin-bottom: 35px; 
-        }
+.signatory-company {
+    font-size: 10px;
+    font-weight: bold;
+    margin-bottom: 25px; /* Company name-um sign/seal-um thammilulla space */
+}
 
-        .sig-seal-row {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: -2px; 
-            margin-bottom: 5px;
-        }
+.sig-seal-container {
+    text-align: center;
+    margin-bottom: 5px;
+    white-space: nowrap; /* Randum orre lineil thanne nilkkum, താഴേക്ക് irangilla */
+}
 
-        .signature-img {
-            max-width: 120px; 
-            max-height: 150px !important; 
-            display: block;
-        }
+.signature-img {
+    width: 140px !important;  /* Signature size */
+    height: auto !important;
+    display: inline-block;
+    vertical-align: middle;
+    margin-right: -20px; /* Seal-um aayi ulla distance kuraikkan (overlap/aduthu varan) */
+    position: relative;
+    z-index: 2;
+}
 
-        .seal-img {
-            max-width: 130px;  
-            max-height: 130px; 
-            display: block;
-            margin-top: -10px; 
-            opacity: 0.9;
-        }
+.seal-img {
+    width: 130px !important;  /* Seal size */
+    height: auto !important;
+    display: inline-block;
+    vertical-align: middle;
+    opacity: 0.9;
+    position: relative;
+    z-index: 1;
+}
 
-        .signatory-line {
-            font-size: 9.5px;
-            font-weight: bold;
-            border-top: 1px solid #000;
-            padding-top: 2px;
-            display: inline-block;
-            min-width: 140px;
-        }
+.signatory-line {
+    font-size: 9.5px;
+    font-weight: bold;
+    border-top: 1px solid #000;
+    padding-top: 2px;
+    display: inline-block;
+    min-width: 140px;
+}
     </style>
 </head>
 <body>
@@ -438,35 +442,35 @@
                     <div class="signatory-line">Authorized Signatory</div>
                 </div> -->
                 <div class="signatory-box">
-                    <div class="signatory-company">
-                        For Nimmys Camera Centre
-                    </div>
+    <div class="signatory-company">
+        For Nimmys Camera Centre
+    </div>
 
-                    {{-- Flex container to place signature and seal side-by-side --}}
-                    <div class="sig-seal-row">
-                        {{-- Signature --}}
-                        @if (!empty($signatureDataUri))
-                            <img
-                                src="{{ $signatureDataUri }}"
-                                class="signature-img"
-                                alt="Authorized Signature"
-                            />
-                        @endif
+    {{-- Same lineil side-by-side nillkan inline-block container --}}
+    <div class="sig-seal-container">
+        {{-- Signature --}}
+        @if (!empty($signatureDataUri))
+            <img
+                src="{{ $signatureDataUri }}"
+                class="signature-img"
+                alt="Authorized Signature"
+            />
+        @endif
 
-                        {{-- Seal (Right side of signature) --}}
-                        @if (!empty($sealDataUri))
-                            <img
-                                src="{{ $sealDataUri }}"
-                                class="seal-img"
-                                alt="Company Seal"
-                            />
-                        @endif
-                    </div>
+        {{-- Seal (Same lineil right side-il) --}}
+        @if (!empty($sealDataUri))
+            <img
+                src="{{ $sealDataUri }}"
+                class="seal-img"
+                alt="Company Seal"
+            />
+        @endif
+    </div>
 
-                    <div class="signatory-line">
-                        Authorized Signatory
-                    </div>
-                </div>
+    <div class="signatory-line">
+        Authorized Signatory
+    </div>
+</div>
 
 
             </td>
