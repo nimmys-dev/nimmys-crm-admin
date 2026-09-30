@@ -235,52 +235,7 @@
             padding: 1px 0;
         }
 
-        .signatory-box {
-            text-align: center;
-            padding-top: 15px;
-        }
-
-        .signatory-company {
-            font-size: 10px;
-            font-weight: bold;
-            margin-bottom: 30px;
-        }
-
-        .signatory-sd {
-            font-size: 9px;
-            margin-bottom: 4px;
-            color: #333;
-        }
-
-        .signatory-line {
-            font-size: 9.5px;
-            font-weight: bold;
-            border-top: 1px solid #000;
-            padding-top: 2px;
-            display: inline-block;
-            min-width: 140px;
-        }
-
-        .bottom-banner-container {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            width: 100%;
-            text-align: center;
-        }
-
-        .bottom-banner {
-            background-color: #cb191d;
-            color: #ffffff;
-            font-weight: bold;
-            font-size: 10.5px;
-            text-align: center;
-            padding: 6px 0;
-            border-radius: 40px 40px 0 0;
-            letter-spacing: 0.3px;
-        }
-        .signatory-box {
+       .signatory-box {
             text-align: center;
             padding-top: 10px;
         }
@@ -288,36 +243,29 @@
         .signatory-company {
             font-size: 10px;
             font-weight: bold;
-            margin-bottom: 15px;
+            margin-bottom: 35px; /* Company name-um signature/seal-um thammilulla space kooti */
         }
 
-        /* .signature-img {
-            max-width: 120px;
-            max-height: 70px;
-            display: block;
-            margin: 0 auto 3px auto;
+        .sig-seal-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px; /* Signature-um seal-um thammilulla idavela (space) kooti */
+            margin-bottom: 5px;
         }
 
-        .seal-img {
-            max-width: 60px;
-            max-height: 80px;
+        .signature-img {
+            max-width: 120px; 
+            max-height: 70px; 
             display: block;
-            margin: -35px auto 5px auto;
-        } */
-
-            .signature-img {
-            max-width: 180px;  /* Size kootiyirikkunnu */
-            max-height: 100px; /* Size kootiyirikkunnu */
-            display: block;
-            margin: 0 auto 5px auto;
         }
 
         .seal-img {
-            max-width: 100px;  /* Size kootiyirikkunnu */
-            max-height: 120px; /* Size kootiyirikkunnu */
+            max-width: 120px;  /* Seal-inte size kooti */
+            max-height: 120px; /* Seal-inte size kooti */
             display: block;
-            /* Negative margin adjust cheyth, signature-um seal-um over-lap aakathirikkunnathezhuthi */
-            margin: -50px auto 5px auto; 
+            margin-top: -10px; /* Seal-inte mukalilekulla space/position adjust cheyyan */
+            opacity: 0.9;
         }
 
         .signatory-line {
@@ -328,7 +276,6 @@
             display: inline-block;
             min-width: 140px;
         }
-
     </style>
 </head>
 <body>
@@ -495,23 +442,26 @@
                         For Nimmys Camera Centre
                     </div>
 
-                    {{-- Signature --}}
-                    @if (!empty($signatureDataUri))
-                        <img
-                            src="{{ $signatureDataUri }}"
-                            class="signature-img"
-                            alt="Authorized Signature"
-                        />
-                    @endif
+                    {{-- Flex container to place signature and seal side-by-side --}}
+                    <div class="sig-seal-row">
+                        {{-- Signature --}}
+                        @if (!empty($signatureDataUri))
+                            <img
+                                src="{{ $signatureDataUri }}"
+                                class="signature-img"
+                                alt="Authorized Signature"
+                            />
+                        @endif
 
-                    {{-- Seal --}}
-                    @if (!empty($sealDataUri))
-                        <img
-                            src="{{ $sealDataUri }}"
-                            class="seal-img"
-                            alt="Company Seal"
-                        />
-                    @endif
+                        {{-- Seal (Right side of signature) --}}
+                        @if (!empty($sealDataUri))
+                            <img
+                                src="{{ $sealDataUri }}"
+                                class="seal-img"
+                                alt="Company Seal"
+                            />
+                        @endif
+                    </div>
 
                     <div class="signatory-line">
                         Authorized Signatory
