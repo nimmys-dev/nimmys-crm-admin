@@ -487,216 +487,309 @@ class TaskController extends Controller
      * Store task
      */
 
-    public function store(TaskRequest $request): RedirectResponse
-    {
-        $data = $request->validated();
+    // public function store(TaskRequest $request): RedirectResponse
+    // {
+    //     $data = $request->validated();
 
-        // Repeat mode
-        $data['repeat_mode'] = $request->boolean('repeat_mode');
+    //     // Repeat mode
+    //     $data['repeat_mode'] = $request->boolean('repeat_mode');
 
-        // Get quarterly data before removing it from Task data
-        $quarters = $data['quarters'] ?? [];
+    //     // Get quarterly data before removing it from Task data
+    //     $quarters = $data['quarters'] ?? [];
 
-        // quarters belongs to task_quarters table, not tasks table
-        unset($data['quarters']);
+    //     // quarters belongs to task_quarters table, not tasks table
+    //     unset($data['quarters']);
 
-        switch ($data['task_type']) {
+    //     switch ($data['task_type']) {
 
-            /*
-            |--------------------------------------------------------------------------
-            | DAILY
-            |--------------------------------------------------------------------------
-            */
-            case 'daily':
+    //         /*
+    //         |--------------------------------------------------------------------------
+    //         | DAILY
+    //         |--------------------------------------------------------------------------
+    //         */
+    //         case 'daily':
 
-                // Weekly fields
-                $data['week_start_day'] = null;
-                $data['week_end_day'] = null;
+    //             // Weekly fields
+    //             $data['week_start_day'] = null;
+    //             $data['week_end_day'] = null;
 
-                // Monthly fields
-                $data['monthly_start_date'] = null;
-                $data['monthly_end_date'] = null;
+    //             // Monthly fields
+    //             $data['monthly_start_date'] = null;
+    //             $data['monthly_end_date'] = null;
 
-                // Quarterly old fields
-                $data['quarter'] = null;
-                $data['quarter_start_date'] = null;
-                $data['quarter_end_date'] = null;
+    //             // Quarterly old fields
+    //             $data['quarter'] = null;
+    //             $data['quarter_start_date'] = null;
+    //             $data['quarter_end_date'] = null;
 
-                // Yearly fields
-                $data['yearly_start_date'] = null;
-                $data['yearly_end_date'] = null;
+    //             // Yearly fields
+    //             $data['yearly_start_date'] = null;
+    //             $data['yearly_end_date'] = null;
 
-                break;
-
-
-            /*
-            |--------------------------------------------------------------------------
-            | WEEKLY
-            |--------------------------------------------------------------------------
-            */
-            case 'weekly':
-
-                // Daily fields
-                $data['start_time'] = null;
-                $data['end_time'] = null;
-
-                // Monthly fields
-                $data['monthly_start_date'] = null;
-                $data['monthly_end_date'] = null;
-
-                // Quarterly old fields
-                $data['quarter'] = null;
-                $data['quarter_start_date'] = null;
-                $data['quarter_end_date'] = null;
-
-                // Yearly fields
-                $data['yearly_start_date'] = null;
-                $data['yearly_end_date'] = null;
-
-                break;
+    //             break;
 
 
-            /*
-            |--------------------------------------------------------------------------
-            | MONTHLY
-            |--------------------------------------------------------------------------
-            */
-            case 'monthly':
+    //         /*
+    //         |--------------------------------------------------------------------------
+    //         | WEEKLY
+    //         |--------------------------------------------------------------------------
+    //         */
+    //         case 'weekly':
 
-                // Daily fields
-                $data['start_time'] = null;
-                $data['end_time'] = null;
+    //             // Daily fields
+    //             $data['start_time'] = null;
+    //             $data['end_time'] = null;
 
-                // Weekly fields
-                $data['week_start_day'] = null;
-                $data['week_end_day'] = null;
+    //             // Monthly fields
+    //             $data['monthly_start_date'] = null;
+    //             $data['monthly_end_date'] = null;
 
-                // Quarterly old fields
-                $data['quarter'] = null;
-                $data['quarter_start_date'] = null;
-                $data['quarter_end_date'] = null;
+    //             // Quarterly old fields
+    //             $data['quarter'] = null;
+    //             $data['quarter_start_date'] = null;
+    //             $data['quarter_end_date'] = null;
 
-                // Yearly fields
-                $data['yearly_start_date'] = null;
-                $data['yearly_end_date'] = null;
+    //             // Yearly fields
+    //             $data['yearly_start_date'] = null;
+    //             $data['yearly_end_date'] = null;
 
-                break;
-
-
-            /*
-            |--------------------------------------------------------------------------
-            | QUARTERLY
-            |--------------------------------------------------------------------------
-            */
-            case 'quarterly':
-
-                // Daily fields
-                $data['start_time'] = null;
-                $data['end_time'] = null;
-
-                // Weekly fields
-                $data['week_start_day'] = null;
-                $data['week_end_day'] = null;
-
-                // Monthly fields
-                $data['monthly_start_date'] = null;
-                $data['monthly_end_date'] = null;
-
-                // Yearly fields
-                $data['yearly_start_date'] = null;
-                $data['yearly_end_date'] = null;
-
-                // Old single-quarter fields
-                $data['quarter'] = null;
-                $data['quarter_start_date'] = null;
-                $data['quarter_end_date'] = null;
-
-                break;
+    //             break;
 
 
-            /*
-            |--------------------------------------------------------------------------
-            | YEARLY
-            |--------------------------------------------------------------------------
-            */
-            case 'yearly':
+    //         /*
+    //         |--------------------------------------------------------------------------
+    //         | MONTHLY
+    //         |--------------------------------------------------------------------------
+    //         */
+    //         case 'monthly':
 
-                // Daily fields
-                $data['start_time'] = null;
-                $data['end_time'] = null;
+    //             // Daily fields
+    //             $data['start_time'] = null;
+    //             $data['end_time'] = null;
 
-                // Weekly fields
-                $data['week_start_day'] = null;
-                $data['week_end_day'] = null;
+    //             // Weekly fields
+    //             $data['week_start_day'] = null;
+    //             $data['week_end_day'] = null;
 
-                // Monthly fields
-                $data['monthly_start_date'] = null;
-                $data['monthly_end_date'] = null;
+    //             // Quarterly old fields
+    //             $data['quarter'] = null;
+    //             $data['quarter_start_date'] = null;
+    //             $data['quarter_end_date'] = null;
 
-                // Quarterly old fields
-                $data['quarter'] = null;
-                $data['quarter_start_date'] = null;
-                $data['quarter_end_date'] = null;
+    //             // Yearly fields
+    //             $data['yearly_start_date'] = null;
+    //             $data['yearly_end_date'] = null;
 
-                break;
+    //             break;
+
+
+    //         /*
+    //         |--------------------------------------------------------------------------
+    //         | QUARTERLY
+    //         |--------------------------------------------------------------------------
+    //         */
+    //         case 'quarterly':
+
+    //             // Daily fields
+    //             $data['start_time'] = null;
+    //             $data['end_time'] = null;
+
+    //             // Weekly fields
+    //             $data['week_start_day'] = null;
+    //             $data['week_end_day'] = null;
+
+    //             // Monthly fields
+    //             $data['monthly_start_date'] = null;
+    //             $data['monthly_end_date'] = null;
+
+    //             // Yearly fields
+    //             $data['yearly_start_date'] = null;
+    //             $data['yearly_end_date'] = null;
+
+    //             // Old single-quarter fields
+    //             $data['quarter'] = null;
+    //             $data['quarter_start_date'] = null;
+    //             $data['quarter_end_date'] = null;
+
+    //             break;
+
+
+    //         /*
+    //         |--------------------------------------------------------------------------
+    //         | YEARLY
+    //         |--------------------------------------------------------------------------
+    //         */
+    //         case 'yearly':
+
+    //             // Daily fields
+    //             $data['start_time'] = null;
+    //             $data['end_time'] = null;
+
+    //             // Weekly fields
+    //             $data['week_start_day'] = null;
+    //             $data['week_end_day'] = null;
+
+    //             // Monthly fields
+    //             $data['monthly_start_date'] = null;
+    //             $data['monthly_end_date'] = null;
+
+    //             // Quarterly old fields
+    //             $data['quarter'] = null;
+    //             $data['quarter_start_date'] = null;
+    //             $data['quarter_end_date'] = null;
+
+    //             break;
+    //     }
+
+
+    //     DB::transaction(function () use ($data, $quarters) {
+
+    //         /*
+    //         |--------------------------------------------------------------------------
+    //         | Create Main Task
+    //         |--------------------------------------------------------------------------
+    //         */
+    //         $task = Task::create($data);
+
+
+    //         /*
+    //         |--------------------------------------------------------------------------
+    //         | Create Quarterly Records
+    //         |--------------------------------------------------------------------------
+    //         */
+    //         if ($task->task_type === 'quarterly') {
+
+    //             foreach ($quarters as $quarter) {
+
+    //                 TaskQuarter::create([
+    //                     'task_id'    => $task->id,
+    //                     'quarter'    => $quarter['quarter'],
+    //                     'start_date' => $quarter['start_date'],
+    //                     'end_date'   => $quarter['end_date'],
+    //                 ]);
+    //             }
+    //         }
+
+    //         DB::afterCommit(function () use ($task) {
+    //             $assignedUser = User::find($task->assigned_to);
+
+    //             if ($assignedUser) {
+    //                 $firebaseService = app(FirebaseNotificationService::class);
+
+    //                 $firebaseService->sendToUser(
+    //                     $assignedUser,
+    //                     'Task Created',
+    //                     'A new task has been created and assigned to you: ' . $task->title,
+    //                     [
+    //                         'type'    => 'task',
+    //                         'task_id' => (string) $task->id,
+    //                         'title'   => (string) $task->title,
+    //                     ]
+    //                 );
+    //             }
+    //         });
+
+    //     });
+
+
+    //     return redirect()
+    //         ->route('tasks.index')
+    //         ->with('success', 'Task created successfully.');
+    // }
+public function store(TaskRequest $request): RedirectResponse
+{
+    $data = $request->validated();
+
+    // Repeat mode
+    $data['repeat_mode'] = $request->boolean('repeat_mode');
+
+    // Get quarterly data before removing it from Task data
+    $quarters = $data['quarters'] ?? [];
+    unset($data['quarters']);
+
+    // Define all optional frequency fields to easily clear them out based on task type
+    $frequencyFields = [
+        'start_time', 'end_time',                             // Daily
+        'week_start_day', 'week_end_day',                     // Weekly
+        'monthly_start_date', 'monthly_end_date',             // Monthly
+        'quarter', 'quarter_start_date', 'quarter_end_date',  // Quarterly (old)
+        'yearly_start_date', 'yearly_end_date',               // Yearly
+    ];
+
+    // Map which fields *should* stay active for each task type
+    $activeFieldsMap = [
+        'daily'     => ['start_time', 'end_time'],
+        'weekly'    => ['week_start_day', 'week_end_day'],
+        'monthly'   => ['monthly_start_date', 'monthly_end_date'],
+        'quarterly' => [], 
+        'yearly'    => ['yearly_start_date', 'yearly_end_date'],
+    ];
+
+    // Automatically nullify fields that do not belong to the current task type
+    $allowedFields = $activeFieldsMap[$data['task_type']] ?? [];
+    foreach ($frequencyFields as $field) {
+        if (!in_array($field, $allowedFields)) {
+            $data[$field] = null;
         }
-
-
-        DB::transaction(function () use ($data, $quarters) {
-
-            /*
-            |--------------------------------------------------------------------------
-            | Create Main Task
-            |--------------------------------------------------------------------------
-            */
-            $task = Task::create($data);
-
-
-            /*
-            |--------------------------------------------------------------------------
-            | Create Quarterly Records
-            |--------------------------------------------------------------------------
-            */
-            if ($task->task_type === 'quarterly') {
-
-                foreach ($quarters as $quarter) {
-
-                    TaskQuarter::create([
-                        'task_id'    => $task->id,
-                        'quarter'    => $quarter['quarter'],
-                        'start_date' => $quarter['start_date'],
-                        'end_date'   => $quarter['end_date'],
-                    ]);
-                }
-            }
-
-            DB::afterCommit(function () use ($task) {
-                $assignedUser = User::find($task->assigned_to);
-
-                if ($assignedUser) {
-                    $firebaseService = app(FirebaseNotificationService::class);
-
-                    $firebaseService->sendToUser(
-                        $assignedUser,
-                        'Task Created',
-                        'A new task has been created and assigned to you: ' . $task->title,
-                        [
-                            'type'    => 'task',
-                            'task_id' => (string) $task->id,
-                            'title'   => (string) $task->title,
-                        ]
-                    );
-                }
-            });
-
-        });
-
-
-        return redirect()
-            ->route('tasks.index')
-            ->with('success', 'Task created successfully.');
     }
 
+    // Wrap in transaction and RETURN the task object properly
+    $task = DB::transaction(function () use ($data, $quarters) {
+
+        /*
+        |--------------------------------------------------------------------------
+        | Create Main Task
+        |--------------------------------------------------------------------------
+        */
+        $task = Task::create($data);
+
+        /*
+        |--------------------------------------------------------------------------
+        | Create Quarterly Records
+        |--------------------------------------------------------------------------
+        */
+        if ($task->task_type === 'quarterly') {
+            foreach ($quarters as $quarter) {
+                TaskQuarter::create([
+                    'task_id'    => $task->id,
+                    'quarter'    => $quarter['quarter'],
+                    'start_date' => $quarter['start_date'],
+                    'end_date'   => $quarter['end_date'],
+                ]);
+            }
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Firebase Notification (Triggered after successful transaction commit)
+        |--------------------------------------------------------------------------
+        */
+        DB::afterCommit(function () use ($task) {
+            $assignedUser = User::find($task->assigned_to);
+
+            if ($assignedUser) {
+                $firebaseService = app(FirebaseNotificationService::class);
+
+                $firebaseService->sendToUser(
+                    $assignedUser,
+                    'Task Created',
+                    'A new task has been created and assigned to you: ' . $task->title,
+                    [
+                        'type'    => 'task',
+                        'task_id' => (string) $task->id,
+                        'title'   => (string) $task->title,
+                    ]
+                );
+            }
+        });
+
+        return $task; // Returning $task is important so it's captured outside
+    });
+
+    return redirect()
+        ->route('tasks.index')
+        ->with('success', 'Task created successfully.');
+}
 
     /**
      * Show task

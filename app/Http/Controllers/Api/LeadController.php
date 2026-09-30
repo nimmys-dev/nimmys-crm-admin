@@ -1344,8 +1344,151 @@ class LeadController extends Controller
     //         ],
     //     ], 200);
     // }
+public function leadList(Request $request): JsonResponse
+{
+    // PAGINATION
+    $perPage = (int) $request->get('per_page', 10);
+    $perPage = min(max($perPage, 1), 100);
 
-    public function leadList(Request $request): JsonResponse
+    // SEARCH (Supporting both 'search' and 'q' parameters)
+    $search = trim($request->get('search', $request->get('q', '')));
+
+    // STATUS FILTER
+    $status = $request->get('status');
+
+    $query = Lead::with([
+        'owner:id,name',
+        'creator:id,name',
+        'latestCall',
+        'leadQuotation.Quitems',
+    ]);
+
+    $query->where('status', '!=', 'closed');
+
+    // ADVANCED SEARCH (Merged lead fields, owner, quotation, and items)
+    if ($search !== '') {
+        $query->where(function ($q) use ($search) {
+            $q->where('name', 'like', "%{$search}%")
+                ->orWhere('company', 'like', "%{$search}%")
+                ->orWhere('email', 'like', "%{$search}%")
+                ->orWhere('phone', 'like', "%{$search}%")
+                ->orWhere('reference', 'like', "%{$search}%")
+                ->orWhere('description', 'like', "%{$search}%")
+                // Search via owner relationship
+                ->orWhereHas('owner', function ($ownerQuery) use ($search) {
+                    $ownerQuery->where('name', 'like', "%{$search}%")
+                        ->orWhere('email', 'like', "%{$search}%");
+                })
+                // Search via leadQuotation and Quitems
+                ->orWhereHas('leadQuotation', function ($quotationQuery) use ($search) {
+                    $quotationQuery->where('reference', 'like', "%{$search}%")
+                        ->orWhereHas('Quitems', function ($itemQuery) use ($search) {
+                            $itemQuery->where('name', 'like', "%{$search}%")
+                                ->orWhere('description', 'like', "%{$search}%");
+                        });
+                });
+        });
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | STATUS & FOLLOW-UP FILTERING
+    |--------------------------------------------------------------------------
+    */
+    if (!empty($status)) {
+        if (in_array($status, ['today', 'overdue', 'upcoming'])) {
+            
+            $query->where('status', 'new')
+                ->whereHas('latestCall', function ($q) use ($status) {
+                    $q->whereNotNull('next_followup_date');
+
+                    if ($status === 'today') {
+                        $q->whereDate('next_followup_date', today());
+                    } elseif ($status === 'overdue') {
+                        $q->whereDate('next_followup_date', '<', today());
+                    } elseif ($status === 'upcoming') {
+                        $q->whereDate('next_followup_date', '>', today());
+                    }
+                });
+        } else {
+            $dbStatus = $status === 'open' ? 'new' : $status;
+            $query->where('status', $dbStatus);
+        }
+    }
+
+    $leads = $query->latest('id')->paginate($perPage);
+
+    $data = $leads->getCollection()->map(function ($lead) {
+
+        // DB "new" => API "open"
+        $responseStatus = $lead->status?->value ?? $lead->status;
+        if ($responseStatus === 'new') {
+            $responseStatus = 'open';
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | FOLLOW-UP CALCULATION
+        |--------------------------------------------------------------------------
+        */
+        $nextFollowUp = $lead->latestCall?->next_followup_date;
+        $followUpDate = $nextFollowUp ? \Carbon\Carbon::parse($nextFollowUp) : null;
+
+        $isOpen = ($lead->status?->value ?? $lead->status) === 'new';
+
+        $isOverdue  = $isOpen && $followUpDate && $followUpDate->isBefore(today());
+        $isToday    = $isOpen && $followUpDate && $followUpDate->isToday();
+        $isUpcoming = $isOpen && $followUpDate && $followUpDate->isAfter(today());
+
+        $followupStatus = null;
+        if ($isOverdue) {
+            $followupStatus = 'overdue';
+        } elseif ($isToday) {
+            $followupStatus = 'today';
+        } elseif ($isUpcoming) {
+            $followupStatus = 'upcoming';
+        }
+
+        return [
+            'id' => $lead->id,
+            'reference' => $lead->reference,
+            'name' => $lead->name,
+            'company' => $lead->company ?? null,
+            'email' => $lead->email ?? null,
+            'phone' => $lead->phone,
+
+            'source' => $lead->source?->value ?? $lead->source,
+            'status' => $responseStatus,
+
+            'assigned_to' => $lead->owner?->name,
+            'created_by' => $lead->creator?->name,
+            'description' => $lead->description,
+
+            'has_quotation' => (bool) $lead->has_quotation,
+
+            'next_followup_date' => $followUpDate ? $followUpDate->format('Y-m-d') : null,
+            'formatted_next_followup_date' => $followUpDate ? $followUpDate->format('j M Y') : null,
+            'followup_status' => $followupStatus,
+        ];
+    })->values();
+
+    return response()->json([
+        'status' => true,
+        'status_code' => 200,
+        'message' => 'Leads retrieved successfully',
+        'data' => $data,
+
+        'pagination' => [
+            'current_page' => $leads->currentPage(),
+            'per_page'     => $leads->perPage(),
+            'total'        => $leads->total(),
+            'last_page'    => $leads->lastPage(),
+            'from'         => $leads->firstItem(),
+            'to'           => $leads->lastItem(),
+        ],
+    ], 200);
+}
+    public function leadListold(Request $request): JsonResponse
     {
         // PAGINATION
         $perPage = (int) $request->get('per_page', 10);

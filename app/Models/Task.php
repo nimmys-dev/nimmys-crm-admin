@@ -52,6 +52,7 @@ class Task extends Model
         'yearly_start_date' => 'date',
         'yearly_end_date' => 'date',
         'repeat_mode' => 'boolean',
+        'last_notified_at' => 'datetime',
     ];
 
     public function assignedUser(): BelongsTo

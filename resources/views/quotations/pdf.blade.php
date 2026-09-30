@@ -235,51 +235,55 @@
             padding: 1px 0;
         }
 
-        .signatory-box {
-            text-align: center;
-            padding-top: 10px;
-        }
+   .signatory-box {
+    text-align: center;
+    padding-top: 10px;
+    margin-top: 20px;
+}
 
-        .signatory-company {
-            font-size: 10px;
-            font-weight: bold;
-            margin-bottom: 25px; 
-        }
+.sig-seal-container {
+    text-align: center;
+    margin-bottom: 2px;
+    white-space: nowrap; 
+    position: relative;
+}
 
-        .sig-seal-container {
-            text-align: center;
-            margin-bottom: 5px;
-            white-space: nowrap; 
-        }
+.signature-img {
+    width: 130px !important;  
+    height: auto !important;
+    display: inline-block;
+    vertical-align: middle;
+    margin-right: -25px; 
+    position: relative;
+    z-index: 2;
+}
 
-        .signature-img {
-            width: 140px !important;  /* Signature size */
-            height: auto !important;
-            display: inline-block;
-            vertical-align: middle;
-            margin-right: -20px; 
-            position: relative;
-            z-index: 2;
-        }
+.seal-img {
+    width: 120px !important;  
+    height: auto !important;
+    display: inline-block;
+    vertical-align: middle;
+    opacity: 0.85;
+    position: relative;
+    z-index: 1;
+}
 
-        .seal-img {
-            width: 130px !important;  /* Seal size */
-            height: auto !important;
-            display: inline-block;
-            vertical-align: middle;
-            opacity: 0.9;
-            position: relative;
-            z-index: 1;
-        }
+.signatory-line {
+    font-size: 10px;
+    font-weight: bold;
+    border-top: 1px solid #000;
+    padding-top: 3px;
+    display: inline-block;
+    min-width: 150px;
+    margin-top: 5px;
+    margin-bottom: 3px;
+}
 
-        .signatory-line {
-            font-size: 9.5px;
-            font-weight: bold;
-            border-top: 1px solid #000;
-            padding-top: 2px;
-            display: inline-block;
-            min-width: 140px;
-        }
+.signatory-company {
+    font-size: 11px;
+    font-weight: bold;
+    margin-top: 2px;
+}
     </style>
 </head>
 <body>
@@ -442,36 +446,35 @@
                     <div class="signatory-line">Authorized Signatory</div>
                 </div> -->
                 <div class="signatory-box">
-                    <div class="signatory-company">
-                        For Nimmys Camera Centre
-                    </div>
+    {{-- 1. Signature & Seal --}}
+    <div class="sig-seal-container">
+        @if (!empty($signatureDataUri))
+            <img
+                src="{{ $signatureDataUri }}"
+                class="signature-img"
+                alt="Authorized Signature"
+            />
+        @endif
 
-                    {{-- Same lineil side-by-side nillkan inline-block container --}}
-                    <div class="sig-seal-container">
-                        {{-- Signature --}}
-                        @if (!empty($signatureDataUri))
-                            <img
-                                src="{{ $signatureDataUri }}"
-                                class="signature-img"
-                                alt="Authorized Signature"
-                            />
-                        @endif
+        @if (!empty($sealDataUri))
+            <img
+                src="{{ $sealDataUri }}"
+                class="seal-img"
+                alt="Company Seal"
+            />
+        @endif
+    </div>
+{{-- 2. Company Name at the bottom --}}
+    <div class="signatory-company">
+        For Nimmys Camera Centre
+    </div>
+    {{-- 3. Authorized Signatory Line --}}
+    <div class="signatory-line">
+        Authorized Signatory
+    </div>
 
-                        {{-- Seal (Same lineil right side-il) --}}
-                        @if (!empty($sealDataUri))
-                            <img
-                                src="{{ $sealDataUri }}"
-                                class="seal-img"
-                                alt="Company Seal"
-                            />
-                        @endif
-                    </div>
-
-                    <div class="signatory-line">
-                        Authorized Signatory
-                    </div>
-                </div>
-
+    
+</div>
 
             </td>
         </tr>
