@@ -250,13 +250,13 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 20px; /* Signature-um seal-um thammilulla idavela (space) kooti */
+            gap: 10px; /* Signature-um seal-um thammilulla idavela (space) kooti */
             margin-bottom: 5px;
         }
 
         .signature-img {
             max-width: 120px; 
-            max-height: 100px; 
+            max-height: 120px; 
             display: block;
         }
 
