@@ -14,97 +14,97 @@ class SendDueTaskNotifications extends Command
 
     protected $description = 'Send Firebase notifications for due tasks exactly at start time once per occurrence to the assigned user';
 
-    public function handle(
-        FirebaseNotificationService $firebaseService
-    ): int {
+    // public function handle(
+    //     FirebaseNotificationService $firebaseService
+    // ): int {
 
-        $now = Carbon::now();
+    //     $now = Carbon::now();
 
-        Task::query()
-            ->whereNotIn('status', ['completed', 'approved'])
-            ->whereNotNull('assigned_to')
-            ->with('assignedUser')
-            ->chunkById(100, function ($tasks) use ($now, $firebaseService) {
+    //     Task::query()
+    //         ->whereNotIn('status', ['completed', 'approved'])
+    //         ->whereNotNull('assigned_to')
+    //         ->with('assignedUser')
+    //         ->chunkById(100, function ($tasks) use ($now, $firebaseService) {
 
-                foreach ($tasks as $task) {
+    //             foreach ($tasks as $task) {
 
-                    // 1. Check if task is due at this exact minute
-                    if (!$this->isDue($task, $now)) {
-                        continue;
-                    }
+    //                 // 1. Check if task is due at this exact minute
+    //                 if (!$this->isDue($task, $now)) {
+    //                     continue;
+    //                 }
 
-                    /*
-                    |--------------------------------------------------------------------------
-                    | Prevent duplicate notification for the current occurrence
-                    |--------------------------------------------------------------------------
-                    */
+    //                 /*
+    //                 |--------------------------------------------------------------------------
+    //                 | Prevent duplicate notification for the current occurrence
+    //                 |--------------------------------------------------------------------------
+    //                 */
 
-                    if ($task->last_notified_at) {
-                        $isAlreadyNotified = match ($task->task_type) {
-                            'daily' => $task->last_notified_at->isSameDay($now),
-                            'weekly' => $task->last_notified_at->format('o-W') === $now->format('o-W'),
-                            'monthly' => $task->last_notified_at->format('Y-m') === $now->format('Y-m'),
-                            'quarterly' => $task->last_notified_at->format('Y') . '-Q' . $task->last_notified_at->quarter === $now->format('Y') . '-Q' . $now->quarter,
-                            'yearly' => $task->last_notified_at->format('Y') === $now->format('Y'),
-                            default => $task->last_notified_at->isSameDay($now),
-                        };
+    //                 if ($task->last_notified_at) {
+    //                     $isAlreadyNotified = match ($task->task_type) {
+    //                         'daily' => $task->last_notified_at->isSameDay($now),
+    //                         'weekly' => $task->last_notified_at->format('o-W') === $now->format('o-W'),
+    //                         'monthly' => $task->last_notified_at->format('Y-m') === $now->format('Y-m'),
+    //                         'quarterly' => $task->last_notified_at->format('Y') . '-Q' . $task->last_notified_at->quarter === $now->format('Y') . '-Q' . $now->quarter,
+    //                         'yearly' => $task->last_notified_at->format('Y') === $now->format('Y'),
+    //                         default => $task->last_notified_at->isSameDay($now),
+    //                     };
 
-                        if ($isAlreadyNotified) {
-                            continue;
-                        }
-                    }
+    //                     if ($isAlreadyNotified) {
+    //                         continue;
+    //                     }
+    //                 }
 
-                    // 2. Ensure assigned user exists
-                    $user = $task->assignedUser;
+    //                 // 2. Ensure assigned user exists
+    //                 $user = $task->assignedUser;
 
-                    if (!$user) {
-                        continue;
-                    }
+    //                 if (!$user) {
+    //                     continue;
+    //                 }
 
-                    /*
-                    |--------------------------------------------------------------------------
-                    | Send Firebase Notification ONLY to the Assigned User
-                    |--------------------------------------------------------------------------
-                    */
+    //                 /*
+    //                 |--------------------------------------------------------------------------
+    //                 | Send Firebase Notification ONLY to the Assigned User
+    //                 |--------------------------------------------------------------------------
+    //                 */
 
-                    try {
-                        $firebaseService->sendToUser(
-                            $user,
-                            'Task Reminder',
-                            'Your task is due: ' . $task->title,
-                            [
-                                'type'    => 'task',
-                                'task_id' => (string) $task->id,
-                                'title'   => (string) $task->title,
-                            ]
-                        );
+    //                 try {
+    //                     $firebaseService->sendToUser(
+    //                         $user,
+    //                         'Task Reminder',
+    //                         'Your task is due: ' . $task->title,
+    //                         [
+    //                             'type'    => 'task',
+    //                             'task_id' => (string) $task->id,
+    //                             'title'   => (string) $task->title,
+    //                         ]
+    //                     );
 
-                        \Log::info('Cron task FCM notification sent to assigned user', [
-                            'task_id' => $task->id,
-                            'user_id' => $user->id,
-                            'email'   => $user->email,
-                        ]);
-                    } catch (\Throwable $e) {
-                        \Log::error('Cron task FCM notification failed', [
-                            'task_id' => $task->id,
-                            'error'   => $e->getMessage(),
-                        ]);
-                    }
+    //                     \Log::info('Cron task FCM notification sent to assigned user', [
+    //                         'task_id' => $task->id,
+    //                         'user_id' => $user->id,
+    //                         'email'   => $user->email,
+    //                     ]);
+    //                 } catch (\Throwable $e) {
+    //                     \Log::error('Cron task FCM notification failed', [
+    //                         'task_id' => $task->id,
+    //                         'error'   => $e->getMessage(),
+    //                     ]);
+    //                 }
 
-                    /*
-                    |--------------------------------------------------------------------------
-                    | Mark Notification Sent
-                    |--------------------------------------------------------------------------
-                    */
+    //                 /*
+    //                 |--------------------------------------------------------------------------
+    //                 | Mark Notification Sent
+    //                 |--------------------------------------------------------------------------
+    //                 */
 
-                    $task->update([
-                        'last_notified_at' => $now,
-                    ]);
-                }
-            });
+    //                 $task->update([
+    //                     'last_notified_at' => $now,
+    //                 ]);
+    //             }
+    //         });
 
-        return self::SUCCESS;
-    }
+    //     return self::SUCCESS;
+    // }
 
 
     /*
