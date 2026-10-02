@@ -119,7 +119,7 @@ class SendDueTaskNotifications extends Command
                             $firebaseService->sendToUser(
                                 $user,
                                 'Task Reminder',
-                                'Your task is due: ' . $lockedTask->title,
+                                'A new task has been created and assigned to you ' . $lockedTask->title,
                                 [
                                     'type' => 'task',
                                     'task_id' => (string) $lockedTask->id,

@@ -872,7 +872,7 @@ public function store(TaskRequest $request): RedirectResponse
 
                         $firebaseService->sendToUser(
                             $assignedUser,
-                            'Task Created (' . ucfirst($userRole) . ')',
+                            'Task Created',
                             'A new task has been created and assigned to you: ' . $task->title,
                             [
                                 'type' => 'task',
