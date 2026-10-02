@@ -3,17 +3,16 @@
 namespace App\Console\Commands;
 
 use App\Models\Task;
+use App\Models\User;
 use App\Services\FirebaseNotificationService;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 
 class SendDueTaskNotifications extends Command
 {
     protected $signature = 'tasks:send-notifications';
 
-    protected $description = 'Send Firebase notification with full role check for admin, manager, and employee';
+    protected $description = 'Send Firebase notifications for due tasks exactly at start time once per occurrence to the assigned user';
 
     public function handle(
         FirebaseNotificationService $firebaseService
@@ -24,146 +23,117 @@ class SendDueTaskNotifications extends Command
         Task::query()
             ->whereNotIn('status', ['completed', 'approved'])
             ->whereNotNull('assigned_to')
-            ->whereNull('last_notified_at')
             ->with('assignedUser')
             ->chunkById(100, function ($tasks) use ($now, $firebaseService) {
 
                 foreach ($tasks as $task) {
 
+                    // 1. Check if task is due at this exact minute
+                    if (!$this->isDue($task, $now)) {
+                        continue;
+                    }
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Prevent duplicate notification for the current occurrence
+                    |--------------------------------------------------------------------------
+                    */
+
+                    if ($task->last_notified_at) {
+                        $isAlreadyNotified = match ($task->task_type) {
+                            'daily' => $task->last_notified_at->isSameDay($now),
+                            'weekly' => $task->last_notified_at->format('o-W') === $now->format('o-W'),
+                            'monthly' => $task->last_notified_at->format('Y-m') === $now->format('Y-m'),
+                            'quarterly' => $task->last_notified_at->format('Y') . '-Q' . $task->last_notified_at->quarter === $now->format('Y') . '-Q' . $now->quarter,
+                            'yearly' => $task->last_notified_at->format('Y') === $now->format('Y'),
+                            default => $task->last_notified_at->isSameDay($now),
+                        };
+
+                        if ($isAlreadyNotified) {
+                            continue;
+                        }
+                    }
+
+                    // 2. Ensure assigned user exists
+                    $user = $task->assignedUser;
+
+                    if (!$user) {
+                        continue;
+                    }
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Send Firebase Notification ONLY to the Assigned User
+                    |--------------------------------------------------------------------------
+                    */
+
                     try {
-
-                        DB::transaction(function () use (
-                            $task,
-                            $now,
-                            $firebaseService
-                        ) {
-
-                            $lockedTask = Task::query()
-                                ->where('id', $task->id)
-                                ->lockForUpdate()
-                                ->first();
-
-                            if (!$lockedTask) {
-                                return;
-                            }
-
-                            if ($lockedTask->last_notified_at !== null) {
-                                return;
-                            }
-
-                            if (in_array(
-                                $lockedTask->status,
-                                ['completed', 'approved'],
-                                true
-                            )) {
-                                return;
-                            }
-
-                            if (!$lockedTask->assigned_to) {
-                                return;
-                            }
-
-                            if (!$this->isDue($lockedTask, $now)) {
-                                return;
-                            }
-
-                            $user = $lockedTask->assignedUser;
-
-                            if (!$user) {
-                                Log::warning(
-                                    'Assigned user not found',
-                                    [
-                                        'task_id' => $lockedTask->id,
-                                        'assigned_to' => $lockedTask->assigned_to,
-                                    ]
-                                );
-                                return;
-                            }
-
-                        
-                            $rawRole = $user->role ?? '';
-                            
-                            if (is_object($rawRole) && enum_exists(get_class($rawRole))) {
-                                $userRole = strtolower($rawRole->value ?? $rawRole->name ?? '');
-                            } else {
-                                $userRole = strtolower((string) $rawRole);
-                            }
-
-                            $shouldNotify = match ($userRole) {
-                                'admin' => true,      
-                                'manager' => true,   
-                                'employee' => false,  
-                                default => false,    
-                            };
-
-                            if (!$shouldNotify) {
-                                return;
-                            }
-
-                            if (empty($user->fcm_token)) {
-                                Log::warning(
-                                    'Assigned user has no FCM token',
-                                    [
-                                        'task_id' => $lockedTask->id,
-                                        'assigned_to' => $user->id,
-                                        'role' => $userRole,
-                                    ]
-                                );
-                                return;
-                            }
-
-                            $lockedTask->update([
-                                'last_notified_at' => $now,
-                            ]);
-
-                            $firebaseService->sendToUser(
-                                $user,
-                                'Task Reminder',
-                                'A new task has been created and assigned to you ' . $lockedTask->title,
-                                [
-                                    'type' => 'task',
-                                    'task_id' => (string) $lockedTask->id,
-                                    'title' => (string) $lockedTask->title,
-                                    'role' => $userRole,
-                                ]
-                            );
-
-                            Log::info(
-                                'Task reminder sent based on full role check',
-                                [
-                                    'task_id' => $lockedTask->id,
-                                    'assigned_to' => $user->id,
-                                    'role' => $userRole,
-                                    'last_notified_at' => $now->toDateTimeString(),
-                                ]
-                            );
-                        });
-
-                    } catch (\Throwable $e) {
-                        Log::error(
-                            'Task reminder notification failed',
+                        $firebaseService->sendToUser(
+                            $user,
+                            'Task Reminder',
+                            'Your task is due: ' . $task->title,
                             [
-                                'task_id' => $task->id,
-                                'error' => $e->getMessage(),
+                                'type'    => 'task',
+                                'task_id' => (string) $task->id,
+                                'title'   => (string) $task->title,
                             ]
                         );
+
+                        \Log::info('Cron task FCM notification sent to assigned user', [
+                            'task_id' => $task->id,
+                            'user_id' => $user->id,
+                            'email'   => $user->email,
+                        ]);
+                    } catch (\Throwable $e) {
+                        \Log::error('Cron task FCM notification failed', [
+                            'task_id' => $task->id,
+                            'error'   => $e->getMessage(),
+                        ]);
                     }
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Mark Notification Sent
+                    |--------------------------------------------------------------------------
+                    */
+
+                    $task->update([
+                        'last_notified_at' => $now,
+                    ]);
                 }
             });
 
         return self::SUCCESS;
     }
 
+
+    /*
+    |--------------------------------------------------------------------------
+    | Check Whether Task Is Due
+    |--------------------------------------------------------------------------
+    */
+
     private function isDue(Task $task, Carbon $now): bool
     {
-        return match ($task->task_type) {
-            'daily' => $this->isDailyDue($task, $now),
-            'weekly' => $this->isWeeklyDue($task, $now),
-            'monthly' => $this->isMonthlyDue($task, $now),
-            'quarterly' => $this->isQuarterlyDue($task, $now),
-            'yearly' => $this->isYearlyDue($task, $now),
-            default => false,
-        };
+        switch ($task->task_type) {
+
+            case 'daily':
+                return $this->isDailyDue($task, $now);
+
+            case 'weekly':
+                return $this->isWeeklyDue($task, $now);
+
+            case 'monthly':
+                return $this->isMonthlyDue($task, $now);
+
+            case 'quarterly':
+                return $this->isQuarterlyDue($task, $now);
+
+            case 'yearly':
+                return $this->isYearlyDue($task, $now);
+        }
+
+        return false;
     }
 
     private function isDailyDue(Task $task, Carbon $now): bool
@@ -172,91 +142,47 @@ class SendDueTaskNotifications extends Command
             return false;
         }
 
-        $startTime = Carbon::parse(
-            $now->format('Y-m-d') . ' ' . $task->start_time
-        );
-
+        $startTime = Carbon::parse($now->format('Y-m-d') . ' ' . $task->start_time);
+        
+        // Trigger ONLY at the exact scheduled start time minute
         return $now->format('Y-m-d H:i') === $startTime->format('Y-m-d H:i');
     }
 
     private function isWeeklyDue(Task $task, Carbon $now): bool
     {
-        if (!$task->week_start_day || !$task->start_time) {
+        if (!$task->week_start_day) {
             return false;
         }
 
-        if (strtolower($now->format('l')) !== strtolower($task->week_start_day)) {
-            return false;
-        }
-
-        $startTime = Carbon::parse(
-            $now->format('Y-m-d') . ' ' . $task->start_time
-        );
-
-        return $now->format('Y-m-d H:i') === $startTime->format('Y-m-d H:i');
+        $currentDay = strtolower($now->format('l'));
+        return $currentDay === strtolower($task->week_start_day);
     }
 
     private function isMonthlyDue(Task $task, Carbon $now): bool
     {
-        if (!$task->monthly_start_date || !$task->start_time) {
+        if (!$task->monthly_start_date) {
             return false;
         }
 
-        $date = Carbon::parse($task->monthly_start_date);
-
-        if (!$now->isSameDay($date)) {
-            return false;
-        }
-
-        $startTime = Carbon::parse(
-            $now->format('Y-m-d') . ' ' . $task->start_time
-        );
-
-        return $now->format('Y-m-d H:i') === $startTime->format('Y-m-d H:i');
-    }
-
-    private function isQuarterlyDue(Task $task, Carbon $now): bool
-    {
-        if (!$task->start_time) {
-            return false;
-        }
-
-        $quarter = $task->quarters()
-            ->whereDate('start_date', '<=', $now->toDateString())
-            ->whereDate('end_date', '>=', $now->toDateString())
-            ->first();
-
-        if (!$quarter) {
-            return false;
-        }
-
-        if (!$now->isSameDay(Carbon::parse($quarter->start_date))) {
-            return false;
-        }
-
-        $startTime = Carbon::parse(
-            $now->format('Y-m-d') . ' ' . $task->start_time
-        );
-
-        return $now->format('Y-m-d H:i') === $startTime->format('Y-m-d H:i');
+        return $now->isSameDay(Carbon::parse($task->monthly_start_date));
     }
 
     private function isYearlyDue(Task $task, Carbon $now): bool
     {
-        if (!$task->yearly_start_date || !$task->start_time) {
+        if (!$task->yearly_start_date) {
             return false;
         }
 
         $date = Carbon::parse($task->yearly_start_date);
 
-        if ($now->month !== $date->month || $now->day !== $date->day) {
-            return false;
-        }
+        return $now->month === $date->month && $now->day === $date->day;
+    }
 
-        $startTime = Carbon::parse(
-            $now->format('Y-m-d') . ' ' . $task->start_time
-        );
-
-        return $now->format('Y-m-d H:i') === $startTime->format('Y-m-d H:i');
+    private function isQuarterlyDue(Task $task, Carbon $now): bool
+    {
+        return $task->quarters()
+            ->whereDate('start_date', '<=', $now->toDateString())
+            ->whereDate('end_date', '>=', $now->toDateString())
+            ->exists();
     }
 }
