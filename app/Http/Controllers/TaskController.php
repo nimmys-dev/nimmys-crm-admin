@@ -700,96 +700,205 @@ public function store(TaskRequest $request): RedirectResponse
 {
     $data = $request->validated();
 
-    // Repeat mode
+    /*
+    |--------------------------------------------------------------------------
+    | Repeat mode
+    |--------------------------------------------------------------------------
+    */
+
     $data['repeat_mode'] = $request->boolean('repeat_mode');
 
-    // Get quarterly data before removing it from Task data
+    /*
+    |--------------------------------------------------------------------------
+    | Get quarterly data before removing from Task data
+    |--------------------------------------------------------------------------
+    */
+
     $quarters = $data['quarters'] ?? [];
+
     unset($data['quarters']);
 
-    // Define all optional frequency fields to easily clear them out based on task type
+    /*
+    |--------------------------------------------------------------------------
+    | Frequency fields
+    |--------------------------------------------------------------------------
+    */
+
     $frequencyFields = [
-        'start_time', 'end_time',                             // Daily
-        'week_start_day', 'week_end_day',                     // Weekly
-        'monthly_start_date', 'monthly_end_date',             // Monthly
-        'quarter', 'quarter_start_date', 'quarter_end_date',  // Quarterly (old)
-        'yearly_start_date', 'yearly_end_date',               // Yearly
+        'start_time',
+        'end_time',
+
+        'week_start_day',
+        'week_end_day',
+
+        'monthly_start_date',
+        'monthly_end_date',
+
+        'quarter',
+        'quarter_start_date',
+        'quarter_end_date',
+
+        'yearly_start_date',
+        'yearly_end_date',
     ];
 
-    // Map which fields *should* stay active for each task type
+    /*
+    |--------------------------------------------------------------------------
+    | Fields allowed for each task type
+    |--------------------------------------------------------------------------
+    */
+
     $activeFieldsMap = [
-        'daily'     => ['start_time', 'end_time'],
-        'weekly'    => ['week_start_day', 'week_end_day'],
-        'monthly'   => ['monthly_start_date', 'monthly_end_date'],
-        'quarterly' => [], 
-        'yearly'    => ['yearly_start_date', 'yearly_end_date'],
+
+        'daily' => [
+            'start_time',
+            'end_time',
+        ],
+
+        'weekly' => [
+            'start_time',
+            'end_time',
+            'week_start_day',
+            'week_end_day',
+        ],
+
+        'monthly' => [
+            'start_time',
+            'end_time',
+            'monthly_start_date',
+            'monthly_end_date',
+        ],
+
+        'quarterly' => [
+            'start_time',
+            'end_time',
+        ],
+
+        'yearly' => [
+            'start_time',
+            'end_time',
+            'yearly_start_date',
+            'yearly_end_date',
+        ],
     ];
 
-    // Automatically nullify fields that do not belong to the current task type
+    /*
+    |--------------------------------------------------------------------------
+    | Clear fields that don't belong to selected task type
+    |--------------------------------------------------------------------------
+    */
+
     $allowedFields = $activeFieldsMap[$data['task_type']] ?? [];
+
     foreach ($frequencyFields as $field) {
-        if (!in_array($field, $allowedFields)) {
+
+        if (!in_array($field, $allowedFields, true)) {
             $data[$field] = null;
         }
     }
 
-    // Wrap in transaction and RETURN the task object properly
+    /*
+    |--------------------------------------------------------------------------
+    | Create task
+    |--------------------------------------------------------------------------
+    */
+
     $task = DB::transaction(function () use ($data, $quarters) {
 
         /*
         |--------------------------------------------------------------------------
-        | Create Main Task
+        | Create main task
         |--------------------------------------------------------------------------
         */
+
         $task = Task::create($data);
 
         /*
         |--------------------------------------------------------------------------
-        | Create Quarterly Records
+        | Create quarterly records
         |--------------------------------------------------------------------------
         */
+
         if ($task->task_type === 'quarterly') {
+
             foreach ($quarters as $quarter) {
+
                 TaskQuarter::create([
-                    'task_id'    => $task->id,
-                    'quarter'    => $quarter['quarter'],
+                    'task_id' => $task->id,
+                    'quarter' => $quarter['quarter'],
                     'start_date' => $quarter['start_date'],
-                    'end_date'   => $quarter['end_date'],
+                    'end_date' => $quarter['end_date'],
                 ]);
             }
         }
 
         /*
         |--------------------------------------------------------------------------
-        | Firebase Notification (Triggered after successful transaction commit)
+        | Firebase notification
+        |--------------------------------------------------------------------------
+        | ONLY assigned user receives "Task Created"
         |--------------------------------------------------------------------------
         */
+
         DB::afterCommit(function () use ($task) {
+
+            if (!$task->assigned_to) {
+                return;
+            }
+
             $assignedUser = User::find($task->assigned_to);
 
-            if ($assignedUser) {
-                $firebaseService = app(FirebaseNotificationService::class);
+            if (!$assignedUser) {
+                return;
+            }
+
+            try {
+
+                $firebaseService = app(
+                    FirebaseNotificationService::class
+                );
 
                 $firebaseService->sendToUser(
                     $assignedUser,
                     'Task Created',
-                    'A new task has been created and assigned to you: ' . $task->title,
+                    'A new task has been created and assigned to you: '
+                        . $task->title,
                     [
-                        'type'    => 'task',
+                        'type' => 'task',
                         'task_id' => (string) $task->id,
-                        'title'   => (string) $task->title,
+                        'title' => (string) $task->title,
                     ]
                 );
+
+                \Log::info('Task created notification sent', [
+                    'task_id' => $task->id,
+                    'assigned_to' => $assignedUser->id,
+                ]);
+
+            } catch (\Throwable $e) {
+
+                \Log::error('Task created notification failed', [
+                    'task_id' => $task->id,
+                    'assigned_to' => $assignedUser->id,
+                    'error' => $e->getMessage(),
+                ]);
             }
         });
 
-        return $task; // Returning $task is important so it's captured outside
+        return $task;
     });
+
+    /*
+    |--------------------------------------------------------------------------
+    | Redirect
+    |--------------------------------------------------------------------------
+    */
 
     return redirect()
         ->route('tasks.index')
         ->with('success', 'Task created successfully.');
 }
+
 
     /**
      * Show task
