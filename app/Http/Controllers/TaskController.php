@@ -834,57 +834,69 @@ public function store(TaskRequest $request): RedirectResponse
 
         /*
         |--------------------------------------------------------------------------
-        | Firebase notification
-        |--------------------------------------------------------------------------
-        | ONLY assigned user receives "Task Created"
+        | Firebase notification (Debugging enabled)
         |--------------------------------------------------------------------------
         */
 
-        DB::afterCommit(function () use ($task) {
-
-            if (!$task->assigned_to) {
-                return;
-            }
+        if (!empty($task->assigned_to)) {
 
             $assignedUser = User::find($task->assigned_to);
 
-            if (!$assignedUser) {
-                return;
+            if ($assignedUser) {
+
+                $rawRole = $assignedUser->role ?? '';
+
+                if (is_object($rawRole) && enum_exists(get_class($rawRole))) {
+                    $userRole = strtolower($rawRole->value ?? $rawRole->name ?? '');
+                } else {
+                    $userRole = strtolower((string) $rawRole);
+                }
+
+                $shouldNotify = match ($userRole) {
+                    'admin' => true,      
+                    'manager' => true,    
+                    'employee' => true,   
+                    default => false,
+                };
+
+                if (empty($assignedUser->fcm_token)) {
+                    \Log::warning('Task notification failed: Assigned user has no FCM token', [
+                        'user_id' => $assignedUser->id,
+                        'task_id' => $task->id
+                    ]);
+                }
+
+                if ($shouldNotify && !empty($assignedUser->fcm_token)) {
+                    try {
+                        $firebaseService = app(FirebaseNotificationService::class);
+
+                        $firebaseService->sendToUser(
+                            $assignedUser,
+                            'Task Created (' . ucfirst($userRole) . ')',
+                            'A new task has been created and assigned to you: ' . $task->title,
+                            [
+                                'type' => 'task',
+                                'task_id' => (string) $task->id,
+                                'title' => (string) $task->title,
+                                'role' => $userRole,
+                            ]
+                        );
+
+                        \Log::info('Task created notification sent successfully', [
+                            'task_id' => $task->id,
+                            'assigned_to' => $assignedUser->id,
+                            'role' => $userRole,
+                        ]);
+
+                    } catch (\Throwable $e) {
+                        \Log::error('Task created notification exception error', [
+                            'task_id' => $task->id,
+                            'error' => $e->getMessage(),
+                        ]);
+                    }
+                }
             }
-
-            try {
-
-                $firebaseService = app(
-                    FirebaseNotificationService::class
-                );
-
-                $firebaseService->sendToUser(
-                    $assignedUser,
-                    'Task Created',
-                    'A new task has been created and assigned to you: '
-                        . $task->title,
-                    [
-                        'type' => 'task',
-                        'task_id' => (string) $task->id,
-                        'title' => (string) $task->title,
-                    ]
-                );
-
-                \Log::info('Task created notification sent', [
-                    'task_id' => $task->id,
-                    'assigned_to' => $assignedUser->id,
-                ]);
-
-            } catch (\Throwable $e) {
-
-                \Log::error('Task created notification failed', [
-                    'task_id' => $task->id,
-                    'assigned_to' => $assignedUser->id,
-                    'error' => $e->getMessage(),
-                ]);
-            }
-        });
-
+        }
         return $task;
     });
 
