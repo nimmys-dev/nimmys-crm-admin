@@ -13,7 +13,7 @@ class SendDueTaskNotifications extends Command
 {
     protected $signature = 'tasks:send-notifications';
 
-    protected $description = 'Send one Firebase notification to the assigned user only';
+    protected $description = 'Send Firebase notification with full role check for admin, manager, and employee';
 
     public function handle(
         FirebaseNotificationService $firebaseService
@@ -80,40 +80,60 @@ class SendDueTaskNotifications extends Command
                                 return;
                             }
 
+                        
+                            $rawRole = $user->role ?? '';
+                            
+                            if (is_object($rawRole) && enum_exists(get_class($rawRole))) {
+                                $userRole = strtolower($rawRole->value ?? $rawRole->name ?? '');
+                            } else {
+                                $userRole = strtolower((string) $rawRole);
+                            }
+
+                            $shouldNotify = match ($userRole) {
+                                'admin' => true,      
+                                'manager' => true,   
+                                'employee' => false,  
+                                default => false,    
+                            };
+
+                            if (!$shouldNotify) {
+                                return;
+                            }
+
                             if (empty($user->fcm_token)) {
                                 Log::warning(
                                     'Assigned user has no FCM token',
                                     [
                                         'task_id' => $lockedTask->id,
                                         'assigned_to' => $user->id,
+                                        'role' => $userRole,
                                     ]
                                 );
                                 return;
                             }
 
-                            // 1. ആദ്യം തന്നെ last_notified_at അപ്ഡേറ്റ് ചെയ്യുക 
-                            // (ഇത് വഴി ഒന്നിച്ച് വീണ്ടും നോട്ടിഫിക്കേഷൻ പോകുന്ന റേസ് കണ്ടീഷൻ ഒഴിവാക്കാം)
                             $lockedTask->update([
                                 'last_notified_at' => $now,
                             ]);
 
-                            // 2. ഫയർബേസ് നോട്ടിഫിക്കേഷൻ അയക്കുക
-                            $sent = $firebaseService->sendToUser(
+                            $firebaseService->sendToUser(
                                 $user,
-                                'Task Reminder',
+                                'Task Reminder (' . ucfirst($userRole) . ')',
                                 'Your task is due: ' . $lockedTask->title,
                                 [
                                     'type' => 'task',
                                     'task_id' => (string) $lockedTask->id,
                                     'title' => (string) $lockedTask->title,
+                                    'role' => $userRole,
                                 ]
                             );
 
                             Log::info(
-                                'Task reminder sent ONCE to assigned user',
+                                'Task reminder sent based on full role check',
                                 [
                                     'task_id' => $lockedTask->id,
                                     'assigned_to' => $user->id,
+                                    'role' => $userRole,
                                     'last_notified_at' => $now->toDateTimeString(),
                                 ]
                             );
