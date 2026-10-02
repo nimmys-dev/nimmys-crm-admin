@@ -41,7 +41,8 @@ class Task extends Model
         'status',
         'remarks',
         'yearly_start_date',
-        'yearly_end_date'
+        'yearly_end_date',
+        'last_notified_at'
     ];
 
     protected $casts = [
