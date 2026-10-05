@@ -107,23 +107,63 @@ class DashboardController extends Controller
 
     // private function getTaskDashboardCounts(User $user): array
     // {
+    //     /*
+    //     |--------------------------------------------------------------------------
+    //     | Update automatic task statuses before calculating dashboard counts
+    //     |--------------------------------------------------------------------------
+    //     */
+    //     Task::query()
+    //         ->whereNotIn('status', [
+    //             'completed',
+    //             'approval_pending',
+    //             'approved',
+    //             'closed',
+    //         ])
+    //         ->get()
+    //         ->each(function (Task $task) {
+    //             $task->updateAutomaticStatus();
+    //         });
+
+    //     /*
+    //     |--------------------------------------------------------------------------
+    //     | Normal Task Counts
+    //     |--------------------------------------------------------------------------
+    //     */
     //     $query = Task::query();
 
     //     // Admin → all tasks
-    //     // Manager / Employee → assigned / approved tasks
-    //     if ($user->role->value !== 'admin') {
-    //         $query->where(function ($query) use ($user) {
-    //             $query->where('assigned_to', $user->id);
-    //         });
+    //     // Manager / Employee → assigned tasks
+    //     // if ($user->role->value !== 'admin') {
+    //     //     $query->where('assigned_to', $user->id);
+    //     // }
+    //     if ($user->role->value === 'employee') {
+    //         $query->where('assigned_to', $user->id);
     //     }
 
-    //     // Approval Pending
+
+    //     /*
+    //     |--------------------------------------------------------------------------
+    //     | Approval Pending
+    //     |--------------------------------------------------------------------------
+    //     */
     //     $approvalPendingQuery = Task::query()
     //         ->where('status', 'completed');
 
-    //     // Non-admin → only tasks assigned for approval to logged-in user
-    //     if ($user->role->value !== 'admin') {
+    //     // Manager / Employee → only tasks assigned to them for approval
+    //     // if ($user->role->value !== 'admin') {
+    //     //     $approvalPendingQuery->where('approved_by', $user->id);
+    //     // }
+    //     if ($user->role->value === 'employee') {
     //         $approvalPendingQuery->where('approved_by', $user->id);
+    //     }
+    //     //  $sendingApprovalQuery = Task::query()
+    //     // ->where('assigned_to', $user->id)
+    //     // ->where('status', 'completed');
+    //     $sendingApprovalQuery = Task::query()
+    //         ->where('status', 'completed');
+
+    //     if ($user->role->value === 'employee') {
+    //         $sendingApprovalQuery->where('assigned_to', $user->id);
     //     }
 
     //     return [
@@ -140,85 +180,41 @@ class DashboardController extends Controller
     //             ->count(),
 
     //         'approvalPending' => $approvalPendingQuery->count(),
+    //         'sendingApproval' => $sendingApprovalQuery->count(),
     //     ];
     // }
 
     private function getTaskDashboardCounts(User $user): array
     {
-        /*
-        |--------------------------------------------------------------------------
-        | Update automatic task statuses before calculating dashboard counts
-        |--------------------------------------------------------------------------
-        */
-        Task::query()
-            ->whereNotIn('status', [
-                'completed',
-                'approval_pending',
-                'approved',
-                'closed',
-            ])
-            ->get()
-            ->each(function (Task $task) {
-                $task->updateAutomaticStatus();
-            });
-
-        /*
-        |--------------------------------------------------------------------------
-        | Normal Task Counts
-        |--------------------------------------------------------------------------
-        */
         $query = Task::query();
 
-        // Admin → all tasks
-        // Manager / Employee → assigned tasks
-        // if ($user->role->value !== 'admin') {
-        //     $query->where('assigned_to', $user->id);
-        // }
         if ($user->role->value === 'employee') {
             $query->where('assigned_to', $user->id);
         }
 
+        $counts = $query
+            ->selectRaw("
+                SUM(status = 'ongoing') as todayDuty,
+                SUM(status = 'overdue') as overdueDuty,
+                SUM(status = 'upcoming') as upcomingDuty,
+                SUM(status = 'completed') as sendingApproval
+            ")
+            ->first();
 
-        /*
-        |--------------------------------------------------------------------------
-        | Approval Pending
-        |--------------------------------------------------------------------------
-        */
-        $approvalPendingQuery = Task::query()
-            ->where('status', 'completed');
-
-        // Manager / Employee → only tasks assigned to them for approval
-        // if ($user->role->value !== 'admin') {
-        //     $approvalPendingQuery->where('approved_by', $user->id);
-        // }
-        if ($user->role->value === 'employee') {
-            $approvalPendingQuery->where('approved_by', $user->id);
-        }
-        //  $sendingApprovalQuery = Task::query()
-        // ->where('assigned_to', $user->id)
-        // ->where('status', 'completed');
-        $sendingApprovalQuery = Task::query()
-            ->where('status', 'completed');
-
-        if ($user->role->value === 'employee') {
-            $sendingApprovalQuery->where('assigned_to', $user->id);
-        }
+        $approvalPending = Task::query()
+            ->where('status', 'completed')
+            ->when(
+                $user->role->value === 'employee',
+                fn ($q) => $q->where('approved_by', $user->id)
+            )
+            ->count();
 
         return [
-            'todayDuty' => (clone $query)
-                ->where('status', 'ongoing')
-                ->count(),
-
-            'overdueDuty' => (clone $query)
-                ->where('status', 'overdue')
-                ->count(),
-
-            'upcomingDuty' => (clone $query)
-                ->where('status', 'upcoming')
-                ->count(),
-
-            'approvalPending' => $approvalPendingQuery->count(),
-            'sendingApproval' => $sendingApprovalQuery->count(),
+            'todayDuty' => (int) $counts->todayDuty,
+            'overdueDuty' => (int) $counts->overdueDuty,
+            'upcomingDuty' => (int) $counts->upcomingDuty,
+            'approvalPending' => $approvalPending,
+            'sendingApproval' => (int) $counts->sendingApproval,
         ];
     }
 
