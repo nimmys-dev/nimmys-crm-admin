@@ -10,6 +10,8 @@ use Illuminate\Http\Request;
 use Carbon\Carbon;
 use App\Models\Task;
 use App\Models\LeadActivity;
+use Illuminate\Support\Facades\Cache;
+
 
 
 /**
@@ -68,26 +70,91 @@ class DashboardController extends Controller
         ]);
     }
 
+    // private function adminDashboard(User $user): View
+    // {
+    //     $taskCounts = $this->getTaskDashboardCounts($user);
+
+    //     $adminTaskCounts = $this->getAdminAssignedTaskCounts($user);
+    //     $recentActivities = LeadActivity::latest()->take(5)->get();
+    //     return view('dashboard.admin', [
+    //         'pageTitle' => 'Dashboard',
+    //         'breadcrumbs' => [['label' => 'Dashboard']],
+    //         'photos' => $this->photos,
+
+    //         'stats' => $this->dashboard->getAdminStatistics(),
+    //         'upcomingIncrements' => $this->dashboard->getUpcomingIncrements(),
+    //         'recentEmployees' => $this->dashboard->getRecentEmployees(),
+    //         'recentShops' => $this->dashboard->getRecentShops(),
+
+    //         'leadStats' => $this->dashboard->getDashboardLeadStatistics($user),
+    //         'statistics' => $this->dashboard->getDashboardAllLeadStatistics($user),
+    //         'dueFollowUps' => $this->dashboard->getDueFollowUps($user),
+    //         'statistics' => $this->dashboard->getDashboardAllLeadStatistics($user),
+
+    //         'todayDuty' => $taskCounts['todayDuty'],
+    //         'overdueDuty' => $taskCounts['overdueDuty'],
+    //         'upcomingDuty' => $taskCounts['upcomingDuty'],
+    //         'approvalPending' => $taskCounts['approvalPending'],
+    //         'sendingApproval' => $taskCounts['sendingApproval'],
+
+    //         'adminAssignedTaskCount' => $adminTaskCounts['total'],
+    //         'adminOngoingTaskCount' => $adminTaskCounts['ongoing'],
+    //         'adminOverdueTaskCount' => $adminTaskCounts['overdue'],
+    //         'adminUpcomingTaskCount' => $adminTaskCounts['upcoming'],
+    //         'adminApprovalPendingTaskCount' => $adminTaskCounts['approval_pending'],
+    //         'adminSendingPendingTaskCount' => $adminTaskCounts['sending_approval'],
+    //         'recentActivities' => $recentActivities,
+    //     ]);
+    // }
+
+
     private function adminDashboard(User $user): View
     {
-        $taskCounts = $this->getTaskDashboardCounts($user);
+        $taskCounts = Cache::remember(
+            "dashboard.task_counts.{$user->id}",
+            now()->addSeconds(30),
+            fn () => $this->getTaskDashboardCounts($user)
+        );
 
-        $adminTaskCounts = $this->getAdminAssignedTaskCounts($user);
-        $recentActivities = LeadActivity::latest()->take(5)->get();
+        $adminTaskCounts = Cache::remember(
+            "dashboard.admin_task_counts.{$user->id}",
+            now()->addSeconds(30),
+            fn () => $this->getAdminAssignedTaskCounts($user)
+        );
+
+        $dashboardStats = Cache::remember(
+            'dashboard.admin.stats',
+            now()->addMinutes(5),
+            fn () => [
+                'stats' => $this->dashboard->getAdminStatistics(),
+                'upcomingIncrements' => $this->dashboard->getUpcomingIncrements(),
+                'recentEmployees' => $this->dashboard->getRecentEmployees(),
+                'recentShops' => $this->dashboard->getRecentShops(),
+            ]
+        );
+
+        $leadStats = Cache::remember(
+            "dashboard.lead_stats.{$user->id}",
+            now()->addSeconds(30),
+            fn () => [
+                'leadStats' => $this->dashboard->getDashboardLeadStatistics($user),
+                'statistics' => $this->dashboard->getDashboardAllLeadStatistics($user),
+                'dueFollowUps' => $this->dashboard->getDueFollowUps($user),
+            ]
+        );
+
+        $recentActivities = LeadActivity::query()
+            ->latest()
+            ->limit(5)
+            ->get();
+
         return view('dashboard.admin', [
             'pageTitle' => 'Dashboard',
             'breadcrumbs' => [['label' => 'Dashboard']],
             'photos' => $this->photos,
 
-            'stats' => $this->dashboard->getAdminStatistics(),
-            'upcomingIncrements' => $this->dashboard->getUpcomingIncrements(),
-            'recentEmployees' => $this->dashboard->getRecentEmployees(),
-            'recentShops' => $this->dashboard->getRecentShops(),
-
-            'leadStats' => $this->dashboard->getDashboardLeadStatistics($user),
-            'statistics' => $this->dashboard->getDashboardAllLeadStatistics($user),
-            'dueFollowUps' => $this->dashboard->getDueFollowUps($user),
-            'statistics' => $this->dashboard->getDashboardAllLeadStatistics($user),
+            ...$dashboardStats,
+            ...$leadStats,
 
             'todayDuty' => $taskCounts['todayDuty'],
             'overdueDuty' => $taskCounts['overdueDuty'],
@@ -101,9 +168,11 @@ class DashboardController extends Controller
             'adminUpcomingTaskCount' => $adminTaskCounts['upcoming'],
             'adminApprovalPendingTaskCount' => $adminTaskCounts['approval_pending'],
             'adminSendingPendingTaskCount' => $adminTaskCounts['sending_approval'],
+
             'recentActivities' => $recentActivities,
         ]);
     }
+
 
     // private function getTaskDashboardCounts(User $user): array
     // {
