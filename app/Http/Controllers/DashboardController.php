@@ -108,23 +108,93 @@ class DashboardController extends Controller
     // }
 
 
+    // private function adminDashboard(User $user): View
+    // {
+    //     $taskCounts = Cache::remember(
+    //         "dashboard.task_counts.{$user->id}",
+    //         now()->addSeconds(30),
+    //         fn () => $this->getTaskDashboardCounts($user)
+    //     );
+
+    //     $adminTaskCounts = Cache::remember(
+    //         "dashboard.admin_task_counts.{$user->id}",
+    //         now()->addSeconds(30),
+    //         fn () => $this->getAdminAssignedTaskCounts($user)
+    //     );
+
+    //     $dashboardStats = Cache::remember(
+    //         'dashboard.admin.stats',
+    //         now()->addMinutes(5),
+    //         fn () => [
+    //             'stats' => $this->dashboard->getAdminStatistics(),
+    //             'upcomingIncrements' => $this->dashboard->getUpcomingIncrements(),
+    //             'recentEmployees' => $this->dashboard->getRecentEmployees(),
+    //             'recentShops' => $this->dashboard->getRecentShops(),
+    //         ]
+    //     );
+
+    //     $leadStats = Cache::remember(
+    //         "dashboard.lead_stats.{$user->id}",
+    //         now()->addSeconds(30),
+    //         fn () => [
+    //             'leadStats' => $this->dashboard->getDashboardLeadStatistics($user),
+    //             'statistics' => $this->dashboard->getDashboardAllLeadStatistics($user),
+    //             'dueFollowUps' => $this->dashboard->getDueFollowUps($user),
+    //         ]
+    //     );
+
+    //     $recentActivities = LeadActivity::query()
+    //         ->latest()
+    //         ->limit(5)
+    //         ->get();
+
+    //     return view('dashboard.admin', [
+    //         'pageTitle' => 'Dashboard',
+    //         'breadcrumbs' => [['label' => 'Dashboard']],
+    //         'photos' => $this->photos,
+
+    //         ...$dashboardStats,
+    //         ...$leadStats,
+
+    //         'todayDuty' => $taskCounts['todayDuty'],
+    //         'overdueDuty' => $taskCounts['overdueDuty'],
+    //         'upcomingDuty' => $taskCounts['upcomingDuty'],
+    //         'approvalPending' => $taskCounts['approvalPending'],
+    //         'sendingApproval' => $taskCounts['sendingApproval'],
+
+    //         'adminAssignedTaskCount' => $adminTaskCounts['total'],
+    //         'adminOngoingTaskCount' => $adminTaskCounts['ongoing'],
+    //         'adminOverdueTaskCount' => $adminTaskCounts['overdue'],
+    //         'adminUpcomingTaskCount' => $adminTaskCounts['upcoming'],
+    //         'adminApprovalPendingTaskCount' => $adminTaskCounts['approval_pending'],
+    //         'adminSendingPendingTaskCount' => $adminTaskCounts['sending_approval'],
+
+    //         'recentActivities' => $recentActivities,
+    //     ]);
+    // }
+
     private function adminDashboard(User $user): View
     {
+        $userId = $user->id;
+
+        // Task counts
         $taskCounts = Cache::remember(
-            "dashboard.task_counts.{$user->id}",
-            now()->addSeconds(30),
+            "dashboard.task_counts.{$userId}",
+            60,
             fn () => $this->getTaskDashboardCounts($user)
         );
 
+        // Admin assigned task counts
         $adminTaskCounts = Cache::remember(
-            "dashboard.admin_task_counts.{$user->id}",
-            now()->addSeconds(30),
+            "dashboard.admin_task_counts.{$userId}",
+            60,
             fn () => $this->getAdminAssignedTaskCounts($user)
         );
 
+        // Admin dashboard data
         $dashboardStats = Cache::remember(
             'dashboard.admin.stats',
-            now()->addMinutes(5),
+            300,
             fn () => [
                 'stats' => $this->dashboard->getAdminStatistics(),
                 'upcomingIncrements' => $this->dashboard->getUpcomingIncrements(),
@@ -133,9 +203,10 @@ class DashboardController extends Controller
             ]
         );
 
+        // Lead dashboard data
         $leadStats = Cache::remember(
-            "dashboard.lead_stats.{$user->id}",
-            now()->addSeconds(30),
+            "dashboard.lead_stats.{$userId}",
+            60,
             fn () => [
                 'leadStats' => $this->dashboard->getDashboardLeadStatistics($user),
                 'statistics' => $this->dashboard->getDashboardAllLeadStatistics($user),
@@ -143,25 +214,39 @@ class DashboardController extends Controller
             ]
         );
 
-        $recentActivities = LeadActivity::query()
-            ->latest()
-            ->limit(5)
-            ->get();
+        // Recent activities
+        $recentActivities = Cache::remember(
+            'dashboard.recent_activities',
+            60,
+            fn () => LeadActivity::query()
+                ->latest('id')
+                ->limit(5)
+                ->get()
+        );
 
         return view('dashboard.admin', [
             'pageTitle' => 'Dashboard',
-            'breadcrumbs' => [['label' => 'Dashboard']],
+
+            'breadcrumbs' => [
+                ['label' => 'Dashboard'],
+            ],
+
             'photos' => $this->photos,
 
+            // Admin statistics
             ...$dashboardStats,
+
+            // Lead statistics
             ...$leadStats,
 
+            // Tasks
             'todayDuty' => $taskCounts['todayDuty'],
             'overdueDuty' => $taskCounts['overdueDuty'],
             'upcomingDuty' => $taskCounts['upcomingDuty'],
             'approvalPending' => $taskCounts['approvalPending'],
             'sendingApproval' => $taskCounts['sendingApproval'],
 
+            // Admin assigned tasks
             'adminAssignedTaskCount' => $adminTaskCounts['total'],
             'adminOngoingTaskCount' => $adminTaskCounts['ongoing'],
             'adminOverdueTaskCount' => $adminTaskCounts['overdue'],
@@ -169,9 +254,11 @@ class DashboardController extends Controller
             'adminApprovalPendingTaskCount' => $adminTaskCounts['approval_pending'],
             'adminSendingPendingTaskCount' => $adminTaskCounts['sending_approval'],
 
+            // Activities
             'recentActivities' => $recentActivities,
         ]);
     }
+
 
 
     // private function getTaskDashboardCounts(User $user): array
