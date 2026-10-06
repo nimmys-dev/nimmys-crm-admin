@@ -36,7 +36,7 @@ class StoreQuotationRequest extends FormRequest
             'terms' => ['nullable', 'string', 'max:5000'],
 
             'items' => ['required', 'array', 'min:1'],
-            'items.*.description' => ['required', 'string', 'max:255'],
+            'items.*.description' => ['required', 'string'],
             'items.*.quantity' => ['required', 'numeric', 'min:0.01', 'max:999999.99'],
             'items.*.rate' => ['required', 'numeric', 'min:0', 'max:99999999.99'],
             'items.*.tax_percent' => ['nullable', 'numeric', 'min:0', 'max:100'],
