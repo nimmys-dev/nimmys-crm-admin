@@ -319,92 +319,92 @@ class DashboardController extends Controller
             ->count(),
         ];
     }
-    // private function managerDashboard(User $user): View
-    // {
-    //     $stats = $this->dashboard->getManagerStatistics($user);
-    //     $shopId = $stats['shop']?->id;
-    //     $taskCounts = $this->getTaskDashboardCounts($user);
-    //     $adminTaskCounts = $this->getAdminAssignedTaskCounts($user);
-    //     $recentActivities = LeadActivity::latest()->take(5)->get();
-
-    //     return view('dashboard.manager', [
-    //         'pageTitle' => 'Dashboard',
-    //         'breadcrumbs' => [['label' => 'Dashboard']],
-    //         'photos' => $this->photos,
-    //         'stats' => $stats,
-
-    //         // Scoped by shop id in the service. A Manager with no shop gets
-    //         // an explicitly empty set rather than an unscoped query.
-    //         'upcomingIncrements' => $shopId
-    //             ? $this->dashboard->getUpcomingIncrements($shopId)
-    //             : collect(),
-    //         'recentEmployees' => $shopId
-    //             ? $this->dashboard->getRecentEmployees($shopId)
-    //             : collect(),
-
-    //         // Lead figures are scoped by the repository, not by shop — a
-    //         // Manager works the whole pipeline they can see.
-    //         'leadStats' => $this->dashboard->getLeadStatistics($user),
-    //         'statistics' => $this->dashboard->getDashboardAllLeadStatistics($user),
-    //         'dueFollowUps' => $this->dashboard->getDueFollowUps($user),
-    //         'leadStats' => $this->dashboard->getDashboardLeadStatistics($user),
-    //             // Task dashboard counts
-    //         'todayDuty' => $taskCounts['todayDuty'],
-    //         'overdueDuty' => $taskCounts['overdueDuty'],
-    //         'upcomingDuty' => $taskCounts['upcomingDuty'],
-    //         'approvalPending' => $taskCounts['approvalPending'],
-    //         'sendingApproval' => $taskCounts['sendingApproval'],
-    //         'adminAssignedTaskCount' => $adminTaskCounts['total'],
-    //         'adminOngoingTaskCount' => $adminTaskCounts['ongoing'],
-    //         'adminOverdueTaskCount' => $adminTaskCounts['overdue'],
-    //         'adminUpcomingTaskCount' => $adminTaskCounts['upcoming'],
-    //         'adminApprovalPendingTaskCount' => $adminTaskCounts['approval_pending'],
-    //         'adminSendingPendingTaskCount' => $adminTaskCounts['sending_approval'],
-    //         'recentActivities' => $recentActivities,
-    //     ]);
-    // }
-
     private function managerDashboard(User $user): View
     {
-        $cacheKey = "manager_dashboard_{$user->id}";
-
-        $dashboardData = Cache::remember($cacheKey, now()->addMinutes(2), function () use ($user) {
-            $stats = $this->dashboard->getManagerStatistics($user);
-            
-            return [
-                'stats'            => $stats,
-                'taskCounts'       => $this->getTaskDashboardCounts($user),
-                'adminTaskCounts'  => $this->getAdminAssignedTaskCounts($user),
-                'leadStats'        => $this->dashboard->getLeadStatistics($user),
-                'statistics'       => $this->dashboard->getDashboardAllLeadStatistics($user),
-                'recentActivities' => LeadActivity::latest()->take(5)->get(),
-            ];
-        });
+        $stats = $this->dashboard->getManagerStatistics($user);
+        $shopId = $stats['shop']?->id;
+        $taskCounts = $this->getTaskDashboardCounts($user);
+        $adminTaskCounts = $this->getAdminAssignedTaskCounts($user);
+        $recentActivities = LeadActivity::latest()->take(5)->get();
 
         return view('dashboard.manager', [
-            'pageTitle'                      => 'Dashboard',
-            'breadcrumbs'                    => [['label' => 'Dashboard']],
-            'photos'                         => $this->photos,
-            'stats'                          => $dashboardData['stats'],
+            'pageTitle' => 'Dashboard',
+            'breadcrumbs' => [['label' => 'Dashboard']],
+            'photos' => $this->photos,
+            'stats' => $stats,
 
-            'leadStats'                      => $dashboardData['leadStats'],
-            'statistics'                     => $dashboardData['statistics'],
+            // Scoped by shop id in the service. A Manager with no shop gets
+            // an explicitly empty set rather than an unscoped query.
+            'upcomingIncrements' => $shopId
+                ? $this->dashboard->getUpcomingIncrements($shopId)
+                : collect(),
+            'recentEmployees' => $shopId
+                ? $this->dashboard->getRecentEmployees($shopId)
+                : collect(),
 
-            'todayDuty'                      => $dashboardData['taskCounts']['todayDuty'] ?? 0,
-            'overdueDuty'                    => $dashboardData['taskCounts']['overdueDuty'] ?? 0,
-            'upcomingDuty'                   => $dashboardData['taskCounts']['upcomingDuty'] ?? 0,
-            'approvalPending'                => $dashboardData['taskCounts']['approvalPending'] ?? 0,
-            'sendingApproval'                => $dashboardData['taskCounts']['sendingApproval'] ?? 0,
-
-            'adminAssignedTaskCount'         => $dashboardData['adminTaskCounts']['total'] ?? 0,
-            'adminOngoingTaskCount'          => $dashboardData['adminTaskCounts']['ongoing'] ?? 0,
-            'adminOverdueTaskCount'          => $dashboardData['adminTaskCounts']['overdue'] ?? 0,
-            'adminUpcomingTaskCount'         => $dashboardData['adminTaskCounts']['upcoming'] ?? 0,
-            'adminApprovalPendingTaskCount'  => $dashboardData['adminTaskCounts']['approval_pending'] ?? 0,
-            'adminSendingPendingTaskCount'   => $dashboardData['adminTaskCounts']['sending_approval'] ?? 0,
-            
-            'recentActivities'               => $dashboardData['recentActivities'],
+            // Lead figures are scoped by the repository, not by shop — a
+            // Manager works the whole pipeline they can see.
+            'leadStats' => $this->dashboard->getLeadStatistics($user),
+            'statistics' => $this->dashboard->getDashboardAllLeadStatistics($user),
+            'dueFollowUps' => $this->dashboard->getDueFollowUps($user),
+            'leadStats' => $this->dashboard->getDashboardLeadStatistics($user),
+                // Task dashboard counts
+            'todayDuty' => $taskCounts['todayDuty'],
+            'overdueDuty' => $taskCounts['overdueDuty'],
+            'upcomingDuty' => $taskCounts['upcomingDuty'],
+            'approvalPending' => $taskCounts['approvalPending'],
+            'sendingApproval' => $taskCounts['sendingApproval'],
+            'adminAssignedTaskCount' => $adminTaskCounts['total'],
+            'adminOngoingTaskCount' => $adminTaskCounts['ongoing'],
+            'adminOverdueTaskCount' => $adminTaskCounts['overdue'],
+            'adminUpcomingTaskCount' => $adminTaskCounts['upcoming'],
+            'adminApprovalPendingTaskCount' => $adminTaskCounts['approval_pending'],
+            'adminSendingPendingTaskCount' => $adminTaskCounts['sending_approval'],
+            'recentActivities' => $recentActivities,
         ]);
     }
+
+    // private function managerDashboard(User $user): View
+    // {
+    //     $cacheKey = "manager_dashboard_{$user->id}";
+
+    //     $dashboardData = Cache::remember($cacheKey, now()->addMinutes(2), function () use ($user) {
+    //         $stats = $this->dashboard->getManagerStatistics($user);
+            
+    //         return [
+    //             'stats'            => $stats,
+    //             'taskCounts'       => $this->getTaskDashboardCounts($user),
+    //             'adminTaskCounts'  => $this->getAdminAssignedTaskCounts($user),
+    //             'leadStats'        => $this->dashboard->getLeadStatistics($user),
+    //             'statistics'       => $this->dashboard->getDashboardAllLeadStatistics($user),
+    //             'recentActivities' => LeadActivity::latest()->take(5)->get(),
+    //         ];
+    //     });
+
+    //     return view('dashboard.manager', [
+    //         'pageTitle'                      => 'Dashboard',
+    //         'breadcrumbs'                    => [['label' => 'Dashboard']],
+    //         'photos'                         => $this->photos,
+    //         'stats'                          => $dashboardData['stats'],
+
+    //         'leadStats'                      => $dashboardData['leadStats'],
+    //         'statistics'                     => $dashboardData['statistics'],
+
+    //         'todayDuty'                      => $dashboardData['taskCounts']['todayDuty'] ?? 0,
+    //         'overdueDuty'                    => $dashboardData['taskCounts']['overdueDuty'] ?? 0,
+    //         'upcomingDuty'                   => $dashboardData['taskCounts']['upcomingDuty'] ?? 0,
+    //         'approvalPending'                => $dashboardData['taskCounts']['approvalPending'] ?? 0,
+    //         'sendingApproval'                => $dashboardData['taskCounts']['sendingApproval'] ?? 0,
+
+    //         'adminAssignedTaskCount'         => $dashboardData['adminTaskCounts']['total'] ?? 0,
+    //         'adminOngoingTaskCount'          => $dashboardData['adminTaskCounts']['ongoing'] ?? 0,
+    //         'adminOverdueTaskCount'          => $dashboardData['adminTaskCounts']['overdue'] ?? 0,
+    //         'adminUpcomingTaskCount'         => $dashboardData['adminTaskCounts']['upcoming'] ?? 0,
+    //         'adminApprovalPendingTaskCount'  => $dashboardData['adminTaskCounts']['approval_pending'] ?? 0,
+    //         'adminSendingPendingTaskCount'   => $dashboardData['adminTaskCounts']['sending_approval'] ?? 0,
+            
+    //         'recentActivities'               => $dashboardData['recentActivities'],
+    //     ]);
+    // }
 
 }
