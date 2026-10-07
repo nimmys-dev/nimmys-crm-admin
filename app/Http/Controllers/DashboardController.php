@@ -71,19 +71,13 @@ class DashboardController extends Controller
     }
 
 
+
     // private function adminDashboard(User $user): View
     // {
     //     $taskCounts = $this->getTaskDashboardCounts($user);
 
     //     $adminTaskCounts = $this->getAdminAssignedTaskCounts($user);
     //     $recentActivities = LeadActivity::latest()->take(5)->get();
-
-    //     // Computed once each. These were previously called twice with the
-    //     // duplicate key silently overwriting the first result — every figure
-    //     // was still right, but the whole set of count queries ran a second
-    //     // time on every dashboard load for nothing.
-    //     $leadStats = $this->dashboard->getDashboardLeadStatistics($user);
-    //     $allLeadStats = $this->dashboard->getDashboardAllLeadStatistics($user);
 
     //     return view('dashboard.admin', [
     //         'pageTitle' => 'Dashboard',
@@ -95,9 +89,10 @@ class DashboardController extends Controller
     //         'recentEmployees' => $this->dashboard->getRecentEmployees(),
     //         'recentShops' => $this->dashboard->getRecentShops(),
 
-    //         'leadStats' => $leadStats,
-    //         'statistics' => $allLeadStats,
+    //         'leadStats' => $this->dashboard->getDashboardLeadStatistics($user),
+    //         'statistics' => $this->dashboard->getDashboardAllLeadStatistics($user),
     //         'dueFollowUps' => $this->dashboard->getDueFollowUps($user),
+    //         'statistics' => $this->dashboard->getDashboardAllLeadStatistics($user),
 
     //         'todayDuty' => $taskCounts['todayDuty'],
     //         'overdueDuty' => $taskCounts['overdueDuty'],
@@ -115,41 +110,53 @@ class DashboardController extends Controller
     //     ]);
     // }
 
-private function adminDashboard(User $user): View
+    private function adminDashboard(User $user): View
     {
-        $taskCounts = $this->getTaskDashboardCounts($user);
+        // Cache heavy dashboard stats for 30 seconds to drastically improve speed
+        $cacheKey = 'admin_dashboard_stats_' . $user->id;
 
-        $adminTaskCounts = $this->getAdminAssignedTaskCounts($user);
-        $recentActivities = LeadActivity::latest()->take(5)->get();
+        $dashboardData = cache()->remember($cacheKey, now()->addSeconds(30), function () use ($user) {
+            $taskCounts = $this->getTaskDashboardCounts($user);
+            $adminTaskCounts = $this->getAdminAssignedTaskCounts($user);
+
+            return [
+                'stats' => $this->dashboard->getAdminStatistics(),
+                'upcomingIncrements' => $this->dashboard->getUpcomingIncrements(),
+                'recentEmployees' => $this->dashboard->getRecentEmployees(),
+                'recentShops' => $this->dashboard->getRecentShops(),
+                'leadStats' => $this->dashboard->getDashboardLeadStatistics($user),
+                'statistics' => $this->dashboard->getDashboardAllLeadStatistics($user),
+                'dueFollowUps' => $this->dashboard->getDueFollowUps($user),
+
+                // Task Counts
+                'todayDuty' => $taskCounts['todayDuty'] ?? 0,
+                'overdueDuty' => $taskCounts['overdueDuty'] ?? 0,
+                'upcomingDuty' => $taskCounts['upcomingDuty'] ?? 0,
+                'approvalPending' => $taskCounts['approvalPending'] ?? 0,
+                'sendingApproval' => $taskCounts['sendingApproval'] ?? 0,
+
+                // Admin Task Counts
+                'adminAssignedTaskCount' => $adminTaskCounts['total'] ?? 0,
+                'adminOngoingTaskCount' => $adminTaskCounts['ongoing'] ?? 0,
+                'adminOverdueTaskCount' => $adminTaskCounts['overdue'] ?? 0,
+                'adminUpcomingTaskCount' => $adminTaskCounts['upcoming'] ?? 0,
+                'adminApprovalPendingTaskCount' => $adminTaskCounts['approval_pending'] ?? 0,
+                'adminSendingPendingTaskCount' => $adminTaskCounts['sending_approval'] ?? 0,
+            ];
+        });
+
+        // Recent activities fetched with eager loading to prevent N+1
+        $recentActivities = LeadActivity::with('lead:id,name')
+            ->latest()
+            ->take(5)
+            ->get();
 
         return view('dashboard.admin', [
             'pageTitle' => 'Dashboard',
             'breadcrumbs' => [['label' => 'Dashboard']],
             'photos' => $this->photos,
-
-            'stats' => $this->dashboard->getAdminStatistics(),
-            'upcomingIncrements' => $this->dashboard->getUpcomingIncrements(),
-            'recentEmployees' => $this->dashboard->getRecentEmployees(),
-            'recentShops' => $this->dashboard->getRecentShops(),
-
-            'leadStats' => $this->dashboard->getDashboardLeadStatistics($user),
-            'statistics' => $this->dashboard->getDashboardAllLeadStatistics($user),
-            'dueFollowUps' => $this->dashboard->getDueFollowUps($user),
-            'statistics' => $this->dashboard->getDashboardAllLeadStatistics($user),
-
-            'todayDuty' => $taskCounts['todayDuty'],
-            'overdueDuty' => $taskCounts['overdueDuty'],
-            'upcomingDuty' => $taskCounts['upcomingDuty'],
-            'approvalPending' => $taskCounts['approvalPending'],
-            'sendingApproval' => $taskCounts['sendingApproval'],
-
-            'adminAssignedTaskCount' => $adminTaskCounts['total'],
-            'adminOngoingTaskCount' => $adminTaskCounts['ongoing'],
-            'adminOverdueTaskCount' => $adminTaskCounts['overdue'],
-            'adminUpcomingTaskCount' => $adminTaskCounts['upcoming'],
-            'adminApprovalPendingTaskCount' => $adminTaskCounts['approval_pending'],
-            'adminSendingPendingTaskCount' => $adminTaskCounts['sending_approval'],
             'recentActivities' => $recentActivities,
+            ...$dashboardData, // Spreads all cached stats into the view
         ]);
     }
 
