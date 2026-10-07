@@ -376,6 +376,7 @@ class LeadQuotationController extends Controller
 
     public function pdf(Request $request, Lead $lead): Response
     {
+        ini_set('memory_limit', '512M');
         $this->authorize('view', $lead);
 
         $quotation = $lead->quotation;
