@@ -13,6 +13,7 @@ use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Log;
 
 /**
  * The one quotation a lead may have.
@@ -333,6 +334,46 @@ class LeadQuotationController extends Controller
      * Gated on 'view' rather than 'update': downloading a document that
      * already exists is a read, not an edit.
      */
+    // public function pdf(Request $request, Lead $lead): Response
+    // {
+    //     $this->authorize('view', $lead);
+
+    //     $quotation = $lead->quotation;
+
+    //     abort_if($quotation === null, 404);
+
+    //     $quotation->load('items');
+
+    //     $company = CompanyProfile::current();
+
+    //     $pdf = Pdf::loadView('quotations.pdf', [
+    //         'quotation' => $quotation,
+    //         'lead' => $lead,
+    //         'company' => $company,
+    //         'logoDataUri' => $this->logoDataUri($company),
+    //         // Company signature
+    //         'signatureDataUri' => $this->companyImageDataUri(
+    //             $company->signature_path
+    //         ),
+
+    //         // Company seal
+    //         'sealDataUri' => $this->companyImageDataUri(
+    //             $company->seal_path
+    //         ),
+    //     ])->setPaper('a4');
+
+    //     $actor = $request->user();
+    //     if ($actor) {
+    //         app(\App\Services\LeadActivityService::class)->logQuotation($lead, $actor, $quotation, 'downloaded');
+    //     }
+
+    //     $safeReference = str_replace(['/', '\\'], '-', $quotation->reference);
+
+    //     return $pdf->download("Quotation-{$safeReference}.pdf");
+    // }
+
+     
+
     public function pdf(Request $request, Lead $lead): Response
     {
         $this->authorize('view', $lead);
@@ -345,21 +386,46 @@ class LeadQuotationController extends Controller
 
         $company = CompanyProfile::current();
 
-        $pdf = Pdf::loadView('quotations.pdf', [
-            'quotation' => $quotation,
-            'lead' => $lead,
-            'company' => $company,
-            'logoDataUri' => $this->logoDataUri($company),
-            // Company signature
-            'signatureDataUri' => $this->companyImageDataUri(
-                $company->signature_path
-            ),
+        // Safe methods with error logging
+        $logoDataUri = null;
+        $signatureDataUri = null;
+        $sealDataUri = null;
 
-            // Company seal
-            'sealDataUri' => $this->companyImageDataUri(
-                $company->seal_path
-            ),
-        ])->setPaper('a4');
+        try {
+            $logoDataUri = $this->logoDataUri($company);
+        } catch (\Throwable $e) {
+            Log::error('Logo generation failed for quotation ID ' . $quotation->id . ': ' . $e->getMessage());
+        }
+
+        try {
+            if ($company?->signature_path) {
+                $signatureDataUri = $this->companyImageDataUri($company->signature_path);
+            }
+        } catch (\Throwable $e) {
+            Log::error('Signature generation failed for quotation ID ' . $quotation->id . ': ' . $e->getMessage());
+        }
+
+        try {
+            if ($company?->seal_path) {
+                $sealDataUri = $this->companyImageDataUri($company->seal_path);
+            }
+        } catch (\Throwable $e) {
+            Log::error('Seal generation failed for quotation ID ' . $quotation->id . ': ' . $e->getMessage());
+        }
+
+        try {
+            $pdf = Pdf::loadView('quotations.pdf', [
+                'quotation' => $quotation,
+                'lead' => $lead,
+                'company' => $company,
+                'logoDataUri' => $logoDataUri,
+                'signatureDataUri' => $signatureDataUri,
+                'sealDataUri' => $sealDataUri,
+            ])->setPaper('a4');
+        } catch (\Throwable $e) {
+            Log::error('PDF view load failed for quotation ID ' . $quotation->id . ': ' . $e->getMessage());
+            throw $e; 
+        }
 
         $actor = $request->user();
         if ($actor) {
