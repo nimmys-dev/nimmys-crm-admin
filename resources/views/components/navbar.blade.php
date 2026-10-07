@@ -16,11 +16,11 @@
                     </a>
                 </li>
 
-                <li class="pc-h-item pc-sidebar-popup lg:hidden">
+                <!-- <li class="pc-h-item pc-sidebar-popup lg:hidden">
                     <a href="#" class="pc-head-link ltr:!ml-0 rtl:!mr-0" id="mobile-collapse" aria-label="Open menu">
                         <i class="ti ti-menu-2"></i>
                     </a>
-                </li>
+                </li> -->
 
                 <!-- <li class="dropdown pc-h-item">
                     <a class="pc-head-link dropdown-toggle me-0" data-pc-toggle="dropdown" href="#" role="button"

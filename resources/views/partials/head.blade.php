@@ -18,8 +18,10 @@
 
 <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="{{ asset('assets/fonts/tabler-icons.min.css') }}" />
-<link rel="stylesheet" href="{{ asset('assets/css/style.css') }}" id="main-style-link" />
+<!-- <link rel="stylesheet" href="{{ asset('assets/css/style.css') }}" id="main-style-link" /> -->
 {{-- Supplies alerts, modals and validation states, which the theme's purged Tailwind build omits. --}}
-<link rel="stylesheet" href="{{ asset('assets/css/crm.css') }}" />
+<!-- <link rel="stylesheet" href="{{ asset('assets/css/crm.css') }}" /> -->
+ <link rel="stylesheet" href="{{ asset('assets/css/style.min.css') }}" id="main-style-link" />
+<link rel="stylesheet" href="{{ asset('assets/css/crm.min.css') }}" />
 
 @stack('styles')
