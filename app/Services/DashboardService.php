@@ -10,6 +10,7 @@ use App\Models\Shop;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB; // Make sure this is imported at the top
 
 /**
  * Every dashboard statistic and listing.
@@ -281,80 +282,172 @@ class DashboardService
 //     ];
 // }
 
+// latest comment
+// public function getDashboardLeadStatistics(User $user): array
+// {
+//     $today = today();
+//     $tomorrow = $today->copy()->addDay();
+
+//     $base = Lead::query()
+//         ->where('assigned_to', $user->id)
+//         ->whereNotIn('status', ['closed', 'lost', 'won']);
+
+//     return [
+//         'unattended' => (clone $base)
+//             ->whereDoesntHave('callDetails')
+//             ->count(),
+
+//         'today_followup' => (clone $base)
+//             ->whereHas('latestCall', function ($q) use ($today, $tomorrow) {
+//                 $q->where('next_followup_date', '>=', $today)
+//                   ->where('next_followup_date', '<', $tomorrow);
+//             })
+//             ->count(),
+
+//         'overdue_followup' => (clone $base)
+//             ->whereHas('latestCall', function ($q) use ($today) {
+//                 $q->where('next_followup_date', '<', $today);
+//             })
+//             ->count(),
+
+//         'upcoming_followup' => (clone $base)
+//             ->whereHas('latestCall', function ($q) use ($tomorrow) {
+//                 $q->where('next_followup_date', '>=', $tomorrow);
+//             })
+//             ->count(),
+
+//         'your_leads' => (clone $base)->count(),
+
+//         'total_leads' => Lead::query()
+//             ->whereNotIn('status', ['closed', 'lost', 'won'])
+//             ->count(),
+//     ];
+// }
+// public function getDashboardAllLeadStatistics(User $user): array
+// {
+//     $today = today();
+//     $tomorrow = $today->copy()->addDay();
+
+//     $base = Lead::query()
+//         ->whereNotIn('status', ['closed', 'lost', 'won']);
+
+//     return [
+//         'unattended' => (clone $base)
+//             ->whereDoesntHave('callDetails')
+//             ->count(),
+
+//         'today_followup' => (clone $base)
+//             ->whereHas('latestCall', function ($q) use ($today, $tomorrow) {
+//                 $q->where('next_followup_date', '>=', $today)
+//                   ->where('next_followup_date', '<', $tomorrow);
+//             })
+//             ->count(),
+
+//         'overdue_followup' => (clone $base)
+//             ->whereHas('latestCall', function ($q) use ($today) {
+//                 $q->where('next_followup_date', '<', $today);
+//             })
+//             ->count(),
+
+//         'upcoming_followup' => (clone $base)
+//             ->whereHas('latestCall', function ($q) use ($tomorrow) {
+//                 $q->where('next_followup_date', '>=', $tomorrow);
+//             })
+//             ->count(),
+
+//         'total_leads' => (clone $base)->count(),
+//     ];
+// }
+
 
 public function getDashboardLeadStatistics(User $user): array
 {
-    $today = today();
-    $tomorrow = $today->copy()->addDay();
+    $today = today()->toDateString();
+    $tomorrow = today()->addDay()->toDateString();
 
     $base = Lead::query()
         ->where('assigned_to', $user->id)
         ->whereNotIn('status', ['closed', 'lost', 'won']);
 
+    $unattended = (clone $base)->whereDoesntHave('callDetails')->count();
+    $totalLeads = (clone $base)->count();
+
+    // Optimized helper using direct whereExists instead of heavy latestOfMany relation
+    $getCountByDate = function ($operator, $date) use ($base) {
+        return (clone $base)->whereExists(function ($sub) use ($operator, $date) {
+            $sub->select(DB::raw(1))
+                ->from('lead_call_details as lcd')
+                ->whereColumn('lcd.lead_id', 'leads.id')
+                ->whereNull('lcd.deleted_at')
+                ->whereNotNull('lcd.next_followup_date')
+                ->whereDate('lcd.next_followup_date', $operator, $date)
+                ->whereRaw('lcd.id = (select max(id) from lead_call_details where lead_id = leads.id and deleted_at is null)');
+        })->count();
+    };
+
+    $getCountBetween = function ($startDate, $endDate) use ($base) {
+        return (clone $base)->whereExists(function ($sub) use ($startDate, $endDate) {
+            $sub->select(DB::raw(1))
+                ->from('lead_call_details as lcd')
+                ->whereColumn('lcd.lead_id', 'leads.id')
+                ->whereNull('lcd.deleted_at')
+                ->whereNotNull('lcd.next_followup_date')
+                ->whereBetween('lcd.next_followup_date', [$startDate, $endDate])
+                ->whereRaw('lcd.id = (select max(id) from lead_call_details where lead_id = leads.id and deleted_at is null)');
+        })->count();
+    };
+
     return [
-        'unattended' => (clone $base)
-            ->whereDoesntHave('callDetails')
-            ->count(),
-
-        'today_followup' => (clone $base)
-            ->whereHas('latestCall', function ($q) use ($today, $tomorrow) {
-                $q->where('next_followup_date', '>=', $today)
-                  ->where('next_followup_date', '<', $tomorrow);
-            })
-            ->count(),
-
-        'overdue_followup' => (clone $base)
-            ->whereHas('latestCall', function ($q) use ($today) {
-                $q->where('next_followup_date', '<', $today);
-            })
-            ->count(),
-
-        'upcoming_followup' => (clone $base)
-            ->whereHas('latestCall', function ($q) use ($tomorrow) {
-                $q->where('next_followup_date', '>=', $tomorrow);
-            })
-            ->count(),
-
-        'your_leads' => (clone $base)->count(),
-
-        'total_leads' => Lead::query()
-            ->whereNotIn('status', ['closed', 'lost', 'won'])
-            ->count(),
+        'unattended'        => $unattended,
+        'today_followup'    => $getCountBetween($today, $today),
+        'overdue_followup'  => $getCountByDate('<', $today),
+        'upcoming_followup' => $getCountByDate('>=', $tomorrow),
+        'your_leads'        => $totalLeads,
+        'total_leads'       => Lead::query()->whereNotIn('status', ['closed', 'lost', 'won'])->count(),
     ];
 }
+
 public function getDashboardAllLeadStatistics(User $user): array
 {
-    $today = today();
-    $tomorrow = $today->copy()->addDay();
+    $today = today()->toDateString();
+    $tomorrow = today()->addDay()->toDateString();
 
     $base = Lead::query()
         ->whereNotIn('status', ['closed', 'lost', 'won']);
 
+    $unattended = (clone $base)->whereDoesntHave('callDetails')->count();
+    $totalLeads = (clone $base)->count();
+
+    $getCountByDate = function ($operator, $date) use ($base) {
+        return (clone $base)->whereExists(function ($sub) use ($operator, $date) {
+            $sub->select(DB::raw(1))
+                ->from('lead_call_details as lcd')
+                ->whereColumn('lcd.lead_id', 'leads.id')
+                ->whereNull('lcd.deleted_at')
+                ->whereNotNull('lcd.next_followup_date')
+                ->whereDate('lcd.next_followup_date', $operator, $date)
+                ->whereRaw('lcd.id = (select max(id) from lead_call_details where lead_id = leads.id and deleted_at is null)');
+        })->count();
+    };
+
+    $getCountBetween = function ($startDate, $endDate) use ($base) {
+        return (clone $base)->whereExists(function ($sub) use ($startDate, $endDate) {
+            $sub->select(DB::raw(1))
+                ->from('lead_call_details as lcd')
+                ->whereColumn('lcd.lead_id', 'leads.id')
+                ->whereNull('lcd.deleted_at')
+                ->whereNotNull('lcd.next_followup_date')
+                ->whereBetween('lcd.next_followup_date', [$startDate, $endDate])
+                ->whereRaw('lcd.id = (select max(id) from lead_call_details where lead_id = leads.id and deleted_at is null)');
+        })->count();
+    };
+
     return [
-        'unattended' => (clone $base)
-            ->whereDoesntHave('callDetails')
-            ->count(),
-
-        'today_followup' => (clone $base)
-            ->whereHas('latestCall', function ($q) use ($today, $tomorrow) {
-                $q->where('next_followup_date', '>=', $today)
-                  ->where('next_followup_date', '<', $tomorrow);
-            })
-            ->count(),
-
-        'overdue_followup' => (clone $base)
-            ->whereHas('latestCall', function ($q) use ($today) {
-                $q->where('next_followup_date', '<', $today);
-            })
-            ->count(),
-
-        'upcoming_followup' => (clone $base)
-            ->whereHas('latestCall', function ($q) use ($tomorrow) {
-                $q->where('next_followup_date', '>=', $tomorrow);
-            })
-            ->count(),
-
-        'total_leads' => (clone $base)->count(),
+        'unattended'        => $unattended,
+        'today_followup'    => $getCountBetween($today, $today),
+        'overdue_followup'  => $getCountByDate('<', $today),
+        'upcoming_followup' => $getCountByDate('>=', $tomorrow),
+        'total_leads'       => $totalLeads,
     ];
 }
 
