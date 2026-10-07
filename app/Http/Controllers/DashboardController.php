@@ -77,6 +77,14 @@ class DashboardController extends Controller
 
         $adminTaskCounts = $this->getAdminAssignedTaskCounts($user);
         $recentActivities = LeadActivity::latest()->take(5)->get();
+
+        // Computed once each. These were previously called twice with the
+        // duplicate key silently overwriting the first result — every figure
+        // was still right, but the whole set of count queries ran a second
+        // time on every dashboard load for nothing.
+        $leadStats = $this->dashboard->getDashboardLeadStatistics($user);
+        $allLeadStats = $this->dashboard->getDashboardAllLeadStatistics($user);
+
         return view('dashboard.admin', [
             'pageTitle' => 'Dashboard',
             'breadcrumbs' => [['label' => 'Dashboard']],
@@ -87,10 +95,9 @@ class DashboardController extends Controller
             'recentEmployees' => $this->dashboard->getRecentEmployees(),
             'recentShops' => $this->dashboard->getRecentShops(),
 
-            'leadStats' => $this->dashboard->getDashboardLeadStatistics($user),
-            'statistics' => $this->dashboard->getDashboardAllLeadStatistics($user),
+            'leadStats' => $leadStats,
+            'statistics' => $allLeadStats,
             'dueFollowUps' => $this->dashboard->getDueFollowUps($user),
-            'statistics' => $this->dashboard->getDashboardAllLeadStatistics($user),
 
             'todayDuty' => $taskCounts['todayDuty'],
             'overdueDuty' => $taskCounts['overdueDuty'],
@@ -276,10 +283,13 @@ class DashboardController extends Controller
 
             // Lead figures are scoped by the repository, not by shop — a
             // Manager works the whole pipeline they can see.
-            'leadStats' => $this->dashboard->getLeadStatistics($user),
+            //
+            // leadStats previously appeared twice, so the first call
+            // (getLeadStatistics) was discarded and its queries were wasted.
+            // Both sets are kept, under distinct keys, computed once.
+            'leadStats' => $this->dashboard->getDashboardLeadStatistics($user),
             'statistics' => $this->dashboard->getDashboardAllLeadStatistics($user),
             'dueFollowUps' => $this->dashboard->getDueFollowUps($user),
-            'leadStats' => $this->dashboard->getDashboardLeadStatistics($user),
                 // Task dashboard counts
             'todayDuty' => $taskCounts['todayDuty'],
             'overdueDuty' => $taskCounts['overdueDuty'],
