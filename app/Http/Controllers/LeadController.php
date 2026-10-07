@@ -42,6 +42,18 @@ class LeadController extends Controller
         private readonly LeadService $service,
     ) {}
 
+    // public function index(LeadIndexRequest $request): View
+    // {
+    //     return view('leads.index', [
+    //         'pageTitle' => 'Lead Management',
+    //         'breadcrumbs' => [['label' => 'Leads']],
+    //         'leads' => $this->leads->paginate($request->user(), $request->filters()),
+    //         'filters' => $request->filters(),
+    //         'hasActiveFilters' => $request->hasActiveFilters(),
+    //         'statistics' => $this->leads->statistics($request->user()),
+    //         ...$this->formOptions($request),
+    //     ]);
+    // }
 
     // public function index(LeadIndexRequest $request): View
     // {
@@ -921,7 +933,7 @@ public function getDashboardLeadStatistics(User $user): array
     //     ]);
     // }
 
-    public function index_old(LeadIndexRequest $request): View
+    public function index(LeadIndexRequest $request): View
     {
         $user = $request->user();
 
@@ -1212,285 +1224,6 @@ public function getDashboardLeadStatistics(User $user): array
         ]);
     }
     
-    public function index(LeadIndexRequest $request): View
-    {
-        $user = $request->user();
-
-        /*
-        |--------------------------------------------------------------------------
-        | Request values
-        |--------------------------------------------------------------------------
-        */
-
-        $filters = $request->filters();
-        $filter = $request->query('filter');
-
-        $isAdmin = $user->isAdmin();
-
-        /*
-        |--------------------------------------------------------------------------
-        | Date range
-        |--------------------------------------------------------------------------
-        */
-
-        $today = today();
-        $tomorrow = today()->addDay();
-
-        /*
-        |--------------------------------------------------------------------------
-        | Base Query (Added select to reduce memory usage)
-        |--------------------------------------------------------------------------
-        */
-
-        $query = Lead::query()
-            ->select([
-                'id', 'reference', 'name', 'company', 'email', 'phone', 
-                'status', 'priority', 'source', 'assigned_to', 'shop_id', 'created_at'
-            ])
-            ->with([
-                'owner:id,name,email',
-                'latestCall',
-            ])
-            ->whereNotIn('status', [
-                'lost',
-                'won',
-                'closed',
-            ]);
-
-        /*
-        |--------------------------------------------------------------------------
-        | Dashboard Filters (Untouched as requested)
-        |--------------------------------------------------------------------------
-        */
-
-        switch ($filter) {
-            case 'my_unattended':
-                $query->where('assigned_to', $user->id)
-                    ->whereDoesntHave('callDetails');
-                break;
-
-            case 'my_today_followup':
-                $query->where('assigned_to', $user->id)
-                    ->whereHas('latestCall', function ($q) use ($today, $tomorrow) {
-                        $q->whereNotNull('next_followup_date')
-                            ->where('next_followup_date', '>=', $today)
-                            ->where('next_followup_date', '<', $tomorrow);
-                    });
-                break;
-
-            case 'my_overdue_followup':
-                $query->where('assigned_to', $user->id)
-                    ->whereHas('latestCall', function ($q) use ($today) {
-                        $q->whereNotNull('next_followup_date')
-                            ->where('next_followup_date', '<', $today);
-                    });
-                break;
-
-            case 'my_upcoming_followup':
-                $query->where('assigned_to', $user->id)
-                    ->whereHas('latestCall', function ($q) use ($tomorrow) {
-                        $q->whereNotNull('next_followup_date')
-                            ->where('next_followup_date', '>=', $tomorrow);
-                    });
-                break;
-
-            case 'my_leads':
-                $query->where('assigned_to', $user->id);
-                break;
-
-            case 'all_unattended':
-                $query->whereDoesntHave('callDetails');
-                break;
-
-            case 'all_today_followup':
-                $query->whereHas('latestCall', function ($q) use ($today, $tomorrow) {
-                    $q->whereNotNull('next_followup_date')
-                    ->where('next_followup_date', '>=', $today)
-                    ->where('next_followup_date', '<', $tomorrow);
-                });
-                break;
-
-            case 'all_overdue_followup':
-                $query->whereHas('latestCall', function ($q) use ($today) {
-                    $q->whereNotNull('next_followup_date')
-                    ->where('next_followup_date', '<', $today);
-                });
-                break;
-
-            case 'all_upcoming_followup':
-                $query->whereHas('latestCall', function ($q) use ($tomorrow) {
-                    $q->whereNotNull('next_followup_date')
-                    ->where('next_followup_date', '>=', $tomorrow);
-                });
-                break;
-
-            case 'total_leads':
-                break;
-
-            default:
-                if (!$isAdmin) {
-                    $query->where('assigned_to', $user->id);
-                }
-                break;
-        }
-
-        /*
-        |--------------------------------------------------------------------------
-        | Search (Optimized to avoid heavy nested subqueries when empty)
-        |--------------------------------------------------------------------------
-        */
-
-        if ($request->filled('q')) {
-            $search = trim($request->input('q'));
-
-            if ($search !== '') {
-                $like = '%' . $search . '%';
-
-                $query->where(function ($q) use ($like) {
-                    $q->where('name', 'like', $like)
-                        ->orWhere('company', 'like', $like)
-                        ->orWhere('email', 'like', $like)
-                        ->orWhere('phone', 'like', $like)
-                        ->orWhere('reference', 'like', $like)
-                        ->orWhere('description', 'like', $like)
-                        ->orWhereHas('owner', function ($userQuery) use ($like) {
-                            $userQuery->where('name', 'like', $like)
-                                ->orWhere('email', 'like', $like);
-                        })
-                        ->orWhereHas('leadQuotation', function ($quotationQuery) use ($like) {
-                            $quotationQuery->where('reference', 'like', $like)
-                                ->orWhereHas('Quitems', function ($itemQuery) use ($like) {
-                                    $itemQuery->where('name', 'like', $like)
-                                        ->orWhere('description', 'like', $like);
-                                });
-                        });
-                });
-            }
-        }
-
-        /*
-        |--------------------------------------------------------------------------
-        | Filters
-        |--------------------------------------------------------------------------
-        */
-
-        if ($request->filled('status')) {
-            $query->where('status', $request->input('status'));
-        }
-
-        if ($request->filled('priority')) {
-            $query->where('priority', $request->input('priority'));
-        }
-
-        if ($request->filled('source')) {
-            $query->where('source', $request->input('source'));
-        }
-
-        if ($request->filled('assigned_to')) {
-            $query->where('assigned_to', (int) $request->input('assigned_to'));
-        }
-
-        if ($request->filled('shop_id')) {
-            $query->where('shop_id', (int) $request->input('shop_id'));
-        }
-
-        /*
-        |--------------------------------------------------------------------------
-        | Safe Sorting
-        |--------------------------------------------------------------------------
-        */
-
-        $allowedSorts = [
-            'id',
-            'reference',
-            'name',
-            'company',
-            'status',
-            'priority',
-            'source',
-            'created_at',
-            'updated_at',
-        ];
-
-        $sort = $request->input('sort', 'created_at');
-
-        if (!in_array($sort, $allowedSorts, true)) {
-            $sort = 'created_at';
-        }
-
-        $direction = strtolower($request->input('direction', 'desc'));
-
-        if ($direction !== 'asc') {
-            $direction = 'desc';
-        }
-
-        /*
-        |--------------------------------------------------------------------------
-        | Pagination
-        |--------------------------------------------------------------------------
-        */
-
-        $perPage = (int) $request->input('per_page', 15);
-
-        if ($perPage < 10) {
-            $perPage = 10;
-        }
-
-        if ($perPage > 50) {
-            $perPage = 50;
-        }
-
-        /*
-        |--------------------------------------------------------------------------
-        | Get Leads
-        |--------------------------------------------------------------------------
-        */
-
-        $leads = $query
-            ->orderBy($sort, $direction)
-            ->paginate($perPage)
-            ->withQueryString();
-
-        /*
-        |--------------------------------------------------------------------------
-        | Statistics
-        |--------------------------------------------------------------------------
-        */
-
-        $statistics = cache()->remember(
-            'lead_statistics_' . $user->id . '_' . ($isAdmin ? 'admin' : 'user'),
-            now()->addSeconds(30),
-            function () use ($user) {
-                return $this->getDashboardLeadStatistics($user);
-            }
-        );
-
-        /*
-        |--------------------------------------------------------------------------
-        | Form Options
-        |--------------------------------------------------------------------------
-        */
-
-        $formOptions = $this->formOptions($request);
-
-        /*
-        |--------------------------------------------------------------------------
-        | View
-        |--------------------------------------------------------------------------
-        */
-
-        return view('leads.index', [
-            'pageTitle' => 'Lead Management',
-            'breadcrumbs' => [
-                ['label' => 'Leads'],
-            ],
-            'filters' => $filters,
-            'leads' => $leads,
-            'hasActiveFilters' => $request->hasActiveFilters(),
-            'statistics' => $statistics,
-            ...$formOptions,
-        ]);
-    }
     public function create(Request $request): View
     {
         $this->authorize('create', Lead::class);
