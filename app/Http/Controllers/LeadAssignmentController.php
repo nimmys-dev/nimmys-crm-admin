@@ -99,45 +99,45 @@ public function update(Request $request, Lead $lead): RedirectResponse
     |--------------------------------------------------------------------------
     */
 
-    if ($ownerUser && !empty($ownerUser->fcm_token)) {
-        try {
+    // if ($ownerUser && !empty($ownerUser->fcm_token)) {
+    //     try {
 
-            $firebaseService = app(FirebaseNotificationService::class);
+    //         $firebaseService = app(FirebaseNotificationService::class);
 
-            $firebaseService->sendToUser(
-                $ownerUser,
-                'Lead Assigned',
-                'A lead has been assigned to you: ' . $lead->reference,
-                [
-                    'type'      => 'lead_assigned',
-                    'lead_id'   => (string) $lead->id,
-                    'reference' => (string) $lead->reference,
-                ]
-            );
+    //         $firebaseService->sendToUser(
+    //             $ownerUser,
+    //             'Lead Assigned',
+    //             'A lead has been assigned to you: ' . $lead->reference,
+    //             [
+    //                 'type'      => 'lead_assigned',
+    //                 'lead_id'   => (string) $lead->id,
+    //                 'reference' => (string) $lead->reference,
+    //             ]
+    //         );
 
-            \Log::info('Lead assignment FCM notification sent', [
-                'lead_id'     => $lead->id,
-                'assigned_to' => $ownerUser->id,
-            ]);
+    //         \Log::info('Lead assignment FCM notification sent', [
+    //             'lead_id'     => $lead->id,
+    //             'assigned_to' => $ownerUser->id,
+    //         ]);
 
-        } catch (\Throwable $e) {
+    //     } catch (\Throwable $e) {
 
-            \Log::error('Lead assignment FCM notification failed', [
-                'lead_id'     => $lead->id,
-                'assigned_to' => $ownerUser->id,
-                'error'       => $e->getMessage(),
-            ]);
-        }
-    } else {
+    //         \Log::error('Lead assignment FCM notification failed', [
+    //             'lead_id'     => $lead->id,
+    //             'assigned_to' => $ownerUser->id,
+    //             'error'       => $e->getMessage(),
+    //         ]);
+    //     }
+    // } else {
 
-        \Log::warning('Lead assignment FCM notification skipped', [
-            'lead_id'    => $lead->id,
-            'assigned_to' => $userId,
-            'reason'     => $ownerUser
-                ? 'FCM token missing'
-                : 'Lead unassigned',
-        ]);
-    }
+    //     \Log::warning('Lead assignment FCM notification skipped', [
+    //         'lead_id'    => $lead->id,
+    //         'assigned_to' => $userId,
+    //         'reason'     => $ownerUser
+    //             ? 'FCM token missing'
+    //             : 'Lead unassigned',
+    //     ]);
+    // }
 
     return redirect()
         ->route('dashboard')

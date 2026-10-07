@@ -1035,87 +1035,87 @@ class LeadController extends Controller
         // FIREBASE NOTIFICATION - REASSIGNMENT ONLY
         // =====================================================
 
-        if (
-            $isReassigned &&
-            $assignedUser &&
-            !empty($assignedUser->fcm_token)
-        ) {
+        // if (
+        //     $isReassigned &&
+        //     $assignedUser &&
+        //     !empty($assignedUser->fcm_token)
+        // ) {
 
-            try {
+        //     try {
 
-                $firebaseService =
-                    app(FirebaseNotificationService::class);
+        //         $firebaseService =
+        //             app(FirebaseNotificationService::class);
 
-                $firebaseService->sendToUser(
-                    $assignedUser,
+        //         $firebaseService->sendToUser(
+        //             $assignedUser,
 
-                    'Lead Assigned',
+        //             'Lead Assigned',
 
-                    'A lead has been assigned to you: '
-                    . $lead->reference,
+        //             'A lead has been assigned to you: '
+        //             . $lead->reference,
 
-                    [
-                        'type' =>
-                            'lead_assigned',
+        //             [
+        //                 'type' =>
+        //                     'lead_assigned',
 
-                        'lead_id' =>
-                            (string) $lead->id,
+        //                 'lead_id' =>
+        //                     (string) $lead->id,
 
-                        'reference' =>
-                            (string) $lead->reference,
-                    ]
-                );
+        //                 'reference' =>
+        //                     (string) $lead->reference,
+        //             ]
+        //         );
 
 
-                \Log::info(
-                    'Lead reassignment FCM notification sent',
-                    [
-                        'lead_id' =>
-                            $lead->id,
+        //         \Log::info(
+        //             'Lead reassignment FCM notification sent',
+        //             [
+        //                 'lead_id' =>
+        //                     $lead->id,
 
-                        'old_user_id' =>
-                            $oldAssignedTo,
+        //                 'old_user_id' =>
+        //                     $oldAssignedTo,
 
-                        'new_user_id' =>
-                            $assignedUser->id,
-                    ]
-                );
+        //                 'new_user_id' =>
+        //                     $assignedUser->id,
+        //             ]
+        //         );
 
-            } catch (\Throwable $e) {
+        //     } catch (\Throwable $e) {
 
-                \Log::error(
-                    'Lead reassignment FCM notification failed',
-                    [
-                        'lead_id' =>
-                            $lead->id,
+        //         \Log::error(
+        //             'Lead reassignment FCM notification failed',
+        //             [
+        //                 'lead_id' =>
+        //                     $lead->id,
 
-                        'assigned_to' =>
-                            $assignedUser->id,
+        //                 'assigned_to' =>
+        //                     $assignedUser->id,
 
-                        'error' =>
-                            $e->getMessage(),
-                    ]
-                );
-            }
+        //                 'error' =>
+        //                     $e->getMessage(),
+        //             ]
+        //         );
+        //     }
 
-        } elseif ($isReassigned) {
+        // } elseif ($isReassigned) {
 
-            \Log::warning(
-                'Lead reassignment FCM notification skipped',
-                [
-                    'lead_id' =>
-                        $lead->id,
+        //     \Log::warning(
+        //         'Lead reassignment FCM notification skipped',
+        //         [
+        //             'lead_id' =>
+        //                 $lead->id,
 
-                    'assigned_to' =>
-                        $newAssignedTo,
+        //             'assigned_to' =>
+        //                 $newAssignedTo,
 
-                    'reason' =>
-                        $assignedUser
-                            ? 'FCM token missing'
-                            : 'Assigned user not found',
-                ]
-            );
-        }
+        //             'reason' =>
+        //                 $assignedUser
+        //                     ? 'FCM token missing'
+        //                     : 'Assigned user not found',
+        //         ]
+        //     );
+        // }
 
 
         // =====================================================
