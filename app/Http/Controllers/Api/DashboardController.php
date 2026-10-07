@@ -8,6 +8,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use App\Models\Lead;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
@@ -954,163 +955,355 @@ class DashboardController extends Controller
     //     ], 200);
     // }
 
+    // public function getDashboardLeadStatistics(Request $request): JsonResponse
+    // {
+    //     $user = auth()->user();
+
+    //     $filter  = $request->input('filter');
+    //     $scope   = $request->input('scope', 'my_leads'); // my_leads | all_leads
+    //     $search  = trim($request->input('search', ''));
+    //     $perPage = min((int) $request->input('per_page', 10), 100);
+
+    //     /*
+    //     |--------------------------------------------------------------------------
+    //     | 1. CACHED DASHBOARD COUNTS 
+    //     |--------------------------------------------------------------------------
+    //     */
+    //     $cacheKey = "lead_stats_user_{$user->id}_search_" . md5($search);
+
+    //     $allCounts = Cache::remember($cacheKey, now()->addMinutes(2), function () use ($user, $search) {
+            
+    //         $myLeadsBase = Lead::query()
+    //             ->where('assigned_to', $user->id)
+    //             ->whereNotIn('status', ['closed', 'lost', 'won']);
+
+    //         $allLeadsBase = Lead::query()
+    //             ->whereNotIn('status', ['closed', 'lost', 'won']);
+
+    //         $applySearch = function ($query) use ($search) {
+    //             if ($search === '') {
+    //                 return $query;
+    //             }
+    //             $search = strtolower($search);
+    //             return $query->where(function ($q) use ($search) {
+    //                 $q->where('name', 'like', '%' . $search . '%')
+    //                 ->orWhere('phone', 'like', '%' . $search . '%')
+    //                 ->orWhere('status', 'like', '%' . $search . '%');
+    //             });
+    //         };
+
+    //         $myLeadsCountBase = $applySearch(clone $myLeadsBase);
+    //         $allLeadsCountBase = $applySearch(clone $allLeadsBase);
+
+    //         $myLeadCounts = [
+    //             'unattended' => (clone $myLeadsCountBase)->whereDoesntHave('callDetails')->count(),
+    //             'today_followup' => (clone $myLeadsCountBase)->whereHas('latestCall', fn($q) => $q->whereNotNull('next_followup_date')->whereDate('next_followup_date', today()))->count(),
+    //             'overdue_followup' => (clone $myLeadsCountBase)->whereHas('latestCall', fn($q) => $q->whereNotNull('next_followup_date')->whereDate('next_followup_date', '<', today()))->count(),
+    //             'upcoming_followup' => (clone $myLeadsCountBase)->whereHas('latestCall', fn($q) => $q->whereNotNull('next_followup_date')->whereDate('next_followup_date', '>', today()))->count(),
+    //             'your_leads' => (clone $myLeadsCountBase)->count(),
+    //             'total_leads' => (clone $allLeadsCountBase)->count(),
+    //         ];
+
+    //         $allLeadCounts = [
+    //             'unattended' => (clone $allLeadsCountBase)->whereDoesntHave('callDetails')->count(),
+    //             'today_followup' => (clone $allLeadsCountBase)->whereHas('latestCall', fn($q) => $q->whereNotNull('next_followup_date')->whereDate('next_followup_date', today()))->count(),
+    //             'overdue_followup' => (clone $allLeadsCountBase)->whereHas('latestCall', fn($q) => $q->whereNotNull('next_followup_date')->whereDate('next_followup_date', '<', today()))->count(),
+    //             'upcoming_followup' => (clone $allLeadsCountBase)->whereHas('latestCall', fn($q) => $q->whereNotNull('next_followup_date')->whereDate('next_followup_date', '>', today()))->count(),
+    //             'total_leads' => (clone $allLeadsCountBase)->count(),
+    //         ];
+
+    //         return [
+    //             'my_leads'  => $myLeadCounts,
+    //             'all_leads' => $allLeadCounts,
+    //         ];
+    //     });
+
+    //     $myLeadCounts  = $allCounts['my_leads'];
+    //     $allLeadCounts = $allCounts['all_leads'];
+
+
+    //     /*
+    //     |--------------------------------------------------------------------------
+    //     | 2. BASE QUERIES FOR LISTING / PAGINATION
+    //     |--------------------------------------------------------------------------
+    //     */
+    //     $myLeadsBase = Lead::query()
+    //         ->where('assigned_to', $user->id)
+    //         ->whereNotIn('status', ['closed', 'lost', 'won']);
+
+    //     $allLeadsBase = Lead::query()
+    //         ->whereNotIn('status', ['closed', 'lost', 'won']);
+
+    //     $applySearch = function ($query) use ($search) {
+    //         if ($search === '') {
+    //             return $query;
+    //         }
+    //         $search = strtolower($search);
+    //         return $query->where(function ($q) use ($search) {
+    //             $q->where('name', 'like', '%' . $search . '%')
+    //             ->orWhere('phone', 'like', '%' . $search . '%')
+    //             ->orWhere('status', 'like', '%' . $search . '%');
+    //         });
+    //     };
+
+    //     $activeBaseQuery = ($scope === 'all_leads')
+    //         ? clone $allLeadsBase
+    //         : clone $myLeadsBase;
+
+    //     $filteredQuery = $applySearch($activeBaseQuery);
+
+    //     /*
+    //     |--------------------------------------------------------------------------
+    //     | 3. FILTER LOGIC
+    //     |--------------------------------------------------------------------------
+    //     */
+    //     if ($filter) {
+    //         switch ($filter) {
+    //             case 'unattended':
+    //                 $filteredQuery->whereDoesntHave('callDetails');
+    //                 break;
+    //             case 'today_followup':
+    //                 $filteredQuery->whereHas('latestCall', function ($q) {
+    //                     $q->whereNotNull('next_followup_date')
+    //                     ->whereDate('next_followup_date', today());
+    //                 });
+    //                 break;
+    //             case 'overdue_followup':
+    //                 $filteredQuery->whereHas('latestCall', function ($q) {
+    //                     $q->whereNotNull('next_followup_date')
+    //                     ->whereDate('next_followup_date', '<', today());
+    //                 });
+    //                 break;
+    //             case 'upcoming_followup':
+    //                 $filteredQuery->whereHas('latestCall', function ($q) {
+    //                     $q->whereNotNull('next_followup_date')
+    //                     ->whereDate('next_followup_date', '>', today());
+    //                 });
+    //                 break;
+    //             case 'your_leads':
+    //                 $filteredQuery = $applySearch(clone $myLeadsBase);
+    //                 break;
+    //             case 'total_leads':
+    //                 $filteredQuery = $applySearch(clone $allLeadsBase);
+    //                 break;
+    //         }
+    //     }
+
+    //     /*
+    //     |--------------------------------------------------------------------------
+    //     | 4. PAGINATED DATA
+    //     |--------------------------------------------------------------------------
+    //     */
+    //     $leads = null;
+
+    //     if ($filteredQuery) {
+    //         $leads = $filteredQuery
+    //             ->with([
+    //                 'owner',
+    //                 'latestCall',
+    //                 'assignedUser:id,name',
+    //                 'createdUser:id,name',
+    //             ])
+    //             ->latest('id')
+    //             ->paginate($perPage)
+    //             ->withQueryString();
+    //     }
+
+    //     /*
+    //     |--------------------------------------------------------------------------
+    //     | 5. RESPONSE
+    //     |--------------------------------------------------------------------------
+    //     */
+    //     return response()->json([
+    //         'status'      => true,
+    //         'status_code' => 200,
+    //         'message'     => 'Dashboard lead statistics retrieved successfully.',
+    //         'data' => [
+    //             'filter'         => $filter,
+    //             'scope'          => $scope,
+    //             'search'         => $search,
+    //             'counts'         => [
+    //                 'my_leads'  => $myLeadCounts,
+    //                 'all_leads' => $allLeadCounts,
+    //             ],
+    //             'filtered_count' => $leads ? $leads->total() : null,
+    //             'leads'          => $leads ? $leads->items() : [],
+    //             'pagination'     => $leads ? [
+    //                 'current_page' => $leads->currentPage(),
+    //                 'per_page'     => $leads->perPage(),
+    //                 'total'        => $leads->total(),
+    //                 'last_page'    => $leads->lastPage(),
+    //                 'from'         => $leads->firstItem(),
+    //                 'to'           => $leads->lastItem(),
+    //             ] : null,
+    //         ],
+    //     ], 200);
+    // }
+
     public function getDashboardLeadStatistics(Request $request): JsonResponse
     {
         $user = auth()->user();
 
         $filter  = $request->input('filter');
-        $scope   = $request->input('scope', 'my_leads'); // my_leads | all_leads
+        $scope   = $request->input('scope', 'my_leads');
         $search  = trim($request->input('search', ''));
         $perPage = min((int) $request->input('per_page', 10), 100);
 
         /*
         |--------------------------------------------------------------------------
-        | 1. CACHED DASHBOARD COUNTS (സ്പീഡ് കൂട്ടാൻ ഇത് സഹായിക്കും)
+        | 1. OPTIMIZED CACHED COUNTS (Bypassing Model Relationship Issues)
         |--------------------------------------------------------------------------
         */
         $cacheKey = "lead_stats_user_{$user->id}_search_" . md5($search);
 
-        $allCounts = Cache::remember($cacheKey, now()->addMinutes(2), function () use ($user, $search) {
+        $allCounts = Cache::remember($cacheKey, now()->addMinutes(5), function () use ($user, $search) {
             
-            $myLeadsBase = Lead::query()
-                ->where('assigned_to', $user->id)
-                ->whereNotIn('status', ['closed', 'lost', 'won']);
+            $baseQuery = Lead::query()->whereNotIn('status', ['closed', 'lost', 'won']);
 
-            $allLeadsBase = Lead::query()
-                ->whereNotIn('status', ['closed', 'lost', 'won']);
+            $myQuery = (clone $baseQuery)->where('assigned_to', $user->id);
+            $allQuery = clone $baseQuery;
 
-            $applySearch = function ($query) use ($search) {
-                if ($search === '') {
-                    return $query;
-                }
-                $search = strtolower($search);
-                return $query->where(function ($q) use ($search) {
-                    $q->where('name', 'like', '%' . $search . '%')
-                    ->orWhere('phone', 'like', '%' . $search . '%')
-                    ->orWhere('status', 'like', '%' . $search . '%');
+            if ($search !== '') {
+                $searchTerm = '%' . strtolower($search) . '%';
+                $searchClosure = function ($q) use ($searchTerm) {
+                    $q->where('name', 'like', $searchTerm)
+                    ->orWhere('phone', 'like', $searchTerm)
+                    ->orWhere('status', 'like', $searchTerm);
+                };
+                $myQuery->where($searchClosure);
+                $allQuery->where($searchClosure);
+            }
+
+            // Helper for latest call subquery checks
+            $applyLatestCallFilter = function ($q, $operator, $date) {
+                $q->whereExists(function ($sub) use ($operator, $date) {
+                    $sub->select(DB::raw(1))
+                        ->from('lead_call_details as lcd')
+                        ->whereColumn('lcd.lead_id', 'leads.id')
+                        ->whereNull('lcd.deleted_at')
+                        ->whereNotNull('lcd.next_followup_date')
+                        ->whereDate('lcd.next_followup_date', $operator, $date)
+                        ->whereRaw('lcd.id = (select max(id) from lead_call_details where lead_id = leads.id and deleted_at is null)');
                 });
             };
 
-            $myLeadsCountBase = $applySearch(clone $myLeadsBase);
-            $allLeadsCountBase = $applySearch(clone $allLeadsBase);
-
-            $myLeadCounts = [
-                'unattended' => (clone $myLeadsCountBase)->whereDoesntHave('callDetails')->count(),
-                'today_followup' => (clone $myLeadsCountBase)->whereHas('latestCall', fn($q) => $q->whereNotNull('next_followup_date')->whereDate('next_followup_date', today()))->count(),
-                'overdue_followup' => (clone $myLeadsCountBase)->whereHas('latestCall', fn($q) => $q->whereNotNull('next_followup_date')->whereDate('next_followup_date', '<', today()))->count(),
-                'upcoming_followup' => (clone $myLeadsCountBase)->whereHas('latestCall', fn($q) => $q->whereNotNull('next_followup_date')->whereDate('next_followup_date', '>', today()))->count(),
-                'your_leads' => (clone $myLeadsCountBase)->count(),
-                'total_leads' => (clone $allLeadsCountBase)->count(),
-            ];
-
-            $allLeadCounts = [
-                'unattended' => (clone $allLeadsCountBase)->whereDoesntHave('callDetails')->count(),
-                'today_followup' => (clone $allLeadsCountBase)->whereHas('latestCall', fn($q) => $q->whereNotNull('next_followup_date')->whereDate('next_followup_date', today()))->count(),
-                'overdue_followup' => (clone $allLeadsCountBase)->whereHas('latestCall', fn($q) => $q->whereNotNull('next_followup_date')->whereDate('next_followup_date', '<', today()))->count(),
-                'upcoming_followup' => (clone $allLeadsCountBase)->whereHas('latestCall', fn($q) => $q->whereNotNull('next_followup_date')->whereDate('next_followup_date', '>', today()))->count(),
-                'total_leads' => (clone $allLeadsCountBase)->count(),
-            ];
+            $getUnattendedCount = fn($q) => (clone $q)->whereDoesntHave('callDetails')->count();
+            $getTodayCount = function ($q) use ($applyLatestCallFilter) {
+                $query = clone $q;
+                $applyLatestCallFilter($query, '=', today());
+                return $query->count();
+            };
+            $getOverdueCount = function ($q) use ($applyLatestCallFilter) {
+                $query = clone $q;
+                $applyLatestCallFilter($query, '<', today());
+                return $query->count();
+            };
+            $getUpcomingCount = function ($q) use ($applyLatestCallFilter) {
+                $query = clone $q;
+                $applyLatestCallFilter($query, '>', today());
+                return $query->count();
+            };
 
             return [
-                'my_leads'  => $myLeadCounts,
-                'all_leads' => $allLeadCounts,
+                'my_leads' => [
+                    'unattended'        => $getUnattendedCount($myQuery),
+                    'today_followup'    => $getTodayCount($myQuery),
+                    'overdue_followup'  => $getOverdueCount($myQuery),
+                    'upcoming_followup' => $getUpcomingCount($myQuery),
+                    'your_leads'        => (clone $myQuery)->count(),
+                    'total_leads'       => (clone $allQuery)->count(),
+                ],
+                'all_leads' => [
+                    'unattended'        => $getUnattendedCount($allQuery),
+                    'today_followup'    => $getTodayCount($allQuery),
+                    'overdue_followup'  => $getOverdueCount($allQuery),
+                    'upcoming_followup' => $getUpcomingCount($allQuery),
+                    'total_leads'       => (clone $allQuery)->count(),
+                ],
             ];
         });
 
         $myLeadCounts  = $allCounts['my_leads'];
         $allLeadCounts = $allCounts['all_leads'];
 
-
         /*
         |--------------------------------------------------------------------------
-        | 2. BASE QUERIES FOR LISTING / PAGINATION
+        | 2. LISTING & PAGINATION QUERY
         |--------------------------------------------------------------------------
         */
-        $myLeadsBase = Lead::query()
-            ->where('assigned_to', $user->id)
-            ->whereNotIn('status', ['closed', 'lost', 'won']);
+        $query = ($scope === 'all_leads')
+            ? Lead::query()->whereNotIn('status', ['closed', 'lost', 'won'])
+            : Lead::query()->where('assigned_to', $user->id)->whereNotIn('status', ['closed', 'lost', 'won']);
 
-        $allLeadsBase = Lead::query()
-            ->whereNotIn('status', ['closed', 'lost', 'won']);
-
-        $applySearch = function ($query) use ($search) {
-            if ($search === '') {
-                return $query;
-            }
-            $search = strtolower($search);
-            return $query->where(function ($q) use ($search) {
-                $q->where('name', 'like', '%' . $search . '%')
-                ->orWhere('phone', 'like', '%' . $search . '%')
-                ->orWhere('status', 'like', '%' . $search . '%');
+        if ($search !== '') {
+            $searchTerm = '%' . strtolower($search) . '%';
+            $query->where(function ($q) use ($searchTerm) {
+                $q->where('name', 'like', $searchTerm)
+                ->orWhere('phone', 'like', $searchTerm)
+                ->orWhere('status', 'like', $searchTerm);
             });
-        };
+        }
 
-        $activeBaseQuery = ($scope === 'all_leads')
-            ? clone $allLeadsBase
-            : clone $myLeadsBase;
-
-        $filteredQuery = $applySearch($activeBaseQuery);
-
-        /*
-        |--------------------------------------------------------------------------
-        | 3. FILTER LOGIC
-        |--------------------------------------------------------------------------
-        */
         if ($filter) {
             switch ($filter) {
                 case 'unattended':
-                    $filteredQuery->whereDoesntHave('callDetails');
+                    $query->whereDoesntHave('callDetails');
                     break;
                 case 'today_followup':
-                    $filteredQuery->whereHas('latestCall', function ($q) {
-                        $q->whereNotNull('next_followup_date')
-                        ->whereDate('next_followup_date', today());
+                    $query->whereExists(function ($sub) {
+                        $sub->select(DB::raw(1))
+                            ->from('lead_call_details as lcd')
+                            ->whereColumn('lcd.lead_id', 'leads.id')
+                            ->whereNull('lcd.deleted_at')
+                            ->whereNotNull('lcd.next_followup_date')
+                            ->whereDate('lcd.next_followup_date', today())
+                            ->whereRaw('lcd.id = (select max(id) from lead_call_details where lead_id = leads.id and deleted_at is null)');
                     });
                     break;
                 case 'overdue_followup':
-                    $filteredQuery->whereHas('latestCall', function ($q) {
-                        $q->whereNotNull('next_followup_date')
-                        ->whereDate('next_followup_date', '<', today());
+                    $query->whereExists(function ($sub) {
+                        $sub->select(DB::raw(1))
+                            ->from('lead_call_details as lcd')
+                            ->whereColumn('lcd.lead_id', 'leads.id')
+                            ->whereNull('lcd.deleted_at')
+                            ->whereNotNull('lcd.next_followup_date')
+                            ->whereDate('lcd.next_followup_date', '<', today())
+                            ->whereRaw('lcd.id = (select max(id) from lead_call_details where lead_id = leads.id and deleted_at is null)');
                     });
                     break;
                 case 'upcoming_followup':
-                    $filteredQuery->whereHas('latestCall', function ($q) {
-                        $q->whereNotNull('next_followup_date')
-                        ->whereDate('next_followup_date', '>', today());
+                    $query->whereExists(function ($sub) {
+                        $sub->select(DB::raw(1))
+                            ->from('lead_call_details as lcd')
+                            ->whereColumn('lcd.lead_id', 'leads.id')
+                            ->whereNull('lcd.deleted_at')
+                            ->whereNotNull('lcd.next_followup_date')
+                            ->whereDate('lcd.next_followup_date', '>', today())
+                            ->whereRaw('lcd.id = (select max(id) from lead_call_details where lead_id = leads.id and deleted_at is null)');
                     });
                     break;
                 case 'your_leads':
-                    $filteredQuery = $applySearch(clone $myLeadsBase);
+                    $query->where('assigned_to', $user->id);
                     break;
                 case 'total_leads':
-                    $filteredQuery = $applySearch(clone $allLeadsBase);
                     break;
             }
         }
 
-        /*
-        |--------------------------------------------------------------------------
-        | 4. PAGINATED DATA
-        |--------------------------------------------------------------------------
-        */
-        $leads = null;
-
-        if ($filteredQuery) {
-            $leads = $filteredQuery
-                ->with([
-                    'owner',
-                    'latestCall',
-                    'assignedUser:id,name',
-                    'createdUser:id,name',
-                ])
-                ->latest('id')
-                ->paginate($perPage)
-                ->withQueryString();
-        }
+        // Safe eager loading without calling the broken model relationship
+        $leads = $query
+            ->with([
+                'owner:id,name',
+                'assignedUser:id,name',
+                'createdUser:id,name',
+            ])
+            ->latest('id')
+            ->paginate($perPage)
+            ->withQueryString();
 
         /*
         |--------------------------------------------------------------------------
-        | 5. RESPONSE
+        | 3. RESPONSE
         |--------------------------------------------------------------------------
         */
         return response()->json([
@@ -1125,16 +1318,16 @@ class DashboardController extends Controller
                     'my_leads'  => $myLeadCounts,
                     'all_leads' => $allLeadCounts,
                 ],
-                'filtered_count' => $leads ? $leads->total() : null,
-                'leads'          => $leads ? $leads->items() : [],
-                'pagination'     => $leads ? [
+                'filtered_count' => $leads->total(),
+                'leads'          => $leads->items(),
+                'pagination'     => [
                     'current_page' => $leads->currentPage(),
                     'per_page'     => $leads->perPage(),
                     'total'        => $leads->total(),
                     'last_page'    => $leads->lastPage(),
                     'from'         => $leads->firstItem(),
                     'to'           => $leads->lastItem(),
-                ] : null,
+                ],
             ],
         ], 200);
     }
