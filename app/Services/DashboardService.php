@@ -10,7 +10,6 @@ use App\Models\Shop;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Cache;
 
 /**
  * Every dashboard statistic and listing.
@@ -24,34 +23,8 @@ class DashboardService
     /** Rows shown in each dashboard listing. */
     public const LIST_LIMIT = 5;
 
-    /**
-     * Cache key holding the dashboard cache version.
-     *
-     * Incremented by AppServiceProvider whenever a Lead or CallDetail is
-     * written. Every dashboard key embeds the current value, so bumping this
-     * one integer invalidates all cached figures at once without a taggable
-     * cache store and without Cache::flush(), which would also discard
-     * sessions.
-     */
-    public const CACHE_VERSION_KEY = 'dashboard.cache-version';
-
-    /**
-     * How long dashboard aggregates may be reused.
-     *
-     * Long enough to absorb refresh/back-navigation bursts, short enough that
-     * even a missed invalidation cannot show a noticeably stale figure.
-     */
-    private const CACHE_TTL_SECONDS = 60;
-
     public function __construct(private readonly LeadRepository $leads) {}
 
-    /**
-     * The current cache version, or 1 when nothing has been written yet.
-     */
-    private function cacheVersion(): int
-    {
-        return (int) Cache::get(self::CACHE_VERSION_KEY, 1);
-    }
 
     /**
      * Lead pipeline figures for the viewer.
@@ -311,28 +284,6 @@ class DashboardService
 
 public function getDashboardLeadStatistics(User $user): array
 {
-    /*
-     * Six COUNT queries, three of them conditional subqueries against
-     * lead_call_details. They only change when a lead or a call is written,
-     * so a short cache removes the repeated load when someone refreshes or
-     * navigates back and forth between the dashboard and the leads list.
-     *
-     * Keyed per user because the scoping differs (admin sees all leads, an
-     * employee only their own), and invalidated by LeadService/CallDetail
-     * writes rather than left to expire.
-     */
-    return Cache::remember(
-        'dashboard.lead-stats.v' . $this->cacheVersion() . ".user.{$user->id}",
-        now()->addSeconds(self::CACHE_TTL_SECONDS),
-        fn () => $this->computeDashboardLeadStatistics($user)
-    );
-}
-
-/**
- * @return array<string, int>
- */
-private function computeDashboardLeadStatistics(User $user): array
-{
     $today = today();
     $tomorrow = $today->copy()->addDay();
 
@@ -372,20 +323,6 @@ private function computeDashboardLeadStatistics(User $user): array
     ];
 }
 public function getDashboardAllLeadStatistics(User $user): array
-{
-    // Same shape and same 60-second window as the per-user figures above;
-    // keyed separately because this one is deliberately not scoped by owner.
-    return Cache::remember(
-        'dashboard.all-lead-stats.v' . $this->cacheVersion(),
-        now()->addSeconds(self::CACHE_TTL_SECONDS),
-        fn () => $this->computeDashboardAllLeadStatistics()
-    );
-}
-
-/**
- * @return array<string, int>
- */
-private function computeDashboardAllLeadStatistics(): array
 {
     $today = today();
     $tomorrow = $today->copy()->addDay();
