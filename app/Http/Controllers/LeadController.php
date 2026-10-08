@@ -18,6 +18,7 @@ use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Lead Management.
@@ -191,52 +192,105 @@ class LeadController extends Controller
     //         ...$this->formOptions($request),
     //     ]);
     // }
+// public function getDashboardLeadStatistics(User $user): array
+// {
+//     $isAdmin = (isset($user->role->value) && $user->role->value === 'admin') || $user->isAdmin();
+
+//     $query = Lead::query();
+
+//     if (!$isAdmin) {
+//         $query->where('assigned_to', $user->id);
+//     }
+
+//     return [
+//         'unattended' => (clone $query)
+//             ->whereDoesntHave('callDetails')
+//             ->count(),
+
+//         'today_followup' => (clone $query)
+//             ->whereHas('latestCall', function ($q) {
+//                 $q->whereNotNull('next_followup_date')
+//                   ->whereDate('next_followup_date', today());
+//             })
+//             ->count(),
+
+//         'overdue_followup' => (clone $query)
+//             ->whereHas('latestCall', function ($q) {
+//                 $q->whereNotNull('next_followup_date')
+//                   ->whereDate('next_followup_date', '<', today());
+//             })
+//             ->count(),
+
+//         'upcoming_followup' => (clone $query)
+//             ->whereHas('latestCall', function ($q) {
+//                 $q->whereNotNull('next_followup_date')
+//                   ->whereDate('next_followup_date', '>', today());
+//             })
+//             ->count(),
+
+//         'your_leads' => Lead::query()
+//             ->where('assigned_to', $user->id)
+//             ->where('status', '!=', 'closed')
+//             ->count(),
+
+//         'total_leads' => Lead::query() ->where('status', '!=', 'closed') ->count(),
+//     ];
+// }
+
 public function getDashboardLeadStatistics(User $user): array
 {
     $isAdmin = (isset($user->role->value) && $user->role->value === 'admin') || $user->isAdmin();
+    $today = today()->toDateString();
+    $tomorrow = today()->addDay()->toDateString();
 
-    $query = Lead::query();
+    // Base query with active status filter to prevent scanning closed/lost/won leads
+    $query = Lead::query()->whereNotIn('status', ['closed', 'lost', 'won']);
 
     if (!$isAdmin) {
         $query->where('assigned_to', $user->id);
     }
 
+    $unattended = (clone $query)->whereDoesntHave('callDetails')->count();
+
+    // Optimized helper using direct whereExists instead of heavy relationship overhead
+    $getCountByDate = function ($operator, $date) use ($query) {
+        return (clone $query)->whereExists(function ($sub) use ($operator, $date) {
+            $sub->select(DB::raw(1))
+                ->from('lead_call_details as lcd')
+                ->whereColumn('lcd.lead_id', 'leads.id')
+                ->whereNull('lcd.deleted_at')
+                ->whereNotNull('lcd.next_followup_date')
+                ->whereDate('lcd.next_followup_date', $operator, $date)
+                ->whereRaw('lcd.id = (select max(id) from lead_call_details where lead_id = leads.id and deleted_at is null)');
+        })->count();
+    };
+
+    $getCountBetween = function ($startDate, $endDate) use ($query) {
+        return (clone $query)->whereExists(function ($sub) use ($startDate, $endDate) {
+            $sub->select(DB::raw(1))
+                ->from('lead_call_details as lcd')
+                ->whereColumn('lcd.lead_id', 'leads.id')
+                ->whereNull('lcd.deleted_at')
+                ->whereNotNull('lcd.next_followup_date')
+                ->whereBetween('lcd.next_followup_date', [$startDate, $endDate])
+                ->whereRaw('lcd.id = (select max(id) from lead_call_details where lead_id = leads.id and deleted_at is null)');
+        })->count();
+    };
+
     return [
-        'unattended' => (clone $query)
-            ->whereDoesntHave('callDetails')
-            ->count(),
-
-        'today_followup' => (clone $query)
-            ->whereHas('latestCall', function ($q) {
-                $q->whereNotNull('next_followup_date')
-                  ->whereDate('next_followup_date', today());
-            })
-            ->count(),
-
-        'overdue_followup' => (clone $query)
-            ->whereHas('latestCall', function ($q) {
-                $q->whereNotNull('next_followup_date')
-                  ->whereDate('next_followup_date', '<', today());
-            })
-            ->count(),
-
-        'upcoming_followup' => (clone $query)
-            ->whereHas('latestCall', function ($q) {
-                $q->whereNotNull('next_followup_date')
-                  ->whereDate('next_followup_date', '>', today());
-            })
-            ->count(),
-
-        'your_leads' => Lead::query()
+        'unattended'        => $unattended,
+        'today_followup'    => $getCountBetween($today, $today),
+        'overdue_followup'  => $getCountByDate('<', $today),
+        'upcoming_followup' => $getCountByDate('>=', $tomorrow),
+        'your_leads'        => Lead::query()
             ->where('assigned_to', $user->id)
-            ->where('status', '!=', 'closed')
+            ->whereNotIn('status', ['closed', 'lost', 'won'])
             ->count(),
-
-        'total_leads' => Lead::query() ->where('status', '!=', 'closed') ->count(),
+        'total_leads'       => Lead::query()
+            ->whereNotIn('status', ['closed', 'lost', 'won'])
+            ->count(),
     ];
 }
-
-
 
     // public function indexnew(LeadIndexRequest $request): View
     // {
