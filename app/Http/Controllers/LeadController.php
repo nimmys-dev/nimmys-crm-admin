@@ -1040,11 +1040,24 @@ public function getDashboardLeadStatistics(User $user): array
         // case 'all_overdue_followup':
         //     $query->whereHas('latestCall', fn($q) => $q->whereNotNull('next_followup_date')->whereDate('next_followup_date', '<', today()));
         //     break;
+
         case 'all_overdue_followup':
-            $query->whereHas('latestCall', function ($q) {
-                $q->whereNotNull('next_followup_date')
-                ->where('next_followup_date', '<', today()->toDateString());
-            });
+    $today = today()->toDateString();
+
+    $query->whereIn('leads.id', function ($sub) use ($today) {
+        $sub->select('lcd.lead_id')
+            ->from('lead_call_details as lcd')
+            ->whereNull('lcd.deleted_at')
+            ->whereNotNull('lcd.next_followup_date')
+            ->where('lcd.next_followup_date', '<', $today)
+            ->whereRaw('lcd.id = (
+                SELECT MAX(lcd2.id)
+                FROM lead_call_details lcd2
+                WHERE lcd2.lead_id = lcd.lead_id
+                  AND lcd2.deleted_at IS NULL
+            )');
+    });
+        
             break;
         case 'all_upcoming_followup':
             $query->whereHas('latestCall', fn($q) => $q->whereNotNull('next_followup_date')->whereDate('next_followup_date', '>', today()));
