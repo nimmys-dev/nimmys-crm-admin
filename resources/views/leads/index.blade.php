@@ -12,6 +12,11 @@
             <i class="ti ti-lock"></i>
             Closed Leads
         </a>
+        <!-- <a href="{{ route('leads.backup.export') }}"
+            class="btn btn-success ms-2">
+                <i class="ti ti-database-export"></i>
+                Backup Data
+            </a> -->
     @endif
 @endsection
 
@@ -45,17 +50,29 @@
             />
         </div>
     </div> --}}
-
+    @if (!empty($dashboardFilter))
+        <input
+            type="hidden"
+            name="filter"
+            value="{{ $dashboardFilter }}"
+        >
+    @endif
     <div class="grid grid-cols-12 gap-x-6">
         <div class="col-span-12">
             <x-card title="Leads">
 
-                <x-filter-bar
+                <!-- <x-filter-bar
                     :action="route('leads.index')"
                     :search="$filters['q']"
                     :has-active-filters="$hasActiveFilters"
                     placeholder="Reference, name, company, email or phone"
-                >
+                > -->
+                <x-filter-bar
+                    :action="route('leads.index')"
+                    :search="$filters['q']"
+                    :has-active-filters="$hasActiveFilters"
+                    placeholder="Search by lead name or phone"
+                />
                     {{-- <x-form.select
                         name="status" label="Status" :options="$statusOptions"
                         :selected="$filters['status']" placeholder="Any status"

@@ -1127,6 +1127,7 @@ public function getDashboardLeadStatistics(User $user): array
         'leads' => $leads,
         'hasActiveFilters' => $request->hasActiveFilters(),
         'statistics' => $statistics,
+        'dashboardFilter' => $filter,
         ...$this->formOptions($request),
     ]);
 }
