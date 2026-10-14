@@ -12,11 +12,6 @@
             <i class="ti ti-lock"></i>
             Closed Leads
         </a>
-        <!-- <a href="{{ route('leads.backup.export') }}"
-            class="btn btn-success ms-2">
-                <i class="ti ti-database-export"></i>
-                Backup Data
-            </a> -->
     @endif
 @endsection
 
