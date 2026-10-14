@@ -253,16 +253,39 @@ public function getDashboardLeadStatistics(User $user): array
     $unattended = (clone $query)->whereDoesntHave('callDetails')->count();
 
     // Optimized helper using direct whereExists instead of heavy relationship overhead
+    // $getCountByDate = function ($operator, $date) use ($query) {
+    //     return (clone $query)->whereExists(function ($sub) use ($operator, $date) {
+    //         $sub->select(DB::raw(1))
+    //             ->from('lead_call_details as lcd')
+    //             ->whereColumn('lcd.lead_id', 'leads.id')
+    //             ->whereNull('lcd.deleted_at')
+    //             ->whereNotNull('lcd.next_followup_date')
+    //             ->whereDate('lcd.next_followup_date', $operator, $date)
+    //             ->whereRaw('lcd.id = (select max(id) from lead_call_details where lead_id = leads.id and deleted_at is null)');
+    //     })->count();
+    // };
     $getCountByDate = function ($operator, $date) use ($query) {
-        return (clone $query)->whereExists(function ($sub) use ($operator, $date) {
-            $sub->select(DB::raw(1))
-                ->from('lead_call_details as lcd')
-                ->whereColumn('lcd.lead_id', 'leads.id')
-                ->whereNull('lcd.deleted_at')
-                ->whereNotNull('lcd.next_followup_date')
-                ->whereDate('lcd.next_followup_date', $operator, $date)
-                ->whereRaw('lcd.id = (select max(id) from lead_call_details where lead_id = leads.id and deleted_at is null)');
-        })->count();
+        return (clone $query)
+                ->whereExists(function ($sub) use ($operator, $date) {
+                    $sub->selectRaw('1')
+                        ->from('lead_call_details as lcd')
+                        ->whereColumn('lcd.lead_id', 'leads.id')
+                        ->whereNull('lcd.deleted_at')
+                        ->whereNotNull('lcd.next_followup_date')
+                        ->whereRaw(
+                            "lcd.next_followup_date {$operator} ?",
+                            [$date]
+                        )
+                        ->whereRaw("
+                            lcd.id = (
+                                SELECT MAX(lcd2.id)
+                                FROM lead_call_details AS lcd2
+                                WHERE lcd2.lead_id = leads.id
+                                AND lcd2.deleted_at IS NULL
+                            )
+                        ");
+                })
+                ->count();
     };
 
     $getCountBetween = function ($startDate, $endDate) use ($query) {
@@ -1066,7 +1089,10 @@ public function getDashboardLeadStatistics(User $user): array
               ->orWhere('email', 'like', "%{$search}%")
               ->orWhere('phone', 'like', "%{$search}%")
               ->orWhere('description', 'like', "%{$search}%")
-              ->orWhereHas('assignedUser', fn($uq) => $uq->where('name', 'like', "%{$search}%")->orWhere('email', 'like', "%{$search}%"))
+               ->orWhereHas('assignedUser', function ($uq) use ($search) {
+                    $uq->where('name', 'like', "%{$search}%")
+                        ->orWhere('email', 'like', "%{$search}%");
+                })
               ->orWhereHas('leadQuotation', function ($qq) use ($search) {
                   $qq->where('reference', 'like', "%{$search}%")
                      ->orWhereHas('Quitems', fn($iq) => $iq->where('name', 'like', "%{$search}%"));
