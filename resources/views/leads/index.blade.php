@@ -45,13 +45,6 @@
             />
         </div>
     </div> --}}
-    @if (!empty($dashboardFilter))
-        <input
-            type="hidden"
-            name="filter"
-            value="{{ $dashboardFilter }}"
-        >
-    @endif
     <div class="grid grid-cols-12 gap-x-6">
         <div class="col-span-12">
             <x-card title="Leads">
@@ -66,8 +59,13 @@
                     :action="route('leads.index')"
                     :search="$filters['q']"
                     :has-active-filters="$hasActiveFilters"
-                    placeholder="Search by lead name or phone"
-                />
+                    placeholder="Reference, name, company, email or phone"
+                >
+                    <!-- Ithu vazhi active filter value form submit cheyyumpol lost aavilla -->
+                    @if(request('filter'))
+                        <input type="hidden" name="filter" value="{{ request('filter') }}">
+                    @endif
+                </x-filter-bar>
                     {{-- <x-form.select
                         name="status" label="Status" :options="$statusOptions"
                         :selected="$filters['status']" placeholder="Any status"
