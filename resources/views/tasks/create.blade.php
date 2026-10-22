@@ -1,5 +1,8 @@
 @extends('layouts.app')
-
+@push('styles')
+    <link rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+@endpush
 @section('content')
 
 <div class="container py-4">
@@ -708,7 +711,12 @@
 {{-- ========================================================= --}}
 {{-- SCRIPT --}}
 {{-- ========================================================= --}}
+@push('scripts')
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 
+    {{-- Monthly calendar initialization ഇവിടെ വരണം --}}
+    {{-- മറ്റ് scripts അതിന് ശേഷം വരാം --}}
+@endpush
 <script>
 document.addEventListener('DOMContentLoaded', function () {
 
@@ -1181,476 +1189,127 @@ document.addEventListener('DOMContentLoaded', function () {
 
 // });
 
+
 document.addEventListener('DOMContentLoaded', function () {
+    const calendarElement = document.getElementById('monthly-calendar');
+    const wrapper = document.getElementById('calendar-wrapper');
+    const toggleBtn = document.getElementById('toggle-calendar-btn');
 
-    const startInput =
-        document.getElementById('monthly_start_date');
+    const startInput = document.getElementById('monthly_start_date');
+    const endInput = document.getElementById('monthly_end_date');
+    const selectedText = document.getElementById('selected-monthly-dates');
 
-    const endInput =
-        document.getElementById('monthly_end_date');
+    if (!calendarElement || !wrapper || !toggleBtn) {
+        console.error('Monthly calendar HTML elements not found.');
+        return;
+    }
 
-    const selectedText =
-        document.getElementById('selected-monthly-dates');
+    if (typeof flatpickr === 'undefined') {
+        console.error('Flatpickr library is not loaded.');
+        return;
+    }
 
-    const calendarWrapper =
-        document.getElementById('calendar-wrapper');
+    let confirmedStart = startInput.value || '';
+    let confirmedEnd = endInput.value || '';
 
-    const toggleBtn =
-        document.getElementById('toggle-calendar-btn');
+    function updateSelectedText() {
+        selectedText.textContent = confirmedStart && confirmedEnd
+            ? confirmedStart + ' - ' + confirmedEnd
+            : 'No dates selected';
+    }
 
-
-    /*
-    |--------------------------------------------------------------------------
-    | Confirmed Dates
-    |--------------------------------------------------------------------------
-    */
-
-    let confirmedStart =
-        startInput.value || '';
-
-    let confirmedEnd =
-        endInput.value || '';
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | Flatpickr
-    |--------------------------------------------------------------------------
-    */
-
-    const fp = flatpickr('#monthly-calendar', {
-
+    const calendar = flatpickr(calendarElement, {
         inline: true,
-
         mode: 'range',
-
         dateFormat: 'Y-m-d',
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | Existing Dates - Edit Page
-        |--------------------------------------------------------------------------
-        */
-
-        defaultDate:
-            confirmedStart && confirmedEnd
+        defaultDate: confirmedStart
+            ? (confirmedEnd
                 ? [confirmedStart, confirmedEnd]
-                : (
-                    confirmedStart
-                        ? [confirmedStart]
-                        : []
-                ),
+                : [confirmedStart])
+            : [],
 
-
-        /*
-        |--------------------------------------------------------------------------
-        | Calendar Open
-        |--------------------------------------------------------------------------
-        */
-
-        onOpen: function () {
-
-            // Save current confirmed values
-            confirmedStart =
-                startInput.value || '';
-
-            confirmedEnd =
-                endInput.value || '';
-
-        },
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | Date Selection
-        |--------------------------------------------------------------------------
-        */
-
-        onChange: function (
-            selectedDates,
-            dateStr,
-            instance
-        ) {
-
-            /*
-            |--------------------------------------------------------------
-            | First Date
-            |--------------------------------------------------------------
-            */
-
-            if (selectedDates.length === 1) {
-
-                const start =
-                    instance.formatDate(
-                        selectedDates[0],
-                        'Y-m-d'
-                    );
-
-                startInput.value =
-                    start;
-
-                endInput.value =
-                    '';
-
-                selectedText.textContent =
-                    start;
+        onChange: function (dates, dateStr, instance) {
+            if (dates.length === 1) {
+                startInput.value = instance.formatDate(dates[0], 'Y-m-d');
+                endInput.value = '';
+            } else if (dates.length === 2) {
+                startInput.value = instance.formatDate(dates[0], 'Y-m-d');
+                endInput.value = instance.formatDate(dates[1], 'Y-m-d');
             }
-
-
-            /*
-            |--------------------------------------------------------------
-            | Start + End Date
-            |--------------------------------------------------------------
-            */
-
-            if (selectedDates.length === 2) {
-
-                const start =
-                    instance.formatDate(
-                        selectedDates[0],
-                        'Y-m-d'
-                    );
-
-                const end =
-                    instance.formatDate(
-                        selectedDates[1],
-                        'Y-m-d'
-                    );
-
-                startInput.value =
-                    start;
-
-                endInput.value =
-                    end;
-
-                selectedText.textContent =
-                    start + ' - ' + end;
-            }
-
-        },
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | Calendar Ready
-        |--------------------------------------------------------------------------
-        */
-
-        onReady: function (
-            selectedDates,
-            dateStr,
-            instance
-        ) {
-
-            /*
-            |--------------------------------------------------------------
-            | Button Container
-            |--------------------------------------------------------------
-            */
-
-            const buttonContainer =
-                document.createElement('div');
-
-            buttonContainer.className =
-                'd-flex gap-2 mt-2';
-
-
-            /*
-            |--------------------------------------------------------------
-            | Cancel Button
-            |--------------------------------------------------------------
-            */
-
-            const cancelBtn =
-                document.createElement('button');
-
-            cancelBtn.type =
-                'button';
-
-            cancelBtn.className =
-                'btn btn-sm w-50';
-
-            cancelBtn.style.backgroundColor =
-                '#6c757d';
-
-            cancelBtn.style.borderColor =
-                '#6c757d';
-
-            cancelBtn.style.color =
-                '#fff';
-
-            cancelBtn.innerHTML =
-                '<i class="ti ti-x"></i> Cancel';
-
-
-            /*
-            |--------------------------------------------------------------
-            | OK Button
-            |--------------------------------------------------------------
-            */
-
-            const okBtn =
-                document.createElement('button');
-
-            okBtn.type =
-                'button';
-
-            okBtn.className =
-                'btn btn-sm w-50';
-
-            okBtn.style.backgroundColor =
-                '#1de9b6';
-
-            okBtn.style.borderColor =
-                '#1de9b6';
-
-            okBtn.style.color =
-                '#fff';
-
-            okBtn.innerHTML =
-                '<i class="ti ti-check"></i> OK';
-
-
-            /*
-            |--------------------------------------------------------------------------
-            | OK Button Click
-            |--------------------------------------------------------------------------
-            */
-
-            okBtn.addEventListener(
-                'click',
-                function () {
-
-                    /*
-                    |----------------------------------------------------------
-                    | Validate Dates
-                    |----------------------------------------------------------
-                    */
-
-                    if (
-                        !startInput.value ||
-                        !endInput.value
-                    ) {
-
-                        alert(
-                            'Please select start date and end date.'
-                        );
-
-                        return;
-                    }
-
-
-                    /*
-                    |----------------------------------------------------------
-                    | Save Confirmed Dates
-                    |----------------------------------------------------------
-                    */
-
-                    confirmedStart =
-                        startInput.value;
-
-                    confirmedEnd =
-                        endInput.value;
-
-
-                    /*
-                    |----------------------------------------------------------
-                    | Hide Calendar
-                    |----------------------------------------------------------
-                    */
-
-                    calendarWrapper.style.display =
-                        'none';
-
-                }
-            );
-
-
-            /*
-            |--------------------------------------------------------------------------
-            | Cancel Button Click
-            |--------------------------------------------------------------------------
-            */
-
-            cancelBtn.addEventListener(
-                'click',
-                function () {
-
-                    /*
-                    |----------------------------------------------------------
-                    | Restore Previous Dates
-                    |----------------------------------------------------------
-                    */
-
-                    startInput.value =
-                        confirmedStart;
-
-                    endInput.value =
-                        confirmedEnd;
-
-
-                    /*
-                    |----------------------------------------------------------
-                    | Restore Calendar Selection
-                    |----------------------------------------------------------
-                    */
-
-                    if (
-                        confirmedStart &&
-                        confirmedEnd
-                    ) {
-
-                        selectedText.textContent =
-                            confirmedStart +
-                            ' - ' +
-                            confirmedEnd;
-
-                        fp.setDate(
-                            [
-                                confirmedStart,
-                                confirmedEnd
-                            ],
-                            false
-                        );
-
-                    } else {
-
-                        startInput.value =
-                            '';
-
-                        endInput.value =
-                            '';
-
-                        selectedText.textContent =
-                            'No dates selected';
-
-                        fp.clear();
-                    }
-
-
-                    /*
-                    |----------------------------------------------------------
-                    | Hide Calendar
-                    |----------------------------------------------------------
-                    */
-
-                    calendarWrapper.style.display =
-                        'none';
-
-                }
-            );
-
-
-            /*
-            |--------------------------------------------------------------------------
-            | Add Buttons
-            |--------------------------------------------------------------------------
-            */
-
-            buttonContainer.appendChild(
-                cancelBtn
-            );
-
-            buttonContainer.appendChild(
-                okBtn
-            );
-
-            instance.calendarContainer.appendChild(
-                buttonContainer
-            );
-
         }
-
     });
 
+    toggleBtn.addEventListener('click', function () {
+        const isHidden = getComputedStyle(wrapper).display === 'none';
 
-    /*
-    |--------------------------------------------------------------------------
-    | Pick Date Range Button
-    |--------------------------------------------------------------------------
-    */
+        if (isHidden) {
+            // Save the last confirmed selection before editing.
+            confirmedStart = startInput.value || '';
+            confirmedEnd = endInput.value || '';
 
-    toggleBtn.addEventListener(
-        'click',
-        function () {
+            calendar.setDate(
+                confirmedStart
+                    ? (confirmedEnd
+                        ? [confirmedStart, confirmedEnd]
+                        : [confirmedStart])
+                    : [],
+                false
+            );
 
-            if (
-                calendarWrapper.style.display ===
-                'none'
-            ) {
-
-                /*
-                |--------------------------------------------------------------
-                | Open Calendar
-                |--------------------------------------------------------------
-                */
-
-                calendarWrapper.style.display =
-                    'block';
-
-
-                /*
-                |--------------------------------------------------------------
-                | Save Current Values
-                |--------------------------------------------------------------
-                */
-
-                confirmedStart =
-                    startInput.value || '';
-
-                confirmedEnd =
-                    endInput.value || '';
-
-
-                /*
-                |--------------------------------------------------------------
-                | Set Existing Selection
-                |--------------------------------------------------------------
-                */
-
-                if (
-                    confirmedStart &&
-                    confirmedEnd
-                ) {
-
-                    fp.setDate(
-                        [
-                            confirmedStart,
-                            confirmedEnd
-                        ],
-                        false
-                    );
-
-                } else if (confirmedStart) {
-
-                    fp.setDate(
-                        [confirmedStart],
-                        false
-                    );
-
-                } else {
-
-                    fp.clear();
-                }
-
-            } else {
-
-                /*
-                |--------------------------------------------------------------
-                | Close Calendar
-                |--------------------------------------------------------------
-                */
-
-                calendarWrapper.style.display =
-                    'none';
-
-            }
-
+            wrapper.style.display = 'block';
+        } else {
+            wrapper.style.display = 'none';
         }
-    );
+    });
 
+    // Add OK and Cancel buttons below the calendar.
+    const buttonContainer = document.createElement('div');
+    buttonContainer.className = 'd-flex gap-2 mt-2';
+
+    const cancelBtn = document.createElement('button');
+    cancelBtn.type = 'button';
+    cancelBtn.className = 'btn btn-secondary btn-sm';
+    cancelBtn.textContent = 'Cancel';
+
+    const okBtn = document.createElement('button');
+    okBtn.type = 'button';
+    okBtn.className = 'btn btn-success btn-sm';
+    okBtn.textContent = 'OK';
+
+    okBtn.addEventListener('click', function () {
+        if (!startInput.value || !endInput.value) {
+            alert('Please select start date and end date.');
+            return;
+        }
+
+        confirmedStart = startInput.value;
+        confirmedEnd = endInput.value;
+
+        updateSelectedText();
+        wrapper.style.display = 'none';
+    });
+
+    cancelBtn.addEventListener('click', function () {
+        startInput.value = confirmedStart;
+        endInput.value = confirmedEnd;
+
+        calendar.setDate(
+            confirmedStart && confirmedEnd
+                ? [confirmedStart, confirmedEnd]
+                : (confirmedStart ? [confirmedStart] : []),
+            false
+        );
+
+        updateSelectedText();
+        wrapper.style.display = 'none';
+    });
+
+    buttonContainer.append(cancelBtn, okBtn);
+    calendar.calendarContainer.appendChild(buttonContainer);
+
+    updateSelectedText();
 });
+
 </script>
 <script>
     document.addEventListener('DOMContentLoaded', function () {
@@ -1855,10 +1514,6 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 </script>
 
-@push('styles')
-<link rel="stylesheet"
-      href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
-@endpush
 
 @endpush
 
