@@ -278,7 +278,7 @@
             <div class="dash-card-arrow"><i class="ti ti-arrow-right"></i></div>
         </a>
 
-        <a href="{{ route('tasks.sending-approval') }}" class="dash-card theme-sending">
+        <a href="{{ route('tasks.sending-approval', ['filter' => 'my_task']) }}" class="dash-card theme-sending">
             <div class="dash-card-icon"><i class="ti ti-send"></i></div>
             <h3 class="dash-card-value">{{ $sendingApproval }}</h3>
             <span class="dash-card-label">Sending Approval</span>

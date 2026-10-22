@@ -1744,42 +1744,81 @@ public function update(
         return back()->with('success', 'Task approved successfully.');
     }
 
+    // public function sendingApproval(): View
+    // {
+    //     $user = auth()->user();
+
+    //     $tasks = Task::with([
+    //         'assignedUser:id,name,email',
+    //         'approvedBy:id,name,email',
+    //         'quarters:id,task_id,quarter,start_date,end_date',
+    //     ])
+    //         // Current user completed tasks
+    //         // ->where('assigned_to', $user->id)
+
+    //         // Completed = waiting for approver
+    //         // ->whereIn('status', ['completed'])
+    //         // Admin + Manager → all sending approval tasks
+    //         // Employee → only their sending approval tasks
+    //         ->when($user->role->value === 'employee', function ($query) use ($user) {
+    //             $query->where('assigned_to', $user->id);
+    //         })
+
+    //         // Completed = waiting for approver
+    //         ->where('status', 'completed')
+
+    //         ->latest('id')
+    //         ->paginate(10)
+    //         ->withQueryString();
+
+    //     return view('tasks.sending-approval', [
+    //         'pageTitle' => 'Sending Approval',
+    //         'breadcrumbs' => [
+    //             ['label' => 'Tasks'],
+    //             ['label' => 'Sending Approval'],
+    //         ],
+    //         'tasks' => $tasks,
+    //     ]);
+    // }
+
     public function sendingApproval(): View
-    {
-        $user = auth()->user();
+{
+    $user = auth()->user();
 
-        $tasks = Task::with([
-            'assignedUser:id,name,email',
-            'approvedBy:id,name,email',
-            'quarters:id,task_id,quarter,start_date,end_date',
-        ])
-            // Current user completed tasks
-            // ->where('assigned_to', $user->id)
+    $filter = request('filter', 'my_task');
 
-            // Completed = waiting for approver
-            // ->whereIn('status', ['completed'])
-            // Admin + Manager → all sending approval tasks
-            // Employee → only their sending approval tasks
-            ->when($user->role->value === 'employee', function ($query) use ($user) {
-                $query->where('assigned_to', $user->id);
-            })
+    $query = Task::with([
+        'assignedUser:id,name,email',
+        'approvedBy:id,name,email',
+        'quarters:id,task_id,quarter,start_date,end_date',
+    ])->where('status', 'completed');
 
-            // Completed = waiting for approver
-            ->where('status', 'completed')
-
-            ->latest('id')
-            ->paginate(10)
-            ->withQueryString();
-
-        return view('tasks.sending-approval', [
-            'pageTitle' => 'Sending Approval',
-            'breadcrumbs' => [
-                ['label' => 'Tasks'],
-                ['label' => 'Sending Approval'],
-            ],
-            'tasks' => $tasks,
-        ]);
+    // Employee can only see their own tasks.
+    if ($user->role->value === 'employee') {
+        $filter = 'my_task';
     }
+
+    // My Tasks filter
+    if ($filter === 'my_task') {
+        $query->where('assigned_to', $user->id);
+    }
+
+    // All Tasks: Admin/Manager can see everyone's tasks.
+    $tasks = $query
+        ->latest('id')
+        ->paginate(10)
+        ->withQueryString();
+
+    return view('tasks.sending-approval', [
+        'pageTitle' => 'Sending Approval',
+        'breadcrumbs' => [
+            ['label' => 'Tasks'],
+            ['label' => 'Sending Approval'],
+        ],
+        'tasks' => $tasks,
+        'filter' => $filter,
+    ]);
+}
 
     public function approvedIndex(Request $request): View
     {
