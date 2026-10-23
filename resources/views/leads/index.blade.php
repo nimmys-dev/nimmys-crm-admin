@@ -12,6 +12,11 @@
             <i class="ti ti-lock"></i>
             Closed Leads
         </a>
+        <a href="{{ route('leads.backup.export') }}"
+            class="btn btn-success ms-2">
+            <i class="ti ti-database-export"></i>
+            Backup Data
+        </a> 
     @endif
 @endsection
 
@@ -61,11 +66,10 @@
                     :has-active-filters="$hasActiveFilters"
                     placeholder="Reference, name, company, email or phone"
                 >
-                    <!-- Ithu vazhi active filter value form submit cheyyumpol lost aavilla -->
                     @if(request('filter'))
                         <input type="hidden" name="filter" value="{{ request('filter') }}">
                     @endif
-                </x-filter-bar>
+                <!-- </x-filter-bar> --> 
                     {{-- <x-form.select
                         name="status" label="Status" :options="$statusOptions"
                         :selected="$filters['status']" placeholder="Any status"

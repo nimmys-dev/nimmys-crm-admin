@@ -19,6 +19,8 @@ use App\Http\Controllers\TaskController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\FirebaseTokenController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\LeadBackupController;
+
 /*
 |--------------------------------------------------------------------------
 | Guest
@@ -180,6 +182,12 @@ Route::middleware(['auth', 'web.access'])->group(function () {
 
         Route::resource('leads', LeadController::class);
         Route::get('leads-closed', [LeadController::class, 'closed'])->name('leads.closed');
+    
+
+        Route::get('/leads/backup/export', [
+            LeadBackupController::class,
+            'export',
+        ])->middleware('auth')->name('leads.backup.export');
     });
 
     Route::get('tasks', [TaskController::class, 'index'])
