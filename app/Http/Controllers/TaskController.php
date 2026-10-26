@@ -866,35 +866,25 @@ public function store(TaskRequest $request): RedirectResponse
                     ]);
                 }
 
-                // if ($shouldNotify && !empty($assignedUser->fcm_token)) {
-                //     try {
-                //         $firebaseService = app(FirebaseNotificationService::class);
+                if ($task->assigned_to) {
+    $assignedUser = User::find($task->assigned_to);
 
-                //         $firebaseService->sendToUser(
-                //             $assignedUser,
-                //             'Task Created',
-                //             'A new task has been created and assigned to you: ' . $task->title,
-                //             [
-                //                 'type' => 'task',
-                //                 'task_id' => (string) $task->id,
-                //                 'title' => (string) $task->title,
-                //                 'role' => $userRole,
-                //             ]
-                //         );
-
-                //         \Log::info('Task created notification sent successfully', [
-                //             'task_id' => $task->id,
-                //             'assigned_to' => $assignedUser->id,
-                //             'role' => $userRole,
-                //         ]);
-
-                //     } catch (\Throwable $e) {
-                //         \Log::error('Task created notification exception error', [
-                //             'task_id' => $task->id,
-                //             'error' => $e->getMessage(),
-                //         ]);
-                //     }
-                // }
+    if ($assignedUser) {
+        app(
+            \App\Services\FirebaseNotificationService::class
+        )->sendToUser(
+            $assignedUser,
+            'New Task Assigned',
+            'A new task has been assigned to you: '
+                . $task->title,
+            [
+                'type' => 'task',
+                'task_id' => (string) $task->id,
+                'title' => (string) $task->title,
+            ]
+        );
+    }
+}
             }
         }
         return $task;

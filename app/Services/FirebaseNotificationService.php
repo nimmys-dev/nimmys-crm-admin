@@ -2,181 +2,200 @@
 
 namespace App\Services;
 
-// use App\Models\User;
-// use Illuminate\Support\Facades\Http;
-// use Illuminate\Support\Facades\Log;
-
+use App\Models\User;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 class FirebaseNotificationService
 {
-    // protected string $projectId = '';
-    // protected string $credentialsPath = '';
+    private function accessToken(): string
+    {
+        $credentialsPath = base_path(
+            env(
+                'FIREBASE_CREDENTIALS',
+                'storage/app/firebase/firebase-credentials.json'
+            )
+        );
 
-    // public function __construct()
-    // {
-    //     $credentials = trim((string) config('services.firebase.credentials', ''));
+        if (!file_exists($credentialsPath)) {
+            throw new \RuntimeException(
+                'Firebase credentials file not found.'
+            );
+        }
 
-    //     if ($credentials === '') {
-    //         return;
-    //     }
+        $credentials = json_decode(
+            file_get_contents($credentialsPath),
+            true
+        );
 
-    //     if (!str_starts_with($credentials, DIRECTORY_SEPARATOR)
-    //         && !preg_match('/^[A-Za-z]:[\\\\\/]/', $credentials)) {
-    //         $credentials = base_path($credentials);
-    //     }
+        if (
+            empty($credentials['client_email']) ||
+            empty($credentials['private_key']) ||
+            empty($credentials['token_uri'])
+        ) {
+            throw new \RuntimeException(
+                'Invalid Firebase service account JSON.'
+            );
+        }
 
-    //     $this->credentialsPath = $credentials;
-    // }
+        $cacheKey = 'firebase_access_token_' .
+            md5($credentials['client_email']);
 
-    
-    // private function getAccessToken(): ?string
-    // {
-    //     $credentialsPath = $this->credentialsPath;
+        return Cache::remember(
+            $cacheKey,
+            now()->addMinutes(50),
+            function () use ($credentials) {
+                $now = time();
 
-    //     if ($credentialsPath === '') {
-    //         Log::error('FCM credentials are not configured. Set FIREBASE_CREDENTIALS to the service-account JSON path.');
-    //         return null;
-    //     }
+                $base64url = static function (string $value): string {
+                    return rtrim(
+                        strtr(base64_encode($value), '+/', '-_'),
+                        '='
+                    );
+                };
 
-    //     if (is_dir($credentialsPath)) {
-    //         Log::error('FCM Error: Given path is a directory, not a file: ' . $credentialsPath);
-    //         return null;
-    //     }
+                $header = $base64url(json_encode([
+                    'alg' => 'RS256',
+                    'typ' => 'JWT',
+                ]));
 
-    //     if (!file_exists($credentialsPath)) {
-    //         Log::error('FCM Error: Credentials file missing at: ' . $credentialsPath);
-    //         return null;
-    //     }
+                $claim = $base64url(json_encode([
+                    'iss' => $credentials['client_email'],
+                    'scope' =>
+                        'https://www.googleapis.com/auth/firebase.messaging',
+                    'aud' => $credentials['token_uri'],
+                    'iat' => $now,
+                    'exp' => $now + 3600,
+                ]));
 
-    //     $credentialsJson = file_get_contents($credentialsPath);
-    //     $jsonKey = is_string($credentialsJson) ? json_decode($credentialsJson, true) : null;
-        
-    //     if (!is_array($jsonKey) || !isset($jsonKey['project_id'], $jsonKey['client_email'], $jsonKey['private_key'])) {
-    //         Log::error('FCM Error: Invalid JSON structure in credentials file.');
-    //         return null;
-    //     }
+                $unsigned = $header . '.' . $claim;
 
-    //     $this->projectId = $jsonKey['project_id'] ?? '';
+                $privateKey = openssl_pkey_get_private(
+                    $credentials['private_key']
+                );
 
-    //     // JWT Header
-    //     $header = $this->base64UrlEncode(json_encode(['alg' => 'RS256', 'typ' => 'JWT'], JSON_THROW_ON_ERROR));
+                if (!$privateKey) {
+                    throw new \RuntimeException(
+                        'Unable to load Firebase private key.'
+                    );
+                }
 
-    //     // JWT Claim Set
-    //     $now = time();
-    //     $claimSet = $this->base64UrlEncode(json_encode([
-    //         'iss' => $jsonKey['client_email'],
-    //         'scope' => 'https://www.googleapis.com/auth/firebase.messaging',
-    //         'aud' => 'https://oauth2.googleapis.com/token',
-    //         'exp' => $now + 3600,
-    //         'iat' => $now,
-    //     ], JSON_THROW_ON_ERROR));
+                if (!openssl_sign(
+                    $unsigned,
+                    $signature,
+                    $privateKey,
+                    OPENSSL_ALGO_SHA256
+                )) {
+                    throw new \RuntimeException(
+                        'Firebase JWT signing failed.'
+                    );
+                }
 
-    //     // Sign JWT with Private Key
-    //     $signature = '';
-    //     if (!openssl_sign(
-    //         $header . '.' . $claimSet,
-    //         $signature,
-    //         $jsonKey['private_key'],
-    //         'SHA256'
-    //     )) {
-    //         Log::error('FCM Error: Unable to sign the OAuth JWT with the service-account private key.');
-    //         return null;
-    //     }
+                $jwt = $unsigned . '.' . $base64url($signature);
 
-    //     $jwt = $header . '.' . $claimSet . '.' . $this->base64UrlEncode($signature);
+                $response = Http::asForm()
+                    ->timeout(20)
+                    ->post($credentials['token_uri'], [
+                        'grant_type' =>
+                            'urn:ietf:params:oauth:grant-type:jwt-bearer',
+                        'assertion' => $jwt,
+                    ]);
 
-    //     // Fetch Access Token from Google
-    //     try {
-    //         $response = Http::asForm()
-    //             ->connectTimeout(10)
-    //             ->timeout(30)
-    //             ->retry(2, 250)
-    //             ->post('https://oauth2.googleapis.com/token', [
-    //                 'grant_type' => 'urn:ietf:params:oauth:grant-type:jwt-bearer',
-    //                 'assertion' => $jwt,
-    //             ]);
-    //     } catch (\Throwable $exception) {
-    //         Log::error('FCM OAuth request failed.', ['error' => $exception->getMessage()]);
-    //         return null;
-    //     }
+                if (!$response->successful()) {
+                    throw new \RuntimeException(
+                        'Firebase OAuth failed: ' .
+                        $response->body()
+                    );
+                }
 
-    //     if (!$response->successful() || blank($response->json('access_token'))) {
-    //         Log::error('FCM OAuth request was rejected.', [
-    //             'status' => $response->status(),
-    //             'response' => $response->json(),
-    //         ]);
-    //         return null;
-    //     }
+                $token = $response->json('access_token');
 
-    //     return $response->json()['access_token'] ?? null;
-    // }
+                if (!$token) {
+                    throw new \RuntimeException(
+                        'Firebase OAuth returned no access token.'
+                    );
+                }
 
-    // private function base64UrlEncode(string $value): string
-    // {
-    //     return rtrim(strtr(base64_encode($value), '+/', '-_'), '=');
-    // }
+                return $token;
+            }
+        );
+    }
 
-    /**
-     * Send notification to a single user
-     */
-    // public function sendToUser(
-    //     User $user,
-    //     string $title,
-    //     string $body,
-    //     array $data = []
-    // ): bool {
-    //     try {
-    //         $token = $user->fcm_token;
+    public function sendToUser(
+        User $user,
+        string $title,
+        string $body,
+        array $data = []
+    ): bool {
+        $fcmToken = trim((string) $user->fcm_token);
 
-    //         if (empty($token)) {
-    //             Log::warning('FCM token not found', ['user_id' => $user->id]);
-    //             return false;
-    //         }
+        if ($fcmToken === '') {
+            Log::warning('FCM token missing', [
+                'user_id' => $user->id,
+            ]);
 
-    //         $accessToken = $this->getAccessToken();
+            return false;
+        }
 
-    //         if (!$accessToken) {
-    //             Log::error('Failed to generate FCM access token');
-    //             return false;
-    //         }
+        try {
+            $projectId = env('FIREBASE_PROJECT_ID');
 
-    //         // Firebase HTTP v1 API Request
-    //         $url = "https://fcm.googleapis.com/v1/projects/{$this->projectId}/messages:send";
+            if (!$projectId) {
+                throw new \RuntimeException(
+                    'FIREBASE_PROJECT_ID is missing.'
+                );
+            }
 
-    //         $response = Http::withToken($accessToken)
-    //             ->connectTimeout(10)
-    //             ->timeout(30)
-    //             ->retry(2, 250)
-    //             ->post($url, [
-    //                 'message' => [
-    //                     'token' => $token,
-    //                     'notification' => [
-    //                         'title' => $title,
-    //                         'body' => $body,
-    //                     ],
-    //                     'data' => array_map('strval', $data), 
-    //                 ],
-    //             ]);
+            $response = Http::withToken($this->accessToken())
+                ->acceptJson()
+                ->timeout(30)
+                ->post(
+                    "https://fcm.googleapis.com/v1/projects/{$projectId}/messages:send",
+                    [
+                        'message' => [
+                            'token' => $fcmToken,
+                            'notification' => [
+                                'title' => $title,
+                                'body' => $body,
+                            ],
+                            'data' => array_map(
+                                static fn ($value) =>
+                                    (string) $value,
+                                $data
+                            ),
+                            'android' => [
+                                'priority' => 'HIGH',
+                                'notification' => [
+                                    'channel_id' => 'task_notifications',
+                                ],
+                            ],
+                        ],
+                    ]
+                );
 
-    //         if ($response->successful()) {
-    //             Log::info('FCM notification sent successfully', ['user_id' => $user->id]);
-    //             return true;
-    //         }
+            if (!$response->successful()) {
+                Log::error('FCM send failed', [
+                    'user_id' => $user->id,
+                    'http_status' => $response->status(),
+                    'response' => $response->body(),
+                ]);
 
-    //         Log::error('FCM notification failed', [
-    //             'user_id' => $user->id,
-    //             'status' => $response->status(),
-    //             'response' => $response->json(),
-    //         ]);
+                return false;
+            }
 
-    //         return false;
+            Log::info('FCM notification accepted', [
+                'user_id' => $user->id,
+                'response' => $response->json(),
+            ]);
 
-    //     } catch (\Throwable $e) {
-    //         Log::error('FCM notification Exception', [
-    //             'user_id' => $user->id,
-    //             'error' => $e->getMessage(),
-    //         ]);
+            return true;
+        } catch (\Throwable $e) {
+            Log::error('FCM notification exception', [
+                'user_id' => $user->id,
+                'error' => $e->getMessage(),
+            ]);
 
-    //         return false;
-    //     }
-    // }
+            return false;
+        }
+    }
 }
