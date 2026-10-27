@@ -6,7 +6,7 @@
     @can('create', App\Models\Lead::class)
         <x-button :href="route('leads.create')" icon="ti ti-plus">Add Lead</x-button>
     @endcan
-      @if(auth()->user()->role->value === 'admin')
+      @if(auth()->user()->role->value !== 'employee')
         <a href="{{ route('leads.closed') }}"
            class="btn btn-secondary ms-2">
             <i class="ti ti-lock"></i>
