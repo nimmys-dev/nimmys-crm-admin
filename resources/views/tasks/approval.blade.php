@@ -224,7 +224,7 @@
                                     {{ $loop->iteration }}
                                 </td>
 
-                                <td>
+                                <td  class="remarks-cell">
                                     {{ $task->title }}
                                 </td>
 
