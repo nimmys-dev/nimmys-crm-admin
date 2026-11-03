@@ -277,14 +277,17 @@
 
 
                             {{-- Remarks --}}
-                            <td>
+                            <!-- <td>
                                 {{ html_entity_decode(strip_tags($lead->description ?? '—')) }}
+                            </td> -->
+                            <td>
+                                {{ $lead->latestCall?->remarks ?? '-' }}
                             </td>
 
 
                             {{-- Created --}}
                             <td>
-                                {{ $lead->created_at?->format('d M Y') }}
+                                {{ $lead->created_at?->format('d M Y, h:i A') }}
                             </td>
 
 
