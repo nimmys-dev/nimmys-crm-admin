@@ -1566,53 +1566,116 @@ public function getDashboardLeadStatistics(User $user): array
 //     ]);
 // }
 
-    public function closed(Request $request): View
-    {
-        $search = trim($request->input('search', ''));
+    // public function closed(Request $request): View
+    // {
+    //     $search = trim($request->input('search', ''));
 
-        $leads = Lead::query()
-            ->with([
-                'owner',
-                'latestCall',
-            ])
-            ->whereIn('status', [
-                'closed',
-                'lost',
-                'won',
-            ])
-            ->when($search !== '', function ($query) use ($search) {
+    //     $leads = Lead::query()
+    //         ->with([
+    //             'owner',
+    //             'latestCall',
+    //         ])
+    //         ->whereIn('status', [
+    //             'closed',
+    //             'lost',
+    //             'won',
+    //         ])
+    //         ->when($search !== '', function ($query) use ($search) {
 
-                $query->where(function ($q) use ($search) {
+    //             $query->where(function ($q) use ($search) {
 
-                    // Lead name
-                    $q->where('name', 'like', '%' . $search . '%')
+    //                 // Lead name
+    //                 $q->where('name', 'like', '%' . $search . '%')
 
-                        // Assigned user name
-                        ->orWhereHas('owner', function ($ownerQuery) use ($search) {
-                            $ownerQuery->where(
-                                'name',
-                                'like',
-                                '%' . $search . '%'
-                            );
-                        });
-                });
-            })
-            ->latest()
-            ->paginate(10)
-            ->withQueryString();
+    //                     // Assigned user name
+    //                     ->orWhereHas('owner', function ($ownerQuery) use ($search) {
+    //                         $ownerQuery->where(
+    //                             'name',
+    //                             'like',
+    //                             '%' . $search . '%'
+    //                         );
+    //                     });
+    //             });
+    //         })
+    //         ->latest()
+    //         ->paginate(10)
+    //         ->withQueryString();
 
-        return view('leads.closed', [
-            'pageTitle' => 'Closed / Lost / Won Leads',
+    //     return view('leads.closed', [
+    //         'pageTitle' => 'Closed / Lost / Won Leads',
 
-            'breadcrumbs' => [
-                ['label' => 'Leads'],
-                ['label' => 'Closed / Lost / Won Leads'],
-            ],
+    //         'breadcrumbs' => [
+    //             ['label' => 'Leads'],
+    //             ['label' => 'Closed / Lost / Won Leads'],
+    //         ],
 
-            'leads' => $leads,
+    //         'leads' => $leads,
 
-            'search' => $search,
-        ]);
-    }
+    //         'search' => $search,
+    //     ]);
+    // }
+
+    
+public function closed(Request $request): View
+{
+    $search = trim($request->input('search', ''));
+    $reason = $request->input('reason', '');
+
+    $leads = Lead::query()
+        ->with([
+            'owner',
+            'latestCall',
+        ])
+        ->whereIn('status', [
+            'closed',
+            'lost',
+            'won',
+        ])
+
+        // Search Lead Name or Assigned User
+        ->when($search !== '', function ($query) use ($search) {
+
+            $query->where(function ($q) use ($search) {
+
+                $q->where('name', 'like', '%' . $search . '%')
+
+                    ->orWhereHas('owner', function ($ownerQuery) use ($search) {
+                        $ownerQuery->where(
+                            'name',
+                            'like',
+                            '%' . $search . '%'
+                        );
+                    });
+            });
+        })
+
+        // Filter by Closing Reason
+        ->when($reason !== '', function ($query) use ($reason) {
+
+            $query->whereHas('latestCall', function ($callQuery) use ($reason) {
+
+                $callQuery->where('reason', $reason);
+
+            });
+        })
+
+        ->latest()
+        ->paginate(10)
+        ->withQueryString();
+
+    return view('leads.closed', [
+        'pageTitle' => 'Closed / Lost / Won Leads',
+
+        'breadcrumbs' => [
+            ['label' => 'Leads'],
+            ['label' => 'Closed / Lost / Won Leads'],
+        ],
+
+        'leads' => $leads,
+        'search' => $search,
+        'reason' => $reason,
+    ]);
+}
+
 
 }

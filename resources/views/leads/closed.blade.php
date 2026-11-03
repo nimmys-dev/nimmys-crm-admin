@@ -159,7 +159,7 @@
     </div>
 
     <div class="card-body">
-        <form method="GET"
+        <!-- <form method="GET"
             action="{{ route('leads.closed') }}"
             class="closed-leads-search">
 
@@ -201,7 +201,111 @@
 
             </div>
 
+        </form> -->
+
+        
+        <form method="GET" action="{{ route('leads.closed') }}">
+            <div class="row g-2 align-items-center">
+
+                {{-- Search --}}
+                <div class="search-wrapper">
+
+                    {{-- Search Input --}}
+                    <div class="search-input-wrapper">
+
+                        <i class="ti ti-search search-icon"></i>
+
+                        <input
+                            type="text"
+                            name="search"
+                            value="{{ $search ?? request('search') }}"
+                            class="form-control search-input"
+                            placeholder="Search lead name or assigned to..."
+                        >
+
+                    </div>
+
+                    {{-- Call Details --}}
+                    <div class="col-md-2">
+                        <select name="call_details" id="call_details"
+                                class="form-select">
+                            <option value="">All Call Details</option>
+                            <option value="Answered"
+                                @selected(request('call_details') == 'Answered')>
+                                Answered
+                            </option>
+                        </select>
+                    </div>
+
+                    {{-- Interest --}}
+                    <div class="col-md-2" id="interest-wrapper">
+                        <select name="interest" id="interest"
+                                class="form-select">
+                            <option value="">Select Interest</option>
+                            <option value="Yes"
+                                @selected(request('interest') == 'Yes')>
+                                Yes
+                            </option>
+                            <option value="No"
+                                @selected(request('interest') == 'No')>
+                                No
+                            </option>
+                        </select>
+                    </div>
+
+                    {{-- Is Item Sold --}}
+                    <div class="col-md-2" id="sold-wrapper">
+                        <select name="is_sold" class="form-select">
+                            <option value="">Is Item Sold?</option>
+                            <option value="Yes"
+                                @selected(request('is_sold') == 'Yes')>
+                                Yes
+                            </option>
+                        </select>
+                    </div>
+
+                    {{-- Reason --}}
+                    <div class="col-md-2" id="reason-wrapper">
+                        <select name="reason" class="form-select">
+                            <option value="">Select Reason</option>
+                            <option value="Not eligible for finance"
+                                @selected(request('reason') == 'Not eligible for finance')>
+                                Not eligible for finance
+                            </option>
+                            <option value="Not planning now"
+                                @selected(request('reason') == 'Not planning now')>
+                                Not planning now
+                            </option>
+                            <option value="Price is higher"
+                                @selected(request('reason') == 'Price is higher')>
+                                Price is higher
+                            </option>
+                            <option value="Purchased from another store"
+                                @selected(request('reason') == 'Purchased from another store')>
+                                Purchased from another store
+                            </option>
+                        </select>
+                    </div>
+                    {{-- Search Button --}}
+                            <button type="submit" class="btn search-btn">
+                                <i class="ti ti-search me-1"></i>
+                                Search
+                            </button>
+
+
+                            {{-- Clear Button --}}
+
+                                <a href="{{ route('leads.closed') }}"
+                                class="btn clear-btn">
+                                    <i class="ti ti-x me-1"></i>
+                                    Clear
+                                </a>
+
+                </div>
+                
+            </div>
         </form>
+
 
 
         <div class="table-responsive">
@@ -334,4 +438,59 @@
 
 </div>
 
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+
+    const callDetails = document.getElementById('call_details');
+    const interest = document.getElementById('interest');
+
+    const interestWrapper = document.getElementById('interest-wrapper');
+    const soldWrapper = document.getElementById('sold-wrapper');
+    const reasonWrapper = document.getElementById('reason-wrapper');
+
+    function updateFilters() {
+
+        const isAnswered = callDetails.value === 'Answered';
+
+        // Interest only when Answered
+        interestWrapper.style.display =
+            isAnswered ? 'block' : 'none';
+
+        // Sold only when Answered + Interest Yes
+        soldWrapper.style.display =
+            (isAnswered && interest.value === 'Yes')
+                ? 'block'
+                : 'none';
+
+        // Reason only when Answered + Interest No
+        reasonWrapper.style.display =
+            (isAnswered && interest.value === 'No')
+                ? 'block'
+                : 'none';
+    }
+
+    callDetails.addEventListener('change', function () {
+
+        interest.value = '';
+
+        // Reset dependent dropdowns
+        document.querySelector('[name="is_sold"]').value = '';
+        document.querySelector('[name="reason"]').value = '';
+
+        updateFilters();
+    });
+
+    interest.addEventListener('change', function () {
+
+        document.querySelector('[name="is_sold"]').value = '';
+        document.querySelector('[name="reason"]').value = '';
+
+        updateFilters();
+    });
+
+    // Initial load
+    updateFilters();
+
+});
+</script>
 @endsection
