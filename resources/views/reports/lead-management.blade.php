@@ -302,6 +302,7 @@
                     <th style="padding: 12px 20px; font-weight: 600;">Staff Name</th>
                     <th style="padding: 12px 16px; font-weight: 600; text-align: center;">Total Leads</th>
                     <th style="padding: 12px 16px; font-weight: 600; text-align: center;">Open Leads</th>
+                    <th style="padding: 12px 16px; font-weight: 600; text-align: center;">Closed Leads</th>
                 </tr>
             </thead>
             <tbody style="color: #334155;">
@@ -323,6 +324,11 @@
                         <td style="padding: 12px 16px; text-align: center;">
                             <span style="display: inline-block; padding: 2px 10px; border-radius: 12px; background-color: #e0f2fe; color: #0369a1; font-weight: 600;">
                                 {{ $salesman->open_leads ?? 0 }}
+                            </span>
+                        </td>
+                        <td style="padding: 12px 16px; text-align: center;">
+                            <span style="display: inline-block; padding: 2px 10px; border-radius: 12px; background-color: #dcfce7; color: #15803d; font-weight: 600;">
+                                {{ $salesman->closed_leads ?? 0 }}
                             </span>
                         </td>
                     </tr>

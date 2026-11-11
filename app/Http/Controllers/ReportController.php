@@ -269,7 +269,8 @@ public function leadManagement(Request $request)
             'users.name as salesman_name',
             DB::raw('COUNT(*) as total_leads'),
             DB::raw("SUM(CASE WHEN leads.status = 'closed' THEN 1 ELSE 0 END) as closed_leads"),
-            DB::raw("SUM(CASE WHEN leads.status IN ('open', 'new') THEN 1 ELSE 0 END) as open_leads")
+            DB::raw("SUM(CASE WHEN leads.status IN ('open', 'new') THEN 1 ELSE 0 END) as open_leads"),
+            DB::raw("SUM(CASE WHEN leads.status = 'closed' THEN 1 ELSE 0 END) as closed_leads")
         )
         ->whereNotNull('leads.assigned_to')
         ->groupBy('leads.assigned_to', 'users.name')
